@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><title>FenixRayos test</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block}</style>
+<script src="three/build/three.min.js"></script>
+<script src="three/examples/js/shaders/CopyShader.js"></script>
+<script src="three/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="three/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="three/examples/js/postprocessing/RenderPass.js"></script>
+<script src="three/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="three/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="rayos.js"></script>
+</head><body>
+<script>
+(function () {
+  // Banco de pruebas: escena "reposo" (intensidad 0.6) y "tormenta" (1.4 + burst al final).
+  // Avance determinista: FRAMES pasos fijos de 1/60 s, luego una sola captura. window.__done avisa al script de captura.
+  var Q = new URLSearchParams(location.search), SCN = Q.get('s') || 'reposo';
+  var W = innerWidth, H = innerHeight, FRAMES = 150, DT = 1 / 60;
+  var seed = 4242;
+  function rnd() { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; }
+
+  var renderer = new THREE.WebGLRenderer({ antialias: false });
+  renderer.setPixelRatio(1); renderer.setSize(W, H);
+  renderer.outputEncoding = THREE.LinearEncoding; renderer.toneMapping = THREE.NoToneMapping;
+  document.body.appendChild(renderer.domElement);
+
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0.016, 0.017, 0.024);
+  scene.fog = new THREE.FogExp2(0x05060a, 0.05);
+  var camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
+  camera.position.set(1.7, 1.45, 3.0); camera.lookAt(0.05, 1.2, 0.1);
+
+  // suelo oscuro con grano procedural
+  var cv = document.createElement('canvas'); cv.width = cv.height = 256;
+  var g = cv.getContext('2d');
+  g.fillStyle = '#3b3733'; g.fillRect(0, 0, 256, 256);
+  for (var i = 0; i < 1200; i++) {
+    var v = 30 + rnd() * 40 | 0;
+    g.fillStyle = 'rgba(' + v + ',' + (v - 3) + ',' + (v - 7) + ',0.4)';
+    g.beginPath(); g.arc(rnd() * 256, rnd() * 256, 1 + rnd() * 6, 0, 6.3); g.fill();
+  }
+  var gt = new THREE.CanvasTexture(cv); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(10, 10);
+  var ground = new THREE.Mesh(new THREE.PlaneGeometry(60, 60),
+    new THREE.MeshStandardMaterial({ map: gt, color: 0x8a8078, roughness: 0.95 }));
+  ground.rotation.x = -Math.PI / 2; scene.add(ground);
+
+  // fondo: rocas y un pilar oscuro
+  var rockM = new THREE.MeshStandardMaterial({ color: 0x2c2926, roughness: 0.9 });
+  [[-2.6, -1.2, 0.6], [2.8, -0.8, 0.9], [-1.0, 3.2, 1.0], [3.4, 2.2, 0.7]].forEach(function (p, k) {
+    var r = new THREE.Mesh(new THREE.DodecahedronGeometry(p[2], 0), rockM);
+    r.position.set(p[0], p[2] * 0.6, p[1]); r.scale.y = 1.5; r.rotation.y = k; scene.add(r);
+  });
+  var pillar = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.4, 0.5), rockM);
+  pillar.position.set(-1.1, 1.7, -1.8); scene.add(pillar);
+
+  scene.add(new THREE.HemisphereLight(0x3a4a6a, 0x0a0806, 0.45));
+  var moon = new THREE.DirectionalLight(0x8090c0, 0.55); moon.position.set(-3, 6, -2); scene.add(moon);
+
+  // espada: caja larga (hoja, origen en la base, spans y 0..1) con guardamano
+  var bladeGeo = new THREE.BoxGeometry(0.035, 1.0, 0.008); bladeGeo.translate(0, 0.5, 0);
+  var blade = new THREE.Mesh(bladeGeo, new THREE.MeshStandardMaterial({ color: 0x9aa2ac, metalness: 0.35, roughness: 0.4 }));
+  blade.position.set(0.1, 0.95, 0.1); blade.rotation.set(0.1, 0.4, -0.22);
+  var guard = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.03, 0.03), new THREE.MeshStandardMaterial({ color: 0x2a2420, metalness: 0.4, roughness: 0.6 }));
+  guard.position.set(0, -0.02, 0); blade.add(guard);
+  var grip = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.14, 8), new THREE.MeshStandardMaterial({ color: 0x1a1412, roughness: 0.8 }));
+  grip.position.set(0, -0.1, 0); blade.add(grip);
+  scene.add(blade);
+
+  // pipeline HDR: HalfFloat RT -> bloom -> exposicion + ACES + gamma
+  var rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType });
+  var composer = new THREE.EffectComposer(renderer, rt);
+  composer.addPass(new THREE.RenderPass(scene, camera));
+  composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(W, H), 0.9, 0.55, 0.35));
+  composer.addPass(new THREE.ShaderPass({
+    uniforms: { tDiffuse: { value: null }, exposure: { value: 1.0 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'uniform sampler2D tDiffuse; uniform float exposure; varying vec2 vUv;' +
+      'vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0); }' +
+      'void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb * exposure; c = aces(c); gl_FragColor = vec4(pow(c, vec3(1.0/2.2)), 1.0); }'
+  }));
+
+  var fx = window.FenixRayos(THREE, scene, { pixelHeight: H, random: rnd });
+  fx.attach(blade, { length: 1.0, axis: new THREE.Vector3(0, 1, 0), intensity: 1, offsetStart: 0 });
+
+  var storm = SCN === 'tormenta';
+  fx.setIntensity(storm ? 1.4 : 0.6);
+  for (var f = 0; f < FRAMES; f++) {
+    blade.rotation.z = -0.22 + 0.03 * Math.sin(f * DT * 2.0);
+    if (storm && f === FRAMES - 6) fx.burst(2);
+    fx.update(DT, f * DT);
+  }
+  blade.updateMatrixWorld(true);
+  composer.render();
+
+  window.__stats = fx.stats();
+  window.__scene = SCN;
+  window.__done = true;
+})();
+</script>
+</body></html>

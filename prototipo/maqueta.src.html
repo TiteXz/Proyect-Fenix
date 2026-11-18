@@ -114,6 +114,12 @@ kbd.ps.x { color: #8fb4ff; } kbd.ps.o { color: #ff8a94; } kbd.ps.sq { color: #e9
 body[data-device="pad"] .slot .k { font-size: 9px; letter-spacing: .02em; }
 #toast { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 74px); transform: translate(-50%, -6px); padding: 7px 14px; border-radius: 3px; background: var(--panel); border: 1px solid var(--edge-strong); font-size: 13px; color: var(--parch); opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
 #toast.on { opacity: 1; transform: translate(-50%, 0); }
+#mountPrompt { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 158px); transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 8px; border-radius: 3px; background: var(--panel); border: 1px solid var(--edge-strong); font-size: 13px; color: var(--parch); white-space: nowrap; }
+#mountPrompt svg { width: 26px; height: 26px; transform: rotate(-90deg); }
+#mountPrompt circle { fill: none; stroke-width: 3; }
+#mountPrompt .bg { stroke: rgba(228,218,196,.18); }
+#mountPrompt .fg { stroke: var(--holy); stroke-dasharray: 94.25; stroke-dashoffset: 94.25; }
+#mountPrompt b { color: var(--holy); }
 #joy { position: absolute; left: max(18px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); width: 112px; height: 112px; border-radius: 50%; pointer-events: auto; touch-action: none; background: rgba(10,11,15,.45); border: 1px solid var(--edge); }
 #knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(228,218,196,.18); border: 1px solid rgba(228,218,196,.38); }
 #tbtns { position: absolute; right: max(18px, env(safe-area-inset-right, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); display: grid; gap: 10px; justify-items: end; }
@@ -195,6 +201,7 @@ body.touchctl .bottom { bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
     Combo: escarcha ×2 congela, el martillo lo hace añicos y el fuego lo derrite.
   </div>
   <div id="toast" role="status" aria-live="polite"></div>
+  <div id="mountPrompt" hidden><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15"/><circle class="fg" id="mountRing" cx="18" cy="18" r="15"/></svg><span id="mountText">Mantén <b>E</b> para montar</span></div>
   <div id="joy" hidden><div id="knob"></div></div>
   <div id="tbtns" hidden>
     <button class="tbtn" id="tSkill" type="button">Habilidad</button>
@@ -215,6 +222,7 @@ body.touchctl .bottom { bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>/*__VFX__*/</script>
+<script>/*__RAYOS__*/</script>
 <script>
 (() => {
 const THREE = window.THREE;
@@ -286,6 +294,7 @@ function resize() {
   renderer.setPixelRatio(pr); renderer.setSize(w, h, false);
   composer.setPixelRatio(pr); composer.setSize(w, h);
   if (typeof VFX !== 'undefined' && VFX && VFX.resize) VFX.resize(h * pr);
+  if (typeof RAYOS !== 'undefined' && RAYOS && RAYOS.resize) RAYOS.resize(h * pr);
   bloom.setSize(Math.round(w * pr / 2), Math.round(h * pr / 2));
   camera.aspect = w / h; camera.fov = w < h ? 64 : 48; camera.updateProjectionMatrix();
 }
@@ -805,6 +814,7 @@ const P = {
   weapon: 'espada', act: null, actT: 0, actDone: false, combo: 0, cast: null,
   dodgeT: 0, dodgeDir: new V3(), stIdle: 0, cds: { fuego: 0, escarcha: 0, luz: 0 }, walk: 0, speed: 0,
   coins: 0, down: false, downT: 0, bonus: 1, dodgeN: 0, castN: 0,
+  mounted: false, mountAnim: 1, mountFrom: null,
   block: false, blockT: 0, atkHeld: false, atkHoldT: 0, charging: false, heavy: false, actDur: 0.5, skill: null, skillCd: 0
 };
 const SKILL = {
@@ -911,7 +921,8 @@ const AX = new V3(1, 0, 0), AY = new V3(0, 1, 0), AZ = new V3(0, 0, 1);
       blk = { ua, la, down: Math.acos(clamp(-dir.y, -1, 1)), elb, downS: sgn(ua, AZ, 'y', false), raiseS: sgn(ua, AX, 'z', true), elbS: sgn(la, elb, 'z', true) };
       reset();
     }
-    GK = { root, mixer, acts, main: { key: '', cur: null }, upper: { key: '', cur: null }, hurtT: 0, hurtN: 0, handL, handR, cape, blk, bw: 0 };
+    GK = { root, mixer, acts, main: { key: '', cur: null }, upper: { key: '', cur: null }, hurtT: 0, hurtN: 0, handL, handR, cape, blk, bw: 0, pelvis: bone('pelvis') };
+    loadKatana();
     WEAP.espada.dur = 0.72; WEAP.espada.hit = 0.45;
     if (acts.martillazo) { WEAP.martillo.dur = 1.15; WEAP.martillo.hit = 0.47; } else { WEAP.martillo.dur = 1.05; WEAP.martillo.hit = 0.5; }
     if (acts.disparo_arco) { WEAP.arco.dur = 0.9; WEAP.arco.hit = 0.53; }
@@ -920,6 +931,145 @@ const AX = new V3(1, 0, 0), AY = new V3(0, 1, 0), AZ = new V3(0, 0, 1);
     knightAnim(0);
   }, (err) => console.warn('No se pudo cargar el caballero GLB', err));
 })();
+/* ---------- katana con rayos rojos y negros ---------- */
+const KATANA_GLB = /*__KATANA__*/'';
+const HORSE_GLB = /*__HORSE__*/'';
+const b64buf = (str) => Uint8Array.from(atob(str), (c) => c.charCodeAt(0)).buffer;
+let RAYOS = null, rayI = 0, rayAttached = false;
+try { if (window.FenixRayos) RAYOS = window.FenixRayos(THREE, scene, { pixelHeight: innerHeight * renderer.getPixelRatio() }); } catch (err) { console.warn('Rayos no disponibles', err); RAYOS = null; }
+function attachRayos(obj, length, axis, offsetStart) {
+  if (!RAYOS || rayAttached) return;
+  RAYOS.attach(obj, { length, axis, offsetStart, intensity: 0 }); rayAttached = true;
+}
+function loadKatana() {
+  if (!KATANA_GLB || !THREE.GLTFLoader) { attachRayos(K.weapons.espada, 0.86, AY, 0.06); return; }
+  new THREE.GLTFLoader().parse(b64buf(KATANA_GLB), '', (gltf) => {
+    const root = gltf.scene;
+    root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; [].concat(o.material).forEach((m) => { m.envMapIntensity = m.metalness > 0.5 ? 1.25 : 0.5; }); } });
+    // orientar: la hoja debe salir del puño hacia +Y del zócalo, como la espada anterior
+    let hoja = root.getObjectByName('hoja') || root;
+    if (!hoja.isMesh) hoja.traverse((o) => { if (o.isMesh && !hoja.isMesh) hoja = o; });
+    const fit = () => { root.updateMatrixWorld(true); return new THREE.Box3().setFromObject(hoja); };
+    let bb = fit(), sz = bb.getSize(new V3());
+    if (sz.z > sz.y && sz.z > sz.x) root.rotation.x = -Math.PI / 2; else if (sz.x > sz.y) root.rotation.z = Math.PI / 2;
+    bb = fit(); if (bb.getCenter(new V3()).y < 0) { root.rotation.x += Math.PI; bb = fit(); }
+    K.weapons.espada.children.forEach((c) => { c.visible = false; });
+    K.weapons.espada.add(root);
+    // la hoja en su espacio local: eje más largo y tramo que ocupa
+    if (hoja.geometry) {
+      hoja.geometry.computeBoundingBox();
+      const b = hoja.geometry.boundingBox, e = b.getSize(new V3());
+      const ax = e.x >= e.y && e.x >= e.z ? 'x' : e.y >= e.z ? 'y' : 'z';
+      attachRayos(hoja, e[ax], ax === 'x' ? AX : ax === 'y' ? AY : AZ, b.min[ax]);
+    } else attachRayos(K.weapons.espada, 0.72, AY, 0.3);
+  }, (err) => { console.warn('No se pudo cargar la katana', err); attachRayos(K.weapons.espada, 0.86, AY, 0.06); });
+}
+function updateRayos(dt) {
+  if (!RAYOS) return;
+  let want = 0;
+  if (P.weapon === 'espada' && !P.down) want = P.act === 'espada' ? (P.heavy || P.skill ? 1.5 : 1.1) : P.charging ? 1.3 : 0.55;
+  rayI += (want - rayI) * Math.min(1, dt * 6);
+  RAYOS.setIntensity(rayI);
+  RAYOS.update(dt, T);
+}
+
+/* ---------- caballo y montura ---------- */
+let HZ = null;
+const HORSE_SPOT = new V3(-6.5, 0, 5.5), HORSE_YAW = 2.4;
+const MOUNT = { holding: false, t: 0, src: '' }, MOUNT_HOLD = 0.6;
+let camMount = 0;
+function playHorse(name, ts) {
+  const a = HZ.acts[name]; if (!a) return;
+  if (HZ.key !== name) { a.reset(); a.setLoop(THREE.LoopRepeat, Infinity); a.setEffectiveWeight(1); a.play(); if (HZ.cur && HZ.cur !== a) HZ.cur.crossFadeTo(a, 0.35, false); HZ.cur = a; HZ.key = name; }
+  a.setEffectiveTimeScale(ts);
+}
+(function loadHorse() {
+  if (!HORSE_GLB || !THREE.GLTFLoader) return;
+  new THREE.GLTFLoader().parse(b64buf(HORSE_GLB), '', (gltf) => {
+    const g = new THREE.Group(), root = gltf.scene; g.add(root); scene.add(g);
+    root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; [].concat(o.material).forEach((m) => { if (m.envMapIntensity !== undefined) m.envMapIntensity = m.metalness > 0.5 ? 1.1 : 0.55; }); } });
+    g.position.copy(HORSE_SPOT); g.rotation.y = HORSE_YAW;
+    const mixer = new THREE.AnimationMixer(root), acts = {};
+    for (const c of gltf.animations) acts[c.name] = mixer.clipAction(c);
+    HZ = { g, root, mixer, acts, seat: root.getObjectByName('silla_asiento'), pos: g.position, yaw: HORSE_YAW, speed: 0, cur: null, key: '', dustT: 0 };
+    playHorse('caballo_reposo', 1);
+  }, (err) => console.warn('No se pudo cargar el caballo', err));
+})();
+const nearHorse = () => !!(HZ && !P.mounted && !P.down && !P.act && !P.cast && P.dodgeT <= 0 && P.pos.distanceTo(HZ.pos) < 2.8);
+const canToggleMount = () => !!(HZ && GK && (P.mounted ? !P.act && !P.cast : nearHorse()));
+function mountHoldStart(src) { MOUNT.holding = true; MOUNT.t = 0; MOUNT.src = src; }
+function mountHoldEnd() { const short = MOUNT.holding && MOUNT.t < 0.45; MOUNT.holding = false; MOUNT.t = 0; return short; }
+function toggleMount() {
+  if (!HZ) return;
+  if (!P.mounted) {
+    P.mounted = true; P.mountAnim = 0; P.mountFrom = P.pos.clone(); P.block = false; atkRelease(true);
+    HZ.speed = 0; toast('A caballo · mantén ' + (device === 'pad' ? '✕' : 'Shift') + ' para galopar', 2.4); rumble(160, 0.4, 0.3);
+  } else {
+    P.mounted = false; P.mountAnim = 1;
+    const side = tmp3.set(Math.cos(HZ.yaw), 0, -Math.sin(HZ.yaw));
+    P.pos.copy(HZ.pos).addScaledVector(side, 1.3); P.pos.y = 0;
+    HZ.speed = 0; if (GK) GK.root.position.set(0, 0, 0);
+  }
+}
+function updateHorse(dt, intent) {
+  if (!HZ) return;
+  if (P.mounted) {
+    const mv = intent && intent.move;
+    let target = 0;
+    if (mv && mv.lengthSq() > 0.01) {
+      const want = Math.atan2(mv.x, mv.z);
+      let d = ((want - HZ.yaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
+      const turn = (HZ.speed > 6 ? 1.7 : 2.6) * dt; HZ.yaw += clamp(d, -turn, turn);
+      target = Math.min(1, mv.length()) * (intent.sprint ? 9.5 : 3.6) * (Math.abs(d) > 1.6 ? 0.35 : 1);
+    }
+    if (P.act || P.cast) target = Math.min(target, 6);
+    HZ.speed += (target - HZ.speed) * Math.min(1, dt * (target > HZ.speed ? 1.5 : 2.8));
+    HZ.pos.x += Math.sin(HZ.yaw) * HZ.speed * dt; HZ.pos.z += Math.cos(HZ.yaw) * HZ.speed * dt;
+    const hl = Math.hypot(HZ.pos.x, HZ.pos.z), lim = ARENA - 0.6;
+    if (hl > lim) { HZ.pos.x *= lim / hl; HZ.pos.z *= lim / hl; HZ.speed *= 0.6; }
+    if (HZ.speed > 6) {   // arrollar al galope
+      const fwd = tmp3.set(Math.sin(HZ.yaw), 0, Math.cos(HZ.yaw));
+      for (const e of enemies) {
+        if (e.dead || e.spawnT > 0 || (e.trampleCd || 0) > T) continue;
+        const d = tmp2.subVectors(e.m.g.position, HZ.pos).setY(0);
+        if (d.length() < 1.6 + e.def.radius && d.dot(fwd) > 0) { damageEnemy(e, 14, '#e0c890', 'Arrollado'); e.kb.add(fwd.clone().multiplyScalar(8 / e.sc)); e.stun = Math.max(e.stun || 0, 0.7); e.trampleCd = T + 0.9; shake(0.2); rumble(90, 0.4, 0.6); }
+      }
+    }
+  } else HZ.speed *= Math.exp(-dt * 4);
+  HZ.g.rotation.y = HZ.yaw;
+  const sp = HZ.speed;
+  if (sp < 0.25) playHorse('caballo_reposo', 1);
+  else if (sp < 2.6) playHorse('caballo_paso', Math.max(0.5, sp / 1.8));
+  else if (sp < 5.6) playHorse('caballo_trote', sp / 3.8);
+  else playHorse(HZ.acts.caballo_galope ? 'caballo_galope' : 'caballo_trote', sp / 8.5);
+  HZ.mixer.update(dt);
+  if (sp > 3) { HZ.dustT -= dt; if (HZ.dustT <= 0) { HZ.dustT = 0.06; smoke(tmp.copy(HZ.pos).setY(0.1).addScaledVector(tmp2.set(Math.sin(HZ.yaw), 0, Math.cos(HZ.yaw)), rr(-1, 0.8)), 1, 0x3a352e, { spd: 1, up: 0.4, life: 1.1, grav: 0.1, spread: 0.4 }); } }
+}
+function seatRider(dt) {   // pega la pelvis del caballero al asiento de la silla
+  if (!GK || !HZ || !HZ.seat || !GK.pelvis) return;
+  if (P.mountAnim < 1) P.mountAnim = Math.min(1, P.mountAnim + dt / 0.5);
+  const e = ease(P.mountAnim);
+  GK.root.position.set(0, 0, 0); K.g.updateMatrixWorld(true);
+  const pel = GK.pelvis.getWorldPosition(new V3()), seat = HZ.seat.getWorldPosition(new V3());
+  const d = seat.sub(pel).applyQuaternion(K.g.quaternion.clone().invert());
+  d.y += Math.sin(e * Math.PI) * 0.35;   // pequeño salto al subir
+  GK.root.position.copy(d.multiplyScalar(e));
+}
+function updateMountUI(dt) {
+  if (MOUNT.holding) {
+    if (!canToggleMount()) mountHoldEnd();
+    else { MOUNT.t += dt; if (MOUNT.t >= MOUNT_HOLD) { MOUNT.holding = false; MOUNT.t = 0; toggleMount(); } }
+  }
+  const show = mode === 'control' && canToggleMount();
+  const el = $('#mountPrompt');
+  if (el.hidden === show) el.hidden = !show;
+  if (show) {
+    const key = device === 'pad' ? '△' : 'E', txt = 'Mantén <b>' + key + '</b> para ' + (P.mounted ? 'desmontar' : 'montar');
+    if (el.dataset.t !== txt) { el.dataset.t = txt; $('#mountText').innerHTML = txt; }
+    $('#mountRing').style.strokeDashoffset = (94.25 * (1 - (MOUNT.holding ? MOUNT.t / MOUNT_HOLD : 0))).toFixed(1);
+  }
+}
+
 const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
 function rotB(b, rots) {   // gira un hueso alrededor de ejes del modelo, sobre su pose de reposo
   qa.identity();
@@ -953,6 +1103,11 @@ function knightAnim(dt) {
     actKey = act + P.castN; actTs = clipDur(act) / SPELL[P.cast].cdur;
   }
   if (P.down) { stopOn(U, 0.1); playOn(M, 'morir', 'morir', 1, true, 0.1); }
+  else if (P.mounted && GK.acts.montado) {   // a caballo: piernas y tronco del jinete; ataques/hechizos solo con la mitad de arriba
+    const gal = HZ && HZ.speed > 5.6 && GK.acts.montado_galope;
+    playOn(M, gal ? 'montado_galope' : 'montado', gal ? 'mg' : 'm', gal ? Math.max(0.6, HZ.speed / 8.5) : 1, false, 0.3);
+    if (act && GK.acts[act + '_sup']) playOn(U, act + '_sup', actKey, actTs, true, 0.08); else stopOn(U, 0.15);
+  }
   else if (P.dodgeT > 0) { stopOn(U, 0.08); playOn(M, 'rodar', 'rodar' + P.dodgeN, clipDur('rodar') / 0.6, true, 0.08); }
   else if (act) {
     if (moving && GK.acts[act + '_sup']) {   // corre con las piernas y ataca/lanza con el tronco y los brazos
@@ -968,6 +1123,7 @@ function knightAnim(dt) {
   else { stopOn(U, 0.15); playOn(M, P.weapon === 'arco' ? 'reposo' : 'guardia', 'idle' + P.weapon, 1, false, 0.25); }
   GK.hurtT = Math.max(0, GK.hurtT - dt);
   GK.mixer.update(dt);
+  if (P.mounted) seatRider(dt);
   GK.bw += ((P.block ? 1 : 0) - GK.bw) * Math.min(1, dt * 14);
   const BK = GK.blk;
   if (BK && GK.bw > 0.01) {   // levanta el escudo: mezcla la pose de guardia alta sobre la animación
@@ -1258,10 +1414,11 @@ let camYaw = Math.PI, camPitch = 0.3, shakeAmt = 0, lastDrag = -99;
 const camPos = new V3(0, 4, -8), camLook = new V3();
 function shake(a) { if (!reduceMotion) shakeAmt = Math.max(shakeAmt, a); }
 function updateCamera(dt) {
-  const portrait = innerWidth < innerHeight, dist = portrait ? 7.6 : 5.6;
+  camMount += ((P.mounted ? 1 : 0) - camMount) * Math.min(1, dt * 3);
+  const portrait = innerWidth < innerHeight, dist = (portrait ? 7.6 : 5.6) + camMount * 2.4;
   if (mode === 'demo' && T - lastDrag > 3) camYaw = lerpAngle(camYaw, P.yaw + Math.PI, 1 - Math.exp(-dt * 0.9));
   const cp = Math.cos(camPitch), right = tmp2.set(-Math.cos(camYaw), 0, Math.sin(camYaw));
-  camLook.copy(P.pos).setY(1.5).addScaledVector(right, portrait ? 0 : -0.55);
+  camLook.copy(P.pos).setY(1.5 + camMount * 1.0).addScaledVector(right, portrait ? 0 : -0.55);
   const want = tmp.set(Math.sin(camYaw) * cp * dist, Math.sin(camPitch) * dist, Math.cos(camYaw) * cp * dist).add(camLook);
   const hl = Math.hypot(want.x, want.z); if (hl > 15) { want.x *= 15 / hl; want.z *= 15 / hl; }
   camPos.lerp(want, 1 - Math.exp(-dt * 7));
@@ -1296,7 +1453,7 @@ function castSpell(s) {
   return true;
 }
 function dodge(dir) {
-  if (P.down || P.dodgeT > 0 || P.st < 20 || P.act) return false;
+  if (P.mounted || P.down || P.dodgeT > 0 || P.st < 20 || P.act) return false;
   P.st -= 20; P.stIdle = 0; P.dodgeT = GK ? 0.6 : DODGE; P.dodgeN++;
   if (dir && dir.lengthSq() > 0.01) P.dodgeDir.copy(dir).normalize(); else P.dodgeDir.set(-Math.sin(P.yaw), 0, -Math.cos(P.yaw));
   smoke(tmp.copy(P.pos).setY(0.1), 8, 0x4a4640, { spd: 1.5, up: 0.4, life: 0.8, grav: 0 });
@@ -1368,6 +1525,7 @@ function meleeHit() {
     emit(at, 18, 0xffd08a, { spd: 4, up: 1, life: 0.35, grav: -9, hdr: 2 });
     shake(0.4);
   }
+  if (any && RAYOS && P.weapon === 'espada') RAYOS.burst(P.heavy || P.skill ? 3 : 1);
   if (any) { hitStop = (P.weapon === 'martillo' ? 0.1 : 0.055) * (P.heavy ? 1.6 : 1); shake(P.weapon === 'martillo' ? 0.45 : 0.18); rumble(P.weapon === 'martillo' ? 170 : 90, 0.45, P.weapon === 'martillo' ? 0.95 : 0.4); }
 }
 function hurtPlayer(dmg, color = 0xff4040, src = null) {
@@ -1441,6 +1599,8 @@ function updateWaves(dt) {
   else if (wState === 'win') { wTimer -= dt; if (wTimer <= 0) resetRun(); }
 }
 function resetRun() {
+  if (P.mounted) toggleMount();
+  if (HZ) { HZ.pos.copy(HORSE_SPOT); HZ.yaw = HORSE_YAW; HZ.speed = 0; }
   if (VFX && P.castFX) { VFX.castCancel(P.castFX); P.castFX = null; }
   for (const e of [...enemies]) removeEnemy(e);
   for (let i = projs.length - 1; i >= 0; i--) freeProj(projs[i], i);
@@ -1538,6 +1698,7 @@ function updateEnemies(dt) {
 
 /* ---------- jugador ---------- */
 let hitStop = 0, hurtFlash = 0;
+const ZERO_MV = new V3();
 function updatePlayer(dt, intent) {
   if (P.down) { P.downT += dt; if (GK) knightAnim(dt); else K.g.rotation.x = -Math.min(1, P.downT / 0.6) * Math.PI / 2 * 0.95; if (P.downT > 3) resetRun(); return; }
   for (const s in P.cds) P.cds[s] = Math.max(0, P.cds[s] - dt);
@@ -1548,10 +1709,10 @@ function updatePlayer(dt, intent) {
   if (intent.spell) castSpell(intent.spell);
   if (intent.skill) attack('skill');
   if (intent.attack) attack(intent.attack);
-  const canBlock = !P.act && !P.cast && P.dodgeT <= 0 && P.st > 2;
+  const canBlock = !P.mounted && !P.act && !P.cast && P.dodgeT <= 0 && P.st > 2;
   if (intent.block && canBlock) { if (!P.block) { P.block = true; P.blockT = 0; } else P.blockT += dt; } else P.block = false;
-  if (intent.dodge) dodge(intent.move);
-  const mv = intent.move; let speed = 4.3;
+  if (intent.dodge && !P.mounted) dodge(intent.move);
+  const mv = P.mounted ? ZERO_MV.set(0, 0, 0) : intent.move; let speed = 4.3;
   if (P.act) speed *= GK ? (P.act === 'espada' ? 0.6 : P.act === 'martillo' ? 0.35 : 0.4) : (P.act === 'arco' ? 0.15 : 0.3);
   if (P.cast) speed *= GK ? 0.55 : 0.5;
   if (P.block) { speed *= 0.45; P.stIdle = 0; const t = nearestEnemy(9); if (t) P.yaw = lerpAngle(P.yaw, Math.atan2(t.m.g.position.x - P.pos.x, t.m.g.position.z - P.pos.z), 1 - Math.exp(-dt * 10)); }
@@ -1571,6 +1732,11 @@ function updatePlayer(dt, intent) {
     P.walk += dt * mv.length() * 9; P.speed = mv.length();
   } else P.speed *= Math.exp(-dt * 10);
   const hl = Math.hypot(P.pos.x, P.pos.z); if (hl > ARENA) { P.pos.x *= ARENA / hl; P.pos.z *= ARENA / hl; }
+  if (P.mounted && HZ) {   // el jinete va donde va el caballo (con transición al subir)
+    if (P.mountAnim < 1 && P.mountFrom) P.pos.copy(P.mountFrom).lerp(HZ.pos, ease(Math.min(1, P.mountAnim + 0.15)));
+    else P.pos.copy(HZ.pos);
+    P.yaw = HZ.yaw; P.speed = 0; K.g.rotation.y = HZ.yaw;
+  }
   K.g.rotation.y = lerpAngle(K.g.rotation.y, P.yaw, 1 - Math.exp(-dt * 18));
   const sw = Math.sin(P.walk) * 0.6 * Math.min(1, P.speed * 1.5);
   K.legs[0].rotation.x = sw; K.legs[1].rotation.x = -sw;
@@ -1668,10 +1834,11 @@ function setDevice(d) {
 let toastT = 0;
 function toast(msg, sec = 2.6) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); toastT = sec; }
 const keys = new Set(), pending = { attack: false, spell: null, weapon: null, dodge: false, skill: false }, joy = new V3();
-const held = { mouseBlock: false, padBlock: false, touchBlock: false };
+const held = { mouseBlock: false, padBlock: false, touchBlock: false, padSprint: false };
 function atkPress() { takeControl(); if (!P.atkHeld) { P.atkHeld = true; P.atkHoldT = 0; P.atkT0 = performance.now(); } }   // se mide en tiempo real, no de juego
 function atkRelease(cancel) { if (!P.atkHeld) return; P.atkHeld = false; P.charging = false; if (!cancel) pending.attack = P.atkHoldT >= 0.3 ? 'heavy' : 'light'; }
 function setMode(m) {
+  if (m === 'demo' && P.mounted) toggleMount();
   mode = m;
   $('#mode').textContent = m === 'demo' ? 'Jugar yo' : 'Ver demo';
   const touch = m === 'control' && coarse && device !== 'pad';
@@ -1711,13 +1878,17 @@ addEventListener('keydown', (e) => {
   if (c === 'KeyV') { takeControl(); keys.add(c); return; }
   if ((c === 'KeyJ' || c === 'Enter') && !e.repeat) { atkPress(); return; }
   if (c === 'KeyC') { takeControl(); camYaw = P.yaw + Math.PI; return; }
+  if (c === 'KeyE') { takeControl(); if (e.repeat) return; if (canToggleMount()) { mountHoldStart('kb'); return; } if (P.mounted) return; }
   if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(c)) { keys.add(c); takeControl(); e.preventDefault(); }
   else if (map[c]) { takeControl(); pending.weapon = map[c]; }
   else if (sp[c]) { takeControl(); pending.spell = sp[c]; }
-  else if (c === 'Space' || c === 'ShiftLeft') { takeControl(); pending.dodge = true; e.preventDefault(); }
+  else if (c === 'Space' || c === 'ShiftLeft') { takeControl(); keys.add(c); pending.dodge = true; e.preventDefault(); }
   else if (c === 'KeyJ' || c === 'Enter') { takeControl(); pending.attack = true; }
 });
-addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'KeyJ' || e.code === 'Enter') atkRelease(); });
+addEventListener('keyup', (e) => {
+  keys.delete(e.code); if (e.code === 'KeyJ' || e.code === 'Enter') atkRelease();
+  if (e.code === 'KeyE' && MOUNT.holding && MOUNT.src === 'kb') { if (mountHoldEnd() && !P.mounted) pending.spell = 'escarcha'; }
+});
 addEventListener('blur', () => { keys.clear(); held.mouseBlock = held.padBlock = held.touchBlock = false; atkRelease(true); });
 let drag = null, selSpell = 0;
 const SPELLS = ['fuego', 'escarcha', 'luz'];
@@ -1808,7 +1979,11 @@ function pollPad(dt) {
     if (down(0) || down(1)) pending.dodge = true;                                    // ✕ / ○
     if (down(14)) { selSpell = (selSpell + 2) % 3; markSel(); }                      // cruceta ◀ ▶ = elegir magia
     if (down(15)) { selSpell = (selSpell + 1) % 3; markSel(); }
-    if (down(3) || down(12)) { const o = ['espada', 'martillo', 'arco']; pending.weapon = o[(o.indexOf(P.weapon) + 1) % 3]; }   // △ / ▲
+    const cycleW = () => { const o = ['espada', 'martillo', 'arco']; pending.weapon = o[(o.indexOf(P.weapon) + 1) % 3]; };
+    if (down(12)) cycleW();                                                          // ▲ = cambiar arma
+    if (down(3)) { if (canToggleMount()) mountHoldStart('pad'); else cycleW(); }     // △: pulsar = arma, mantener cerca del caballo = montar/desmontar
+    if (up(3) && MOUNT.holding && MOUNT.src === 'pad') { if (mountHoldEnd() && !P.mounted) cycleW(); }
+    held.padSprint = btn(0);                                                         // ✕ mantenido = galopar
     if (down(11)) camYaw = P.yaw + Math.PI;                                          // R3
     if (down(8) || down(17)) $('#qual').click();                                     // CREATE/SHARE o panel táctil
   }
@@ -1821,7 +1996,8 @@ function rumble(ms, weak, strong) {
 }
 function manualIntent() {
   const it = { move: new V3(), attack: pending.attack, spell: pending.spell, weapon: pending.weapon, dodge: pending.dodge, skill: pending.skill,
-    block: keys.has('KeyV') || held.mouseBlock || held.padBlock || held.touchBlock };
+    block: keys.has('KeyV') || held.mouseBlock || held.padBlock || held.touchBlock,
+    sprint: keys.has('ShiftLeft') || keys.has('Space') || held.padSprint };
   pending.attack = false; pending.spell = null; pending.weapon = null; pending.dodge = false; pending.skill = false;
   let f = 0, s = 0;
   if (keys.has('KeyW') || keys.has('ArrowUp')) f += 1; if (keys.has('KeyS') || keys.has('ArrowDown')) f -= 1;
@@ -1882,16 +2058,19 @@ function frame(now) {
   pollPad(rdt);
   if (toastT > 0) { toastT -= rdt; if (toastT <= 0) $('#toast').classList.remove('on'); }
   const intent = mode === 'demo' ? autopilot(dt) : manualIntent();
+  updateHorse(dt, intent);
+  updateMountUI(rdt);
   updatePlayer(dt, intent); updateEnemies(dt); updateProjs(dt); updateCoins(dt); updateWaves(dt);
   updateFx(dt); updateFlashes(dt); updateWorld(rdt);
   FX.update(dt); SMOKE.update(dt, true); ASH.update(rdt, true);
   if (VFX) VFX.update(dt);
+  updateRayos(dt);
   updateCamera(rdt); updateNums(rdt); updateHud(rdt);
   if (bannerT > 0) { bannerT -= rdt; if (bannerT <= 0) $('#banner').classList.remove('on'); }
   grade.uniforms.time.value = T;
   composer.render(rdt);
 }
-window.__GAME__ = { P, SPELL, WEAP, get GK() { return GK; }, get VFX() { return VFX; }, castSpell, attack, setMode, get device() { return device; }, PAD, SKILL };   // estado legible para pruebas
+window.__GAME__ = { P, SPELL, WEAP, get GK() { return GK; }, get VFX() { return VFX; }, castSpell, attack, setMode, get device() { return device; }, PAD, SKILL, get HZ() { return HZ; }, MOUNT, toggleMount, get RAYOS() { return RAYOS; } };   // estado legible para pruebas
 markSel();
 setMode('demo');
 setQual(qual);

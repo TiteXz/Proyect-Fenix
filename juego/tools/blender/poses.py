@@ -2,7 +2,7 @@
 
 Cada clip se define con poses clave (direcciones de brazos en espacio mundo, inclinación y giro del
 tronco, altura de cadera y cierre de los dedos) que se interpolan suavemente fotograma a fotograma.
-Las piernas y lo que no se especifica salen de un clip base capturado (guardia).
+Las piernas (th/sh/ft = muslo/pantorrilla/pie, peso w_legs) se apuntan como los brazos. Lo que no se especifica salen de un clip base capturado (guardia).
 Ejes de Blender para el personaje: delante = -Y, izquierda = +X, arriba = +Z.
 El cierre de dedos mezcla la mano abierta del clip "hechizo" con el puño del clip "guardia".
 """
@@ -10,8 +10,10 @@ import bpy
 from mathutils import Matrix, Quaternion, Vector
 
 FINGERS = [f"{f}_{i:02d}" for f in ("index", "middle", "ring", "pinky", "thumb") for i in (1, 2, 3)]
-DIRS = ("ua_r", "la_r", "ua_l", "la_l")
-BONE_OF = {"ua_r": "upperarm_r", "la_r": "lowerarm_r", "ua_l": "upperarm_l", "la_l": "lowerarm_l"}
+DIRS = ("ua_r", "la_r", "ua_l", "la_l", "th_r", "sh_r", "ft_r", "th_l", "sh_l", "ft_l")
+BONE_OF = {"ua_r": "upperarm_r", "la_r": "lowerarm_r", "ua_l": "upperarm_l", "la_l": "lowerarm_l",
+           "th_r": "thigh_r", "sh_r": "calf_r", "ft_r": "foot_r", "th_l": "thigh_l", "sh_l": "calf_l", "ft_l": "foot_l"}
+LEG_KEYS = ("th_r", "sh_r", "ft_r", "th_l", "sh_l", "ft_l")
 
 
 def _depth(b):
@@ -28,7 +30,7 @@ def _smooth(t):
 
 def _fill(keys):
     """Cada clave hereda los campos no indicados de la anterior."""
-    out, cur = [], {"w_r": 0.0, "w_l": 0.0, "pitch": 0.0, "twist": 0.0, "dz": 0.0, "curl_r": None, "curl_l": None}
+    out, cur = [], {"w_r": 0.0, "w_l": 0.0, "w_legs": 0.0, "pitch": 0.0, "twist": 0.0, "dz": 0.0, "curl_r": None, "curl_l": None}
     for k in keys:
         cur = dict(cur)
         cur.update(k)
@@ -65,7 +67,7 @@ def _world_q(rig, pb):
     return (rig.matrix_world @ pb.matrix).to_quaternion()
 
 
-def author(rig, name, keys, base="guardia"):
+def author(rig, name, keys, base="guardia", pelvis_origin=False):
     sc = bpy.context.scene
     P = rig.pose.bones
     order = sorted(rig.data.bones, key=_depth)
@@ -99,10 +101,13 @@ def author(rig, name, keys, base="guardia"):
                     P[b.name].matrix = base_m[b.name]
             bpy.context.view_layer.update()
         # 2) cadera y tronco
-        if s["dz"]:
+        if s["dz"] or pelvis_origin:
             pel = P["pelvis"]
             m = pel.matrix.copy()
             m.translation.z += s["dz"]
+            if pelvis_origin:   # pelvis en el origen horizontal del personaje
+                m.translation.x = 0.0
+                m.translation.y = 0.0
             pel.matrix = m
             bpy.context.view_layer.update()
         for sp in ("spine_01", "spine_02", "spine_03"):
@@ -113,7 +118,7 @@ def author(rig, name, keys, base="guardia"):
         for d in DIRS:
             if d not in s or s[d] is None:
                 continue
-            w = s["w_r"] if d.endswith("_r") else s["w_l"]
+            w = s["w_legs"] if d in LEG_KEYS else (s["w_r"] if d.endswith("_r") else s["w_l"])
             if w <= 1e-4:
                 continue
             pb = P[BONE_OF[d]]
@@ -154,7 +159,7 @@ def author_all(rig):
         {"t": 15, "ua_l": (0.6, -0.15, -0.35), "la_l": (0.1, -0.55, 0.85), "curl_l": 0.55, "pitch": -0.06, "twist": -0.25},
         {"t": 19, "ua_l": (0.12, -0.97, 0.12), "la_l": (0.05, -1.0, 0.1), "curl_l": 0.0, "pitch": 0.16, "twist": 0.3},
         {"t": 25, "w_l": 0.8},
-        {"t": 33, "w_l": 0.0, "pitch": 0.0, "twist": 0.0, "curl_l": None},
+        {"t": 33, "w_l": 0.0, "w_legs": 0.0, "pitch": 0.0, "twist": 0.0, "curl_l": None},
     ]))
     # Invocar (ambas manos): manos juntas, brazos al cielo, golpe hacia el suelo.
     made.append(author(rig, "invocar", [
@@ -189,5 +194,28 @@ def author_all(rig):
         {"t": 26},
         {"t": 34, "w_l": 0.0, "w_r": 0.0, "twist": 0.0, "curl_l": None, "curl_r": None},
     ]))
+    # Jinete: sentado en la silla (pelvis en el origen horizontal), muslos abiertos y adelantados, rodillas a ~85 grados,
+    # pies en estribos, manos juntas con las riendas. Base: reposo.
+    legs = {"w_legs": 1.0,
+            "th_l": (0.45, -0.86, -0.28), "sh_l": (0.12, 0.25, -0.96), "ft_l": (0.05, -0.93, -0.36),
+            "th_r": (-0.45, -0.86, -0.28), "sh_r": (-0.12, 0.25, -0.96), "ft_r": (-0.05, -0.93, -0.36)}
+    hands = {"w_l": 1.0, "w_r": 1.0, "curl_l": 1.0, "curl_r": 1.0,
+             "ua_l": (0.12, -0.25, -0.96), "la_l": (-0.28, -0.93, 0.2),
+             "ua_r": (-0.12, -0.25, -0.96), "la_r": (0.28, -0.93, 0.2)}
+    made.append(author(rig, "montado", [
+        dict(legs, **hands, t=0, pitch=0.12, twist=0.0, dz=0.0),
+        {"t": 12, "pitch": 0.05, "twist": 0.03, "dz": 0.012},
+        {"t": 24, "pitch": 0.12, "twist": 0.0, "dz": 0.0},
+        {"t": 36, "pitch": 0.19, "twist": -0.03, "dz": 0.012},
+        {"t": 48, "pitch": 0.12, "twist": 0.0, "dz": 0.0},
+    ], base="reposo", pelvis_origin=True))
+    gh = dict(hands, ua_l=(0.1, -0.55, -0.83), la_l=(-0.25, -0.96, 0.1),
+              ua_r=(-0.1, -0.55, -0.83), la_r=(0.25, -0.96, 0.1))
+    gl = dict(legs, th_l=(0.45, -0.8, -0.4), th_r=(-0.45, -0.8, -0.4))
+    made.append(author(rig, "montado_galope", [
+        dict(gl, **gh, t=0, pitch=0.5, twist=0.0, dz=0.0),
+        {"t": 7, "pitch": 0.58, "dz": 0.07},
+        {"t": 14, "pitch": 0.5, "dz": 0.0},
+    ], base="reposo", pelvis_origin=True))
     print("POSES:", ", ".join("%s(%d f)" % m for m in made))
     return made
