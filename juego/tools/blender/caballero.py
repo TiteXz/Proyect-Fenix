@@ -25,7 +25,8 @@ from bl_ext.user_default.mpfb.services.locationservice import LocationService
 ARGS = sys.argv[sys.argv.index("--") + 1:]
 OUT_GLB = os.path.abspath(ARGS[0])
 TEX = os.path.abspath(ARGS[1])
-PREVIEW = os.path.abspath(ARGS[2]) if len(ARGS) > 2 else None
+PREVIEW = os.path.abspath(ARGS[2]) if len(ARGS) > 2 and ARGS[2] != "-" else None
+ANIMS = os.path.abspath(ARGS[3]) if len(ARGS) > 3 else None   # UAL1_Standard.glb de Quaternius (CC0)
 U = LocationService.get_user_data()
 
 # ---------------------------------------------------------------- escena limpia
@@ -432,6 +433,12 @@ for o in rig.children_recursive:
         o.data.calc_loop_triangles(); tris += len(o.data.loop_triangles)
 print("CABALLERO: objetos=%d triángulos=%d altura=%.2f m" % (len(rig.children_recursive), tris, max(v.z for v in head_vs) + 0.03))
 
+# ---------------------------------------------------------------- animaciones (Quaternius UAL, CC0)
+if ANIMS:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from retarget import retarget  # noqa: E402
+    retarget(ANIMS, rig)
+
 # ---------------------------------------------------------------- exportar GLB
 os.makedirs(os.path.dirname(OUT_GLB), exist_ok=True)
 bpy.ops.object.select_all(action="DESELECT")
@@ -440,7 +447,7 @@ for o in rig.children_recursive:
     o.select_set(True)
 bpy.context.view_layer.objects.active = rig
 bpy.ops.export_scene.gltf(filepath=OUT_GLB, export_format="GLB", use_selection=True, export_skins=True,
-                          export_animations=False, export_apply=False, export_image_format="WEBP",
+                          export_animations=bool(ANIMS), export_animation_mode="ACTIONS", export_apply=False, export_image_format="WEBP",
                           export_yup=True, export_materials="EXPORT")
 print("GLB:", OUT_GLB, os.path.getsize(OUT_GLB) // 1024, "KB")
 bpy.ops.wm.save_as_mainfile(filepath=OUT_GLB.replace(".glb", ".blend"))
@@ -477,3 +484,15 @@ if PREVIEW:
     sc.render.filepath = PREVIEW
     bpy.ops.render.render(write_still=True)
     print("PREVIEW:", PREVIEW)
+    if ANIMS:   # una imagen por pose para comprobar el reasignado
+        sc.cycles.samples = 16
+        sc.render.resolution_x, sc.render.resolution_y = 450, 600
+        for act_name, frac in (("guardia", 0.3), ("andar", 0.25), ("tajo", 0.45), ("hechizo", 0.6), ("rodar", 0.4)):
+            act = bpy.data.actions.get(act_name)
+            if not act:
+                continue
+            rig.animation_data.action = act
+            sc.frame_set(int(act.frame_range[0] + (act.frame_range[1] - act.frame_range[0]) * frac))
+            sc.render.filepath = PREVIEW.replace(".png", "_%s.png" % act_name)
+            bpy.ops.render.render(write_still=True)
+        rig.animation_data.action = None
