@@ -171,12 +171,12 @@ def author_all(rig):
     # Martillazo a dos manos: carga por encima de la cabeza y golpe al suelo.
     made.append(author(rig, "martillazo", [
         {"t": 0, "w_l": 0.0, "w_r": 0.0},
-        {"t": 9, "w_l": 1.0, "w_r": 1.0, "ua_r": (-0.25, 0.3, 0.92), "la_r": (0.1, 0.75, 0.65),
-         "ua_l": (0.25, 0.25, 0.93), "la_l": (-0.15, 0.7, 0.7), "pitch": -0.28, "twist": -0.2, "curl_l": 1.0, "curl_r": 1.0},
-        {"t": 14, "ua_r": (-0.1, -0.9, -0.4), "la_r": (0.05, -0.75, -0.65), "ua_l": (0.12, -0.9, -0.4),
-         "la_l": (-0.05, -0.75, -0.65), "pitch": 0.5, "twist": 0.1, "dz": -0.12},
-        {"t": 18, "ua_r": (-0.1, -0.7, -0.7), "la_r": (0.0, -0.5, -0.85), "ua_l": (0.1, -0.7, -0.7),
-         "la_l": (0.0, -0.5, -0.85), "pitch": 0.6},
+        {"t": 9, "w_l": 1.0, "w_r": 1.0, "ua_r": (0.0, 0.25, 0.95), "la_r": (0.5, 0.5, 0.7),
+         "ua_l": (0.0, 0.25, 0.95), "la_l": (-0.5, 0.5, 0.7), "pitch": -0.28, "twist": -0.2, "curl_l": 1.0, "curl_r": 1.0},
+        {"t": 14, "ua_r": (0.3, -0.85, -0.4), "la_r": (0.45, -0.65, -0.6), "ua_l": (-0.3, -0.85, -0.4),
+         "la_l": (-0.45, -0.65, -0.6), "pitch": 0.5, "twist": 0.1, "dz": -0.12},
+        {"t": 18, "ua_r": (0.3, -0.7, -0.7), "la_r": (0.4, -0.5, -0.8), "ua_l": (-0.3, -0.7, -0.7),
+         "la_l": (-0.4, -0.5, -0.8), "pitch": 0.6},
         {"t": 30, "w_l": 0.0, "w_r": 0.0, "pitch": 0.0, "twist": 0.0, "dz": 0.0, "curl_l": None},
     ]))
     # Disparo con arco (arco en la mano izquierda): levantar, tensar hasta la mejilla, soltar.
