@@ -55,7 +55,9 @@ En modo de prueba la página expone `window.__GAME__` (estado del jugador, hechi
 | Elegir magia | Cruceta ◀ ▶ | Rueda | — |
 | Habilidad del arma (Embestida / Terremoto / Andanada) | R2 | G o clic central | Habilidad |
 | Esquivar | ✕ / ○ | Espacio | Esquivar |
-| Cambiar arma | △ / cruceta ▲ | 1 2 3 | Ranuras de arma |
+| Cambiar arma | △ (pulsar) / cruceta ▲ | 1 2 3 | Ranuras de arma |
+| Montar / desmontar el caballo (cerca de él) | △ mantener | E mantener | — |
+| Galopar (a caballo) | ✕ mantener | Shift / Espacio mantener | — |
 | Demo / jugar · calidad | OPTIONS · CREATE/panel táctil | Botones del HUD | Botones del HUD |
 
 Los mandos se leen con la Gamepad API (mapeo estándar) y vibran al golpear, recibir daño y en explosiones.

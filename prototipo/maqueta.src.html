@@ -987,7 +987,19 @@ function playHorse(name, ts) {
   if (!HORSE_GLB || !THREE.GLTFLoader) return;
   new THREE.GLTFLoader().parse(b64buf(HORSE_GLB), '', (gltf) => {
     const g = new THREE.Group(), root = gltf.scene; g.add(root); scene.add(g);
-    root.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; [].concat(o.material).forEach((m) => { if (m.envMapIntensity !== undefined) m.envMapIntensity = m.metalness > 0.5 ? 1.1 : 0.55; }); } });
+    root.traverse((o) => {
+      if (!o.isMesh) return;
+      o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false;
+      [].concat(o.material).forEach((m) => {
+        if (m.envMapIntensity === undefined) return;
+        const dark = m.color && (m.color.r + m.color.g + m.color.b) < 0.25;
+        // pelaje negro: menos reflejo del cielo para que no se vea azulado
+        if (dark && m.metalness < 0.5) { m.envMapIntensity = 0.22; m.roughness = Math.max(m.roughness, 0.55); }
+        // el brillo aterciopelado (sheen) del GLB es azul y muy fuerte: se deja en un reflejo sutil
+        if (m.sheenColor) { const k = dark ? 0.12 : 0.3; m.sheenColor.multiplyScalar(k); m.sheenColor.lerp(new THREE.Color(0.06, 0.065, 0.08).multiplyScalar(dark ? 1 : 0), dark ? 0.6 : 0); }
+        else m.envMapIntensity = m.metalness > 0.5 ? 1.1 : 0.5;
+      });
+    });
     g.position.copy(HORSE_SPOT); g.rotation.y = HORSE_YAW;
     const mixer = new THREE.AnimationMixer(root), acts = {};
     for (const c of gltf.animations) acts[c.name] = mixer.clipAction(c);
@@ -997,8 +1009,8 @@ function playHorse(name, ts) {
 })();
 const nearHorse = () => !!(HZ && !P.mounted && !P.down && !P.act && !P.cast && P.dodgeT <= 0 && P.pos.distanceTo(HZ.pos) < 2.8);
 const canToggleMount = () => !!(HZ && GK && (P.mounted ? !P.act && !P.cast : nearHorse()));
-function mountHoldStart(src) { MOUNT.holding = true; MOUNT.t = 0; MOUNT.src = src; }
-function mountHoldEnd() { const short = MOUNT.holding && MOUNT.t < 0.45; MOUNT.holding = false; MOUNT.t = 0; return short; }
+function mountHoldStart(src) { MOUNT.holding = true; MOUNT.t = 0; MOUNT.t0 = performance.now(); MOUNT.src = src; }   // tiempo real, no de juego
+function mountHoldEnd() { if (MOUNT.holding) MOUNT.t = (performance.now() - MOUNT.t0) / 1000; const short = MOUNT.holding && MOUNT.t < 0.45; MOUNT.holding = false; MOUNT.t = 0; return short; }
 function toggleMount() {
   if (!HZ) return;
   if (!P.mounted) {
@@ -1058,7 +1070,7 @@ function seatRider(dt) {   // pega la pelvis del caballero al asiento de la sill
 function updateMountUI(dt) {
   if (MOUNT.holding) {
     if (!canToggleMount()) mountHoldEnd();
-    else { MOUNT.t += dt; if (MOUNT.t >= MOUNT_HOLD) { MOUNT.holding = false; MOUNT.t = 0; toggleMount(); } }
+    else { MOUNT.t = (performance.now() - MOUNT.t0) / 1000; if (MOUNT.t >= MOUNT_HOLD) { MOUNT.holding = false; MOUNT.t = 0; toggleMount(); } }
   }
   const show = mode === 'control' && canToggleMount();
   const el = $('#mountPrompt');

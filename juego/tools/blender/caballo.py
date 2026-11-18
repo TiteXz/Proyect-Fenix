@@ -970,8 +970,8 @@ for name, nfr, cfg, idle in CLIPS:
             cfg["body"](t, d, loc, scl)
         else:
             d, loc, scl = pose_gait(t, cfg)
-        key_all(act, 1 + i, d, loc, scl)
-    act.frame_range = (1, 1 + nfr)
+        key_all(act, i, d, loc, scl)
+    act.frame_range = (0, nfr)
     ACTIONS[name] = (act, nfr)
 
 # ------------------------------------------------------------------ exportar
