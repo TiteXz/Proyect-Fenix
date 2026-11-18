@@ -14,7 +14,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(date:*)",
-      "Bash(python3 orquestador/orquestador.py estado)"
+      "Bash(python3 orquestador/orquestador.py estado)",
+      "Bash(bash scripts/instalar-blender.sh)",
+      "Bash(/home/user/tools/blender-4.2.9-linux-x64/blender -b *)"
     ],
     "deny": [
       "Bash(git push --force:*)",

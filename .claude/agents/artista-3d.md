@@ -29,8 +29,11 @@ el presupuesto; tú los consigues o los fabricas y los integras.
    a 1–2K con scripts reproducibles en `juego/tools/texturas/`.
 4. **Geometría procedural** solo para lo que gana con ello (terreno, escombros, variaciones de ruinas),
    con desplazamiento por ruido y materiales PBR, nunca con aspecto facetado.
-5. **Blender sin interfaz** (`blender -b -P script.py`) solo si `command -v blender` ya lo encuentra
-   (útil para LODs, horneado de normales y retopología). No lo instales sin preguntar.
+5. **Blender sin interfaz** — instálalo con `bash scripts/instalar-blender.sh` (versión LTS fijada,
+   descarga oficial con SHA-256 verificado; imprime la ruta) y ejecútalo solo así:
+   `/home/user/tools/blender-4.2.9-linux-x64/blender -b -P juego/tools/blender/<script>.py`.
+   Úsalo para MakeHuman/MPFB (humanos CC0), retargeting de animaciones, LODs, horneado de normales y
+   exportación GLB. Scripts en `juego/tools/blender/`. No instales otros programas sin preguntar.
 6. **Packs low-poly** (KayKit, Quaternius, Kenney) **solo como placeholder temporal** de gameplay,
    marcados como `placeholder` en `CREDITOS.md` y con una feature pendiente para sustituirlos.
 
