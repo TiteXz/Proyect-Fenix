@@ -1,0 +1,137 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>FenixVFX test</title>
+<style>html,body{margin:0;height:100%;background:#000;overflow:hidden}canvas{display:block}
+#ui{position:fixed;left:8px;top:8px;display:flex;flex-wrap:wrap;gap:4px;font:12px sans-serif}
+#ui button{background:#1d1a17cc;color:#e8dcc8;border:1px solid #6b5a43;padding:4px 8px;cursor:pointer}
+body.shot #ui{display:none}</style>
+<script src="three/build/three.min.js"></script>
+<script src="three/examples/js/shaders/CopyShader.js"></script>
+<script src="three/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="three/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="three/examples/js/postprocessing/RenderPass.js"></script>
+<script src="three/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="three/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="vfx.js"></script>
+</head><body>
+<div id="ui"></div>
+<script>
+(function () {
+  var Q = new URLSearchParams(location.search), SCN = Q.get('s'), SHOT = !!SCN;
+  if (SHOT) document.body.className = 'shot';
+  var W = innerWidth, H = innerHeight;
+  var renderer = new THREE.WebGLRenderer({ antialias: false });
+  renderer.setPixelRatio(1); renderer.setSize(W, H);
+  renderer.toneMapping = THREE.NoToneMapping; renderer.outputEncoding = THREE.LinearEncoding;
+  document.body.appendChild(renderer.domElement);
+  var scene = new THREE.Scene();
+  scene.background = new THREE.Color(0.006, 0.008, 0.014);
+  scene.fog = new THREE.FogExp2(0x05070c, 0.045);
+  var camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 200);
+  camera.position.set(3.4, 2.1, 4.4); camera.lookAt(0, 1.0, 0.4);
+
+  // suelo con textura procedural
+  var cv = document.createElement('canvas'); cv.width = cv.height = 512; var g = cv.getContext('2d');
+  g.fillStyle = '#4a4540'; g.fillRect(0, 0, 512, 512);
+  for (var i = 0; i < 2500; i++) { var x = Math.random() * 512, y = Math.random() * 512, r = Math.random() * 10 + 1, v = 50 + Math.random() * 40 | 0;
+    g.fillStyle = 'rgba(' + v + ',' + (v - 4) + ',' + (v - 10) + ',0.35)'; g.beginPath(); g.arc(x, y, r, 0, 6.3); g.fill(); }
+  var gt = new THREE.CanvasTexture(cv); gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(12, 12); gt.encoding = THREE.sRGBEncoding;
+  var ground = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ map: gt, color: 0x9a9088, roughness: 0.95 }));
+  ground.rotation.x = -Math.PI / 2; scene.add(ground);
+  var stoneM = new THREE.MeshStandardMaterial({ color: 0x3a3631, roughness: 0.9 });
+  [[-3, 5], [3.5, 8], [-1.5, 10], [5, 2], [-5, 1]].forEach(function (p, k) {
+    var s = new THREE.Mesh(new THREE.DodecahedronGeometry(0.6 + k * 0.15, 0), stoneM); s.position.set(p[0], 0.4, p[1]); s.scale.y = 1.6; s.rotation.y = k; scene.add(s); });
+  scene.add(new THREE.HemisphereLight(0x3a4a6a, 0x0a0806, 0.35));
+  var moon = new THREE.DirectionalLight(0x8090c0, 0.35); moon.position.set(-5, 10, -4); scene.add(moon);
+
+  // maniquí (mira a +Z, mano derecha extendida hacia delante)
+  var mm = new THREE.MeshStandardMaterial({ color: 0x6a625a, roughness: 0.75 });
+  var man = new THREE.Group(); scene.add(man);
+  function part(geo, x, y, z, rx, rz) { var m = new THREE.Mesh(geo, mm); m.position.set(x, y, z); m.rotation.set(rx || 0, 0, rz || 0); man.add(m); return m; }
+  part(new THREE.CylinderGeometry(0.22, 0.17, 0.7, 12), 0, 1.15, 0);
+  part(new THREE.SphereGeometry(0.14, 16, 12), 0, 1.68, 0);
+  part(new THREE.CylinderGeometry(0.08, 0.07, 0.85, 8), 0.1, 0.42, 0); part(new THREE.CylinderGeometry(0.08, 0.07, 0.85, 8), -0.1, 0.42, 0);
+  part(new THREE.CylinderGeometry(0.05, 0.045, 0.62, 8), -0.27, 1.38, 0.28, Math.PI / 2 - 0.1);
+  part(new THREE.CylinderGeometry(0.05, 0.045, 0.6, 8), 0.3, 1.15, 0.05, 0, 0.25);
+  var handPos = new THREE.Vector3(-0.27, 1.40, 0.6), fwd = new THREE.Vector3(0, 0, 1), feet = new THREE.Vector3(0, 0, 0);
+
+  // destellos: pool de 4 luces puntuales
+  var flashes = [];
+  for (var f = 0; f < 4; f++) { var L = new THREE.PointLight(0xffffff, 0, 9, 2); scene.add(L); flashes.push({ l: L, t: 0, d: 1, i: 0 }); }
+  function flash(pos, hex, inten, dur) {
+    var b = flashes[0]; flashes.forEach(function (x) { if (x.t / x.d >= b.t / b.d) b = x; });
+    b.l.position.copy(pos); b.l.color.setHex(hex); b.i = inten; b.d = dur; b.t = 0;
+  }
+  function updFlash(dt) { flashes.forEach(function (x) { x.t += dt; var k = Math.max(0, 1 - x.t / x.d); x.l.intensity = x.i * k * k; }); }
+
+  // pipeline: HalfFloat RT -> bloom -> exposición + ACES + gamma
+  var rt = new THREE.WebGLRenderTarget(W, H, { type: THREE.HalfFloatType });
+  var composer = new THREE.EffectComposer(renderer, rt);
+  composer.addPass(new THREE.RenderPass(scene, camera));
+  composer.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(W, H), 0.6, 0.55, 0.92));
+  composer.addPass(new THREE.ShaderPass({
+    uniforms: { tDiffuse: { value: null }, exposure: { value: 1.15 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+    fragmentShader: 'uniform sampler2D tDiffuse; uniform float exposure; varying vec2 vUv;' +
+      'vec3 aces(vec3 x){ return clamp((x*(2.51*x+0.03))/(x*(2.43*x+0.59)+0.14),0.0,1.0); }' +
+      'void main(){ vec3 c = texture2D(tDiffuse, vUv).rgb * exposure; c = aces(c); gl_FragColor = vec4(pow(c, vec3(1.0/2.2)), 1.0); }'
+  }));
+
+  var vfx = window.FenixVFX(THREE, scene, camera, { flash: flash, pixelHeight: H });
+  window.vfx = vfx;
+  var DT = 1 / 60, proj = [];
+  function step(dt) {
+    updFlash(dt);
+    for (var i = proj.length - 1; i >= 0; i--) {
+      var p = proj[i]; p.m.position.addScaledVector(p.v, dt); p.m.userData.tick(dt); vfx.trail(p.kind, p.m.position, dt);
+      if (p.m.position.z > p.endZ) { scene.remove(p.m); proj.splice(i, 1); if (p.onHit) p.onHit(p.m.position.clone().setY(0)); }
+    }
+    vfx.update(dt);
+  }
+  function steps(sec) { var n = Math.round(sec / DT); for (var i = 0; i < n; i++) step(DT); }
+  function shoot(kind, speed, endZ, onHit) {
+    var m = vfx.projectileMesh(kind); m.position.copy(handPos).addScaledVector(fwd, 0.5);
+    m.lookAt(m.position.clone().add(fwd)); scene.add(m);
+    proj.push({ m: m, v: fwd.clone().multiplyScalar(speed), kind: kind, endZ: endZ, onHit: onHit });
+  }
+  function charge(kind, upto, dur) {
+    var h = vfx.castStart(kind), n = Math.round(dur / DT);
+    for (var i = 0; i < n; i++) { vfx.castUpdate(h, DT, Math.min(upto, (i * DT) / dur * upto), handPos, fwd, feet); step(DT); }
+    return h;
+  }
+  function camAt(x, y, z, lx, ly, lz) { camera.position.set(x, y, z); camera.lookAt(lx, ly, lz); }
+
+  var S = {
+    chargeFire: function () { charge('fuego', 0.7, 1.6); },
+    chargeFrost: function () { charge('escarcha', 1, 1.6); },
+    chargeLight: function () { charge('luz', 1, 1.6); },
+    release: function () { var h = charge('fuego', 1, 1.2); vfx.castRelease(h); steps(0.08); },
+    projFire: function () { camAt(4.5, 1.8, 3.5, -0.3, 1.2, 3.2); shoot('fuego', 13, 30); steps(0.42); },
+    projFrost: function () { camAt(4.5, 1.8, 3.5, -0.3, 1.2, 3.2); shoot('escarcha', 13, 30); steps(0.42); },
+    projOrb: function () { camAt(4.5, 1.8, 3.5, -0.3, 1.2, 3.2); shoot('orbe', 9, 30); steps(0.45); },
+    fireExplosion: function () { camAt(3.5, 2.6, 0.5, 0, 0.9, 6); vfx.fireExplosion(new THREE.Vector3(0, 0, 6)); steps(0.2); },
+    fireAfter: function () { camAt(3.5, 2.6, 0.5, 0, 0.9, 6); vfx.fireExplosion(new THREE.Vector3(0, 0, 6)); steps(2.2); },
+    frostImpact: function () { camAt(3.5, 2.6, 0.5, 0, 0.6, 6); vfx.frostImpact(new THREE.Vector3(0, 0, 6)); steps(0.3); },
+    holyBurst: function () { camAt(4.5, 2.4, -0.5, 0, 1.6, 6); vfx.holyBurst(new THREE.Vector3(0, 0, 6), 2.2); steps(0.35); },
+    heal: function () { vfx.healSparkles(new THREE.Vector3(0, 0, 0)); steps(0.8); }
+  };
+  window.__done = false;
+  if (SHOT) {
+    S[SCN](); composer.render(); window.__stats = vfx.stats(); window.__done = true;
+  } else {
+    var ui = document.getElementById('ui'), cur = null;
+    Object.keys(S).forEach(function (k) { var b = document.createElement('button'); b.textContent = k; b.onclick = function () { location.search = '?live=' + k; }; ui.appendChild(b); });
+    var live = Q.get('live'), clock = new THREE.Clock(), h = null, t = 0;
+    (function loop() {
+      requestAnimationFrame(loop); var dt = Math.min(clock.getDelta(), 0.05); t += dt;
+      if (live && live.indexOf('charge') === 0) {
+        var kind = live === 'chargeFire' ? 'fuego' : live === 'chargeFrost' ? 'escarcha' : 'luz';
+        if (!h) h = vfx.castStart(kind); var c = Math.min(1, t / 1.5);
+        vfx.castUpdate(h, dt, c, handPos, fwd, feet);
+        if (t > 2.2) { vfx.castRelease(h); h = null; t = 0; shoot(kind === 'escarcha' ? 'escarcha' : 'fuego', 13, 8, function (p) { kind === 'escarcha' ? vfx.frostImpact(p) : kind === 'luz' ? vfx.holyBurst(p, 2.2) : vfx.fireExplosion(p); }); }
+      }
+      step(dt); composer.render();
+    })();
+  }
+})();
+</script>
+</body></html>

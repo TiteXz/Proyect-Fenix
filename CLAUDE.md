@@ -18,6 +18,7 @@ el detalle vive en los ficheros enlazados. Léelos bajo demanda, no todos de gol
 | `estado/feature_list.json` | Backlog verificable (la definición de "terminado") | planificador |
 | `estado/PROGRESO.md` | Diario de sesiones, solo se añade al final | guardian-contexto |
 | `juego/` | Código del juego (Vite + TypeScript + Three.js) | programadores |
+| `prototipo/` | Maqueta visual de referencia (estilo, combate, `vfx/vfx.js` de hechizos con runas); no es el juego | humano / director-arte |
 | `scripts/init.sh` / `scripts/verificar.sh` | Arranque del entorno / verificación completa | arquitecto |
 
 ## Reglas de oro (no negociables)

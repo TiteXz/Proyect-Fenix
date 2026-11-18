@@ -10,3 +10,5 @@ __pycache__/
 .assets-cache/
 *.blend
 *.blend1
+prototipo/.three/
+prototipo/dist/
