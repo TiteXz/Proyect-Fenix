@@ -1,0 +1,56 @@
+{
+  "proyecto": "ejemplo — lo genera el planificador en estado/feature_list.json",
+  "version": 1,
+  "hitos": [
+    { "id": "M0", "nombre": "Base técnica", "objetivo": "Proyecto que arranca, renderiza y se puede testear" },
+    { "id": "M1", "nombre": "Vertical slice", "objetivo": "El bucle principal se puede jugar con placeholders" }
+  ],
+  "features": [
+    {
+      "id": "F-001", "hito": "M0", "categoria": "infra",
+      "titulo": "Scaffolding Vite + TS + Three.js con tests",
+      "descripcion": "Crear juego/ con Vite, TypeScript estricto, Three.js, Vitest, Playwright, ESLint y scripts npm dev/build/typecheck/lint/test/test:e2e.",
+      "criterios_aceptacion": [
+        "npm run dev sirve una página con un <canvas data-testid=\"game-canvas\">",
+        "scripts/verificar.sh termina con VERIFICACIÓN OK",
+        "No hay errores en la consola del navegador al cargar"
+      ],
+      "pasos_verificacion": [
+        "bash scripts/verificar.sh",
+        "e2e: abrir / y comprobar que el canvas es visible y la consola no tiene errores"
+      ],
+      "agente": "arquitecto", "depende_de": [], "prioridad": 1,
+      "passes": false, "intentos": 0, "notas": ""
+    },
+    {
+      "id": "F-002", "hito": "M0", "categoria": "core",
+      "titulo": "Bucle de paso fijo y modo test con window.__GAME__",
+      "descripcion": "GameLoop con dt fijo 1/60 e interpolación; con ?test=1 el bucle no avanza solo y window.__GAME__ expone step(n) y state().",
+      "criterios_aceptacion": [
+        "state().tick aumenta exactamente n tras step(n) en modo test",
+        "Con paso fijo, 120 ticks producen el mismo estado a 30 y a 144 FPS simulados (test unitario)"
+      ],
+      "pasos_verificacion": [
+        "e2e: abrir /?test=1, leer state().tick, ejecutar step(10), comprobar tick + 10",
+        "unit: test de determinismo del bucle"
+      ],
+      "agente": "programador-motor", "depende_de": ["F-001"], "prioridad": 2,
+      "passes": false, "intentos": 0, "notas": ""
+    },
+    {
+      "id": "F-010", "hito": "M1", "categoria": "gameplay",
+      "titulo": "El jugador se mueve con WASD con aceleración y fricción",
+      "descripcion": "Componente Velocity + sistema de movimiento con valores de juego/src/config/player.ts según GDD §3.",
+      "criterios_aceptacion": [
+        "Pulsando D durante 60 ticks, player.x aumenta y la velocidad no supera maxSpeed",
+        "Al soltar, la velocidad llega a 0 en ≤ 0,3 s (18 ticks)"
+      ],
+      "pasos_verificacion": [
+        "e2e: /?test=1, keydown D, step(60), comprobar state().player.x > 0 y |vx| <= maxSpeed",
+        "e2e: keyup D, step(18), comprobar vx == 0"
+      ],
+      "agente": "programador-gameplay", "depende_de": ["F-002"], "prioridad": 10,
+      "passes": false, "intentos": 0, "notas": ""
+    }
+  ]
+}

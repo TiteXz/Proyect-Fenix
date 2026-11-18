@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.dev-server.log
+.dev-server.pid
+juego/test-results/
+juego/playwright-report/
+__pycache__/
+.venv/
+.env
