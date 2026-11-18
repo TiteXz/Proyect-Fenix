@@ -395,6 +395,27 @@ with bpy.context.temp_override(object=cape):
 for p in cape_me.polygons:
     p.use_smooth = True
 
+# huesos propios de la capa: cadena capa_1..capa_4 por el centro, siguiendo su inclinación hacia atrás
+def cape_pt(t):
+    return Vector((0.0, s3t.y + 0.16 + 0.12 * t + 0.03 * (1 - t), cape_top - H * t))
+
+
+bpy.context.view_layer.objects.active = rig
+with bpy.context.temp_override(active_object=rig, object=rig, selected_objects=[rig], selected_editable_objects=[rig]):
+    bpy.ops.object.mode_set(mode="EDIT")
+    eb = rig.data.edit_bones
+    inv = rig.matrix_world.inverted()
+    prev = eb["spine_03"]
+    for k in range(4):
+        e = eb.new("capa_%d" % (k + 1))
+        e.head = inv @ cape_pt(k / 4)
+        e.tail = inv @ cape_pt((k + 1) / 4)
+        e.parent = prev
+        e.use_connect = False
+        prev = e
+    bpy.ops.object.mode_set(mode="OBJECT")
+BONES = {b.name for b in rig.data.bones}
+
 # ---------------------------------------------------------------- unir al esqueleto
 def bone_parent(obj, bone):
     mw = obj.matrix_world.copy()
@@ -409,7 +430,16 @@ for p in pieces:
     bind(p)
 for p in helm_parts:
     bone_parent(p, "head")
-bone_parent(cape, "spine_03")
+# capa: Armature + pesos por altura (fila superior 100 % capa_1, mezcla lineal entre huesos consecutivos)
+for k in range(4):
+    cape.vertex_groups.new(name="capa_%d" % (k + 1))
+for v in cape_me.vertices:
+    u = max(0.0, min(1.0, (cape_top - v.co.z) / H)) * 3.0     # 0..3 entre capa_1 y capa_4
+    i = min(2, int(u)); f = u - i
+    cape.vertex_groups["capa_%d" % (i + 1)].add([v.index], 1.0 - f, "REPLACE")
+    if f > 1e-6:
+        cape.vertex_groups["capa_%d" % (i + 2)].add([v.index], f, "REPLACE")
+bind(cape)
 
 # bajo la armadura no hace falta la cabeza del cuerpo (va dentro del yelmo): se borra para evitar que asome
 bm = bmesh.new(); bm.from_mesh(body.data)
@@ -438,6 +468,8 @@ if ANIMS:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from retarget import retarget  # noqa: E402
     retarget(ANIMS, rig)
+    from poses import author_all  # noqa: E402
+    author_all(rig)
 
 # ---------------------------------------------------------------- exportar GLB
 os.makedirs(os.path.dirname(OUT_GLB), exist_ok=True)
@@ -482,17 +514,34 @@ if PREVIEW:
     cam.rotation_euler = (Vector((0, 0, 1.0)) - cam.location).to_track_quat("-Z", "Y").to_euler()
     sc.camera = cam
     sc.render.filepath = PREVIEW
-    bpy.ops.render.render(write_still=True)
+    if not os.environ.get("SOLO_POSES"):
+        bpy.ops.render.render(write_still=True)
     print("PREVIEW:", PREVIEW)
+    # depuración: SOLO_POSES="clip:fotograma,clip:fotograma" renderiza de frente y de lado
+    if os.environ.get("SOLO_POSES") and ANIMS:
+        sc.cycles.samples = 8
+        sc.render.resolution_x, sc.render.resolution_y = 450, 600
+        for item in os.environ["SOLO_POSES"].split(","):
+            nm, fr = item.split(":")
+            rig.animation_data.action = bpy.data.actions[nm]
+            sc.frame_set(int(fr))
+            for vname, loc in (("f", (0.0, -3.6, 1.3)), ("l", (-3.6, 0.0, 1.3))):
+                cam.location = loc
+                cam.rotation_euler = (Vector((0, 0, 1.0)) - cam.location).to_track_quat("-Z", "Y").to_euler()
+                sc.render.filepath = PREVIEW.replace(".png", "_dbg_%s_%s_%s.png" % (nm, fr, vname))
+                bpy.ops.render.render(write_still=True)
+        ANIMS = None
     if ANIMS:   # una imagen por pose para comprobar el reasignado
         sc.cycles.samples = 16
         sc.render.resolution_x, sc.render.resolution_y = 450, 600
-        for act_name, frac in (("guardia", 0.3), ("andar", 0.25), ("tajo", 0.45), ("hechizo", 0.6), ("rodar", 0.4)):
+        for act_name, frac in (("guardia", 0.3), ("andar", 0.25), ("tajo", 0.45), ("hechizo", 0.6), ("rodar", 0.4),
+                               ("conjurar", 0.5), ("invocar", 0.5), ("invocar", 0.55), ("martillazo", 0.3),
+                               ("martillazo", 0.47), ("disparo_arco", 0.47)):
             act = bpy.data.actions.get(act_name)
             if not act:
                 continue
             rig.animation_data.action = act
             sc.frame_set(int(act.frame_range[0] + (act.frame_range[1] - act.frame_range[0]) * frac))
-            sc.render.filepath = PREVIEW.replace(".png", "_%s.png" % act_name)
+            sc.render.filepath = PREVIEW.replace(".png", "_%s_%d.png" % (act_name, int(frac * 100)))
             bpy.ops.render.render(write_still=True)
         rig.animation_data.action = None
