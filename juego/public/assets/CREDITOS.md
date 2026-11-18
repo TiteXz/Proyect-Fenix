@@ -8,8 +8,11 @@ Todo lo que se usa en el juego es propio, CC0 o compatible. Cada entrada indica 
 | Textura de armadura | `personajes/caballero.glb` (embebida) | Poly Haven — `metal_plate_02` — https://polyhaven.com/a/metal_plate_02 | Poly Haven | CC0 1.0 | Color desaturado a acero gris, 1K, WebP |
 | Armadura, yelmo, faldón y capa | `personajes/caballero.glb` | Propios, generados por `juego/tools/blender/caballero.py` | Proyecto Fénix | Propia | — |
 | Animaciones (reposo, guardia, andar, correr, tajo, hechizo, rodar, golpeado, morir) | `personajes/caballero.glb` | Universal Animation Library [Standard] — https://quaternius.itch.io/universal-animation-library | Quaternius | CC0 1.0 | Reasignadas al esqueleto MPFB con `juego/tools/blender/retarget.py`; renombradas |
+| Katana (hoja con sori, hamon, hi, kissaki; tsuba, habaki, seppa, fuchi, tsuka con ito, menuki, kashira) | `armas/katana.glb` | Propia, generada por `juego/tools/blender/katana.py` (Blender 4.2, sin interfaz) | Proyecto Fénix | Propia | Geometria y texturas de hoja, ito y tsuka procedurales (numpy). Hierro y laton derivan de Poly Haven `metal_plate_02` (https://polyhaven.com/a/metal_plate_02, CC0 1.0; Diffuse/normal/ARM a 512 px, teñidos), WebP. ~42 k triangulos |
 
 Para regenerar: `bash scripts/instalar-blender.sh` y después
 `/home/user/tools/blender-4.2.9-linux-x64/blender -b -P juego/tools/blender/caballero.py -- juego/public/assets/personajes/caballero.glb <dir texturas Poly Haven> - <UAL1_Standard.glb>`
 (el tercer argumento es la ruta del render de muestra, o `-` para omitirlo).
 (MPFB y el pack CC0 de MakeHuman deben estar instalados; ver `juego/tools/blender/mpfb_setup.py`).
+
+Katana: `/home/user/tools/blender-4.2.9-linux-x64/blender -b -P juego/tools/blender/katana.py -- juego/public/assets/armas/katana.glb [preview.png] [dir texturas Poly Haven]`.

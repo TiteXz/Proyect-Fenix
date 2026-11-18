@@ -936,10 +936,10 @@ const KATANA_GLB = /*__KATANA__*/'';
 const HORSE_GLB = /*__HORSE__*/'';
 const b64buf = (str) => Uint8Array.from(atob(str), (c) => c.charCodeAt(0)).buffer;
 let RAYOS = null, rayI = 0, rayAttached = false;
-try { if (window.FenixRayos) RAYOS = window.FenixRayos(THREE, scene, { pixelHeight: innerHeight * renderer.getPixelRatio() }); } catch (err) { console.warn('Rayos no disponibles', err); RAYOS = null; }
+try { if (window.FenixRayos) RAYOS = window.FenixRayos(THREE, scene, { pixelHeight: innerHeight * renderer.getPixelRatio(), widthScale: 2.8, reachScale: 1.7 }); } catch (err) { console.warn('Rayos no disponibles', err); RAYOS = null; }
 function attachRayos(obj, length, axis, offsetStart) {
   if (!RAYOS || rayAttached) return;
-  RAYOS.attach(obj, { length, axis, offsetStart, intensity: 0 }); rayAttached = true;
+  RAYOS.attach(obj, { length, axis, offsetStart, intensity: 1 }); rayAttached = true;   // la intensidad global la regula updateRayos
 }
 function loadKatana() {
   if (!KATANA_GLB || !THREE.GLTFLoader) { attachRayos(K.weapons.espada, 0.86, AY, 0.06); return; }
@@ -967,7 +967,7 @@ function loadKatana() {
 function updateRayos(dt) {
   if (!RAYOS) return;
   let want = 0;
-  if (P.weapon === 'espada' && !P.down) want = P.act === 'espada' ? (P.heavy || P.skill ? 1.5 : 1.1) : P.charging ? 1.3 : 0.55;
+  if (P.weapon === 'espada' && !P.down) want = P.act === 'espada' ? (P.heavy || P.skill ? 1.5 : 1.2) : P.charging ? 1.35 : 0.8;
   rayI += (want - rayI) * Math.min(1, dt * 6);
   RAYOS.setIntensity(rayI);
   RAYOS.update(dt, T);

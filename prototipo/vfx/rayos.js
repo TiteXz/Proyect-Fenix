@@ -5,6 +5,7 @@
  *   api.burst(n=1)       relampago grande y breve
  *   api.update(dt, time) avanza la simulacion (dt se limita a 1/20 s)
  *   api.resize(pixelHeight), api.dispose(), api.stats()
+ *   opts.widthScale / opts.reachScale: grosor y alcance de arcos, zarcillos y chispas (por defecto 1)
  * Coste fijo: 4 draw calls (arco nucleo HDR, arco halo, zarcillos negros, chispas).
  *   24 arcos x 33 puntos (rebuild a 25 Hz), 4 hojas x 8 zarcillos x 20 puntos, 200 chispas.
  * Los colores son lineales HDR (>1 brilla con bloom). Sin asignaciones por frame: pools y buffers fijos.
@@ -16,6 +17,8 @@
   window.FenixRayos = function (THREE, scene, opts) {
     opts = opts || {};
     var rand = opts.random || Math.random;
+    // escalas para ajustar el efecto a la distancia de cámara del juego (1 = banco de pruebas)
+    var WSCALE = opts.widthScale || 1, RSCALE = opts.reachScale || 1;
     var TAU = Math.PI * 2;
     var pixelH = opts.pixelHeight || 1080;
     function rr(a, b) { return a + (b - a) * rand(); }
@@ -231,8 +234,8 @@
 
     function respawnTend(T) {
       T.age = 0; T.dur = rr(0.8, 1.8); T.t0 = rand(); T.th = rr(0, TAU);
-      T.reach = rr(0.25, 0.6); T.amp = rr(0.05, 0.12); T.freq = rr(0.8, 1.6);
-      T.ph = rr(0, TAU); T.sp = rr(3, 7); T.w = rr(0.009, 0.015);
+      T.reach = rr(0.25, 0.6) * RSCALE; T.amp = rr(0.05, 0.12); T.freq = rr(0.8, 1.6);
+      T.ph = rr(0, TAU); T.sp = rr(3, 7); T.w = rr(0.009, 0.015) * WSCALE;
     }
 
     // ------------------------------------------------------------ arcos
@@ -276,13 +279,13 @@
       var L = att.len, ax = att.ax;
       A.live = true; A.att = att.idx; A.big = big; A.age = 0;
       A.life = big ? rr(0.2, 0.38) : rr(0.06, 0.14);
-      A.w = big ? rr(0.02, 0.03) : rr(0.009, 0.014) * L;
+      A.w = (big ? rr(0.02, 0.03) : rr(0.009, 0.014) * L) * WSCALE;
       A.t0 = rand();
       var bl = att.off + A.t0 * L;
       A.sL.set(ax.x * bl, ax.y * bl, ax.z * bl);
       var t1 = clamp(A.t0 + rr(-0.3, 0.3), 0, 1), bl1 = att.off + t1 * L;
       var zz = rr(-1, 1), th = TAU * rand(), r = Math.sqrt(1 - zz * zz);
-      var reach = (big ? rr(0.5, 1.0) : rr(0.07, 0.3)) * L;
+      var reach = (big ? rr(0.5, 1.0) : rr(0.07, 0.3)) * L * RSCALE;
       A.eL.set(ax.x * bl1 + r * Math.cos(th) * reach, ax.y * bl1 + zz * reach, ax.z * bl1 + r * Math.sin(th) * reach);
       buildArc(slot);
       if (rand() < 0.5) emitSpark(att, A.t0, 0.6);
@@ -302,7 +305,7 @@
       SP.vel[j + 1] = zz * sp + 0.6 * L * power;
       SP.vel[j + 2] = r * Math.sin(th) * sp;
       SP.life[k] = rr(0.25, 0.7); SP.max[k] = SP.life[k];
-      SP.size[k] = L * rr(0.006, 0.013);
+      SP.size[k] = L * rr(0.006, 0.013) * WSCALE;
       SP.hot[k] = rand() < 0.5 ? 1 : 0;
     }
 

@@ -61,9 +61,9 @@ def rgba(rgb):
 def make_image(name, arr, srgb):
     h, w = arr.shape[:2]
     img = bpy.data.images.new(name, w, h, alpha=False)
-    img.pixels.foreach_set(rgba(arr[..., :3]).ravel())
-    img.colorspace_settings.name = "sRGB" if srgb else "Non-Color"
+    img.colorspace_settings.name = "sRGB" if srgb else "Non-Color"  # antes de escribir pixeles
     img.file_format = "PNG"
+    img.pixels.foreach_set(rgba(arr[..., :3]).ravel())
     img.pack()
     return img
 
@@ -243,7 +243,7 @@ def tex_hoja():
 
     def hamon_line(seed):
         ph = np.random.default_rng(seed).uniform(0, 1, 6)
-        hl = 0.17 + 0.030 * np.sin(TAU * (3.1 * V + ph[0])) + 0.020 * np.sin(TAU * (7.7 * V + ph[1])) \
+        hl = 0.30 + 0.030 * np.sin(TAU * (3.1 * V + ph[0])) + 0.020 * np.sin(TAU * (7.7 * V + ph[1])) \
             + 0.010 * np.sin(TAU * (19 * V + ph[2]))
         gun = np.abs(np.sin(TAU * (10.5 * V + ph[3]))) ** 1.3
         hl = hl + 0.045 * gun * (0.6 + 0.4 * np.sin(TAU * (2.3 * V + ph[4])))
@@ -255,13 +255,13 @@ def tex_hoja():
     warp = 0.006 * noise2(H, W, 6, 1.5, 3)
     d = uf + warp - hl
     ric = 1 - sstep(0.036, 0.070, V)  # ricasso: sin temple, sin pulir
-    M = sstep(0.011, -0.011, d) * (1 - ric)
+    M = sstep(0.016, -0.016, d) * (1 - ric)
     nie = np.exp(-(d / 0.022) ** 2) * (0.5 + 0.5 * np.clip(noise2(H, W, 0.7, 0.7, 5), -2, 2) / 2) * (1 - ric)
     grain = noise2(H, W, 38, 1.1, 7)       # hada: vetas largas
     grain2 = noise2(H, W, 5, 0.9, 8)
     mott = noise2(H, W, 60, 8, 9)
-    hard = np.array([0.80, 0.82, 0.85])
-    soft = np.array([0.47, 0.49, 0.54])
+    hard = np.array([0.86, 0.88, 0.91])
+    soft = np.array([0.20, 0.21, 0.25])
     rica = np.array([0.30, 0.31, 0.33])
     col = soft[None, None] * (1 - M[..., None]) + hard[None, None] * M[..., None]
     col = col * (1 + 0.035 * mott[..., None] + 0.03 * grain[..., None])
@@ -270,7 +270,7 @@ def tex_hoja():
     col = col * (1 - ric[..., None]) + rica[None, None] * (1 + 0.15 * grain2[..., None]) * ric[..., None]
     # rayas de pulido
     rng = np.random.default_rng(21)
-    height = 0.30 * grain + 0.12 * grain2 + 0.9 * M * 0.0
+    height = 0.025 * grain + 0.012 * grain2
     scr = np.zeros((H, W))
     for _ in range(70):
         x0, y0 = rng.uniform(0, W), rng.uniform(0, H)
@@ -279,10 +279,10 @@ def tex_hoja():
         xs = (x0 + t * math.sin(ang)).astype(int) % W
         ys = (y0 + t * math.cos(ang)).astype(int) % H
         scr[ys, xs] += rng.uniform(0.4, 1.0)
-    height = height - 0.8 * scr + 0.25 * M
+    height = height - 0.35 * scr + 0.06 * M
     col = col + 0.05 * scr[..., None]
-    rough = 0.30 + 0.05 * grain
-    rough = rough - 0.10 * M
+    rough = 0.30 + 0.025 * grain
+    rough = rough - 0.15 * M
     rough = rough - 0.07 * (1 - sstep(0.0, 0.10, uf))  # el filo, mas pulido
     rough = rough + 0.04 * (arm[..., 1] - arm[..., 1].mean()) / (arm[..., 1].std() + 1e-6)
     rough = rough * (1 - ric) + (0.55 + 0.1 * grain2) * ric
@@ -304,7 +304,7 @@ def tex_ito():
     fuzz = noise2(S, S, 0.8, 0.8, 31)
     var = noise2(S, S, 30, 30, 32)
     h = rib * twill + 0.18 * fuzz
-    base = np.array([0.050, 0.047, 0.066])                         # indigo casi negro, desgastado
+    base = np.array([0.030, 0.030, 0.048])                         # indigo casi negro, desgastado
     col = base[None, None] * (0.55 + 0.9 * h[..., None]) * (1 + 0.25 * var[..., None])
     col = col + np.array([0.012, 0.010, 0.008]) * (fuzz[..., None] > 1.5)
     rough = 0.82 + 0.05 * fuzz
@@ -322,9 +322,9 @@ def tex_same():
     bead = (0.5 + 0.5 * np.cos(TAU * (n * u + 0.5 * (row % 2)))) * (0.5 + 0.5 * np.cos(TAU * n * v))
     bead = bead ** 0.6
     var = noise2(S, S, 20, 20, 41)
-    col = np.array([0.30, 0.27, 0.21])[None, None] * (0.7 + 0.5 * bead[..., None]) * (1 + 0.15 * var[..., None])
+    col = np.array([0.15, 0.14, 0.11])[None, None] * (0.7 + 0.5 * bead[..., None]) * (1 + 0.15 * var[..., None])
     orm = np.stack([0.5 + 0.5 * bead, 0.55 - 0.2 * bead, np.zeros((S, S))], -1)
-    return (make_image("same_color", col, True), make_image("same_normal", normal_from_height(bead, 4.0), False),
+    return (make_image("same_color", col, True), make_image("same_normal", normal_from_height(bead, 1.2), False),
             make_image("same_orm", orm, False))
 
 
@@ -334,7 +334,7 @@ def tex_metales():
     arm = down2(read_raw(os.path.join(TEXDIR, "armadura_gris_arm.jpg")))
     dn = d / (d.mean() + 1e-6)
     iron = np.clip(dn * np.array([0.20, 0.20, 0.215]), 0, 1)   # hierro ennegrecido (valores sRGB)
-    brass = np.clip(dn * np.array([0.52, 0.38, 0.17]), 0, 1)   # laton viejo
+    brass = np.clip(dn * np.array([0.42, 0.31, 0.15]), 0, 1)   # laton viejo
     arm_i = arm.copy(); arm_i[..., 2] = 1.0
     arm_b = arm.copy(); arm_b[..., 2] = 1.0
     arm_b[..., 1] = np.clip(arm_b[..., 1] * 0.8 + 0.08, 0, 1)
@@ -368,7 +368,7 @@ def hoja():
         t = TB - (TB - TT) * (s / SY) ** 1.3 if not in_k else TT * (w / WT) ** 0.6
         t = max(t, 0.0005)
         g = lambda x: SORI * (x / L) ** 1.7
-        cx = WB / 2 - g(s)
+        cx = -g(s)
         dx = -SORI * 1.7 * (s / L) ** 0.7 / L
         nrm = math.hypot(1, dx)
         R = np.array([1 / nrm, 0, -dx / nrm])       # direccion hacia el filo (en el plano XY: x,y)
@@ -518,7 +518,7 @@ def habaki():
     spec = [(0.0000, 0.0166, 0.0040), (0.0003, 0.0174, 0.0046), (0.0020, 0.0177, 0.0049), (0.0120, 0.0175, 0.0047),
             (0.0200, 0.0172, 0.0045), (0.0235, 0.0168, 0.0042), (0.0245, 0.0162, 0.0037)]
     spec = [(Y0 + y, a, b) for y, a, b in spec]
-    return lathe_ellipse("habaki", spec, n=56, expo=3.0, sm=55)
+    return lathe_ellipse("habaki", spec, n=56, expo=2.3, sm=55)
 
 
 def seppa(name, yc):
@@ -615,7 +615,7 @@ def main():
     parts = {}
     mats = {}
     ch, cn, co = tex_hoja()
-    mats["hoja"] = make_mat("acero_hoja", ch, cn, co, 1.0)
+    mats["hoja"] = make_mat("acero_hoja", ch, cn, co, 0.6)
     ih, in_, io = tex_ito()
     mats["ito"] = make_mat("ito_tela", ih, in_, io, 1.0)
     sh, sn, so = tex_same()
@@ -665,7 +665,7 @@ def main():
 # ------------------------------------------------------------------ renders de muestra
 def render_previews(root):
     sc = bpy.context.scene
-    sc.render.engine = "CYCLES"; sc.cycles.device = "CPU"; sc.cycles.samples = 48
+    sc.render.engine = "CYCLES"; sc.cycles.device = "CPU"; sc.cycles.samples = int(os.environ.get("KATANA_SAMPLES", "48"))
     sc.cycles.use_denoising = True
     sc.cycles.seed = 1
     sc.render.resolution_x, sc.render.resolution_y = 1600, 900
@@ -690,7 +690,7 @@ def render_previews(root):
         return n
     td = tex("suelo_Diffuse.jpg", "sRGB"); tn = tex("suelo_nor_gl.jpg", "Non-Color"); ta = tex("suelo_arm.jpg", "Non-Color")
     mix = nt.nodes.new("ShaderNodeMix"); mix.data_type = "RGBA"; mix.blend_type = "MULTIPLY"
-    mix.inputs["Factor"].default_value = 1.0; mix.inputs["B"].default_value = (0.35, 0.33, 0.32, 1)
+    mix.inputs["Factor"].default_value = 1.0; mix.inputs["B"].default_value = (0.05, 0.048, 0.048, 1)
     nt.links.new(td.outputs["Color"], mix.inputs["A"]); nt.links.new(mix.outputs["Result"], b.inputs["Base Color"])
     nm = nt.nodes.new("ShaderNodeNormalMap"); nt.links.new(tn.outputs["Color"], nm.inputs["Color"])
     nt.links.new(nm.outputs["Normal"], b.inputs["Normal"])
@@ -699,7 +699,7 @@ def render_previews(root):
     fl.data.materials.append(fm)
     # mundo nocturno
     w = bpy.data.worlds.new("noche"); w.use_nodes = True; sc.world = w
-    bg = w.node_tree.nodes["Background"]; bg.inputs["Color"].default_value = (0.010, 0.016, 0.034, 1); bg.inputs["Strength"].default_value = 1.0
+    bg = w.node_tree.nodes["Background"]; bg.inputs["Color"].default_value = (0.030, 0.045, 0.085, 1); bg.inputs["Strength"].default_value = 1.0
     # luna fria (area grande) y antorcha calida
     def light(kind, loc, energy, color, size=1.0, target=(0.4, 0, 0)):
         bpy.ops.object.light_add(type=kind, location=loc)
@@ -711,9 +711,11 @@ def render_previews(root):
         d = Vector(target) - Vector(loc)
         l.rotation_euler = d.to_track_quat("-Z", "Y").to_euler()
         return l
-    light("AREA", (-0.6, 1.4, 1.6), 260, (0.55, 0.70, 1.0), 1.6)
-    light("AREA", (1.6, 1.2, 0.9), 90, (0.45, 0.60, 1.0), 1.2)
-    light("POINT", (0.55, -0.85, 0.32), 110, (1.0, 0.50, 0.20), 0.05)
+    ml = light("AREA", (0.4, 1.2, 1.1), 32, (0.55, 0.70, 1.0), 1.0)
+    ml.data.shape = "RECTANGLE"; ml.data.size = 1.8; ml.data.size_y = 0.30
+    light("AREA", (-0.6, 1.4, 1.8), 40, (0.55, 0.70, 1.0), 1.6)
+    light("AREA", (1.6, 1.2, 0.9), 40, (0.45, 0.60, 1.0), 1.2)
+    light("POINT", (0.55, -0.85, 0.32), 70, (1.0, 0.50, 0.20), 0.05)
     bpy.ops.object.empty_add(location=(0.4, 0, 0)); tgt = bpy.context.object
 
     def cam(name, loc, lens, target):
@@ -723,8 +725,8 @@ def render_previews(root):
         tc = c.constraints.new("TRACK_TO"); tc.target = tgt; tc.track_axis = "TRACK_NEGATIVE_Z"; tc.up_axis = "UP_Y"
         return c
     base, _ = os.path.splitext(PREVIEW)
-    views = [("completa", (0.36, -1.35, 0.95), 50, (0.36, 0, 0)),
-             ("guarda", (0.02, -0.42, 0.30), 85, (0.14, 0, 0)),
+    views = [("completa", (0.36, -1.15, 1.25), 50, (0.36, 0, 0)),
+             ("guarda", (0.52, -0.20, 0.27), 70, (0.15, 0, 0.01)),
              ("punta", (0.74, -0.28, 0.22), 85, (0.80, 0, 0))]
     only = os.environ.get("KATANA_VISTAS")
     for nm_, loc, lens, tg in views:
