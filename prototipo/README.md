@@ -37,5 +37,17 @@ node prototipo/vfx/shoot.js                            # capturas del módulo de
 En modo de prueba la página expone `window.__GAME__` (estado del jugador, hechizos y armas) para Playwright.
 
 ## Controles
-WASD mover · clic/J atacar · Espacio esquivar · 1-2-3 espada/martillo/arco · Q/E/R fuego/escarcha/luz ·
-arrastrar para girar la cámara. En móvil: joystick y botones. Botón «Calidad» para Baja/Media/Alta.
+| Acción | Mando PS5 (DualSense) / PS4 (DualShock 4) | Teclado y ratón | Táctil |
+|---|---|---|---|
+| Moverse / cámara | Stick izq. / stick der. (R3 centra) | WASD / ratón (clic para capturarlo, Esc lo suelta; C centra) | Joystick / arrastrar |
+| Atacar · mantener = ataque fuerte | R1 (□ también) | Clic izq. o J | Atacar |
+| Bloquear · a tiempo = parada (aturde) | L1 mantener | Clic der. o V mantener | Bloquear |
+| Magia elegida | L2 | F (Q/E/R directos) | Ranuras de hechizo |
+| Elegir magia | Cruceta ◀ ▶ | Rueda | — |
+| Habilidad del arma (Embestida / Terremoto / Andanada) | R2 | G o clic central | Habilidad |
+| Esquivar | ✕ / ○ | Espacio | Esquivar |
+| Cambiar arma | △ / cruceta ▲ | 1 2 3 | Ranuras de arma |
+| Demo / jugar · calidad | OPTIONS · CREATE/panel táctil | Botones del HUD | Botones del HUD |
+
+Los mandos se leen con la Gamepad API (mapeo estándar) y vibran al golpear, recibir daño y en explosiones.
+Si el visor de la página bloquea los mandos (iframe sin permiso `gamepad`), se avisa en pantalla: ábrela en su propia pestaña.

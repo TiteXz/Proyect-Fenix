@@ -100,17 +100,28 @@ body {
 .slot[data-s="escarcha"] { color: var(--frost); }
 .slot[data-s="luz"] { color: var(--holy); }
 .slot[data-w] { color: var(--parch); }
+.slot[data-h] { color: #e8d39a; }
 #weapName { font-family: var(--f-display); font-weight: 600; font-size: 15px; color: var(--parch-dim); letter-spacing: .04em; text-shadow: 0 1px 3px #000; }
 
 #hint { position: absolute; left: max(12px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 14px); max-width: 270px; font-size: 12px; line-height: 1.45; color: var(--parch-dim); padding: 8px 10px; border-radius: 3px; background: var(--panel); border: 1px solid var(--edge); }
 #hint kbd { font-family: inherit; font-weight: 700; color: var(--parch); }
-@media (max-width: 980px) { #hint { display: none; } }
+@media (max-width: 980px) { #hint { display: none; } body[data-device="pad"] #hint:not([hidden]) { display: block; } }
+#hint { max-width: 330px; }
+#hint b { color: var(--parch); font-weight: 700; }
+kbd.ps { display: inline-block; min-width: 1.25em; text-align: center; font-weight: 700; }
+kbd.ps.x { color: #8fb4ff; } kbd.ps.o { color: #ff8a94; } kbd.ps.sq { color: #e99be0; } kbd.ps.tr { color: #6fd8b0; }
+.slot.sel { outline: 1px dashed rgba(228,218,196,.55); outline-offset: -4px; }
+body[data-device="pad"] .slot .k { font-size: 9px; letter-spacing: .02em; }
+#toast { position: absolute; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 74px); transform: translate(-50%, -6px); padding: 7px 14px; border-radius: 3px; background: var(--panel); border: 1px solid var(--edge-strong); font-size: 13px; color: var(--parch); opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; white-space: nowrap; max-width: 92vw; overflow: hidden; text-overflow: ellipsis; }
+#toast.on { opacity: 1; transform: translate(-50%, 0); }
 #joy { position: absolute; left: max(18px, env(safe-area-inset-left, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); width: 112px; height: 112px; border-radius: 50%; pointer-events: auto; touch-action: none; background: rgba(10,11,15,.45); border: 1px solid var(--edge); }
 #knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: rgba(228,218,196,.18); border: 1px solid rgba(228,218,196,.38); }
 #tbtns { position: absolute; right: max(18px, env(safe-area-inset-right, 0px)); bottom: calc(env(safe-area-inset-bottom, 0px) + 22px); display: grid; gap: 10px; justify-items: end; }
 .tbtn { border-radius: 50%; border: 1px solid var(--edge); background: rgba(10,11,15,.6); font-weight: 700; font-size: 12px; touch-action: none; }
 #tAtk { width: 78px; height: 78px; color: var(--parch); font-size: 14px; border-color: rgba(232,196,106,.5); }
 #tDodge { width: 56px; height: 56px; color: var(--parch-dim); }
+#tBlock, #tSkill { width: 56px; height: 56px; color: var(--parch-dim); }
+#tSkill { color: #e8d39a; }
 body.touchctl .slot { width: 42px; height: 42px; }
 body.touchctl .slot svg { width: 20px; height: 20px; }
 body.touchctl .bottom { bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
@@ -147,30 +158,47 @@ body.touchctl .bottom { bottom: calc(env(safe-area-inset-bottom, 0px) + 10px); }
   <div class="bottom">
     <div id="weapName">Espada y escudo</div>
     <div class="row">
-      <button class="slot on" type="button" data-w="espada" aria-label="Espada y escudo (1)"><span class="k">1</span>
+      <button class="slot on" type="button" data-w="espada" aria-label="Espada y escudo (1)"><span class="k" data-kb="1" data-pad="△">1</span>
         <svg viewBox="0 0 24 24"><path d="M20 4 10.5 13.5M7.5 10.5l6 6M9 15l-5 5"/></svg></button>
-      <button class="slot" type="button" data-w="martillo" aria-label="Martillo de guerra (2)"><span class="k">2</span>
+      <button class="slot" type="button" data-w="martillo" aria-label="Martillo de guerra (2)"><span class="k" data-kb="2" data-pad="△">2</span>
         <svg viewBox="0 0 24 24"><path d="m13 3 8 8-3.5 3.5-8-8zM11.5 11.5 4 19l1 1 7.5-7.5"/></svg></button>
-      <button class="slot" type="button" data-w="arco" aria-label="Arco (3)"><span class="k">3</span>
+      <button class="slot" type="button" data-w="arco" aria-label="Arco (3)"><span class="k" data-kb="3" data-pad="△">3</span>
         <svg viewBox="0 0 24 24"><path d="M5 4c8 0 15 7 15 15M5 4l15 15M4 20 15 9M15 9h-3M15 9v3"/></svg></button>
     </div>
     <div class="row">
-      <button class="slot" type="button" data-s="fuego" aria-label="Bola de fuego (Q)"><span class="k">Q</span><span class="c">25</span>
+      <button class="slot" type="button" data-s="fuego" aria-label="Bola de fuego (Q)"><span class="k" data-kb="Q" data-pad="">Q</span><span class="c">25</span>
         <svg viewBox="0 0 24 24"><path d="M12 3c1 4 5 5.5 5 10.5a5 5 0 0 1-10 0c0-3 1.8-4 2-6.5 1.2 1 2 2.2 2 3.5.4-3.4.2-5.4 1-7.5z"/></svg><div class="cd"></div></button>
-      <button class="slot" type="button" data-s="escarcha" aria-label="Lanza de escarcha (E)"><span class="k">E</span><span class="c">14</span>
+      <button class="slot" type="button" data-s="escarcha" aria-label="Lanza de escarcha (E)"><span class="k" data-kb="E" data-pad="">E</span><span class="c">14</span>
         <svg viewBox="0 0 24 24"><path d="M12 2v20M3.4 7l17.2 10M3.4 17 20.6 7M9.5 3.5 12 6l2.5-2.5M9.5 20.5 12 18l2.5 2.5"/></svg><div class="cd"></div></button>
-      <button class="slot" type="button" data-s="luz" aria-label="Destello sagrado (R)"><span class="k">R</span><span class="c">35</span>
+      <button class="slot" type="button" data-s="luz" aria-label="Destello sagrado (R)"><span class="k" data-kb="R" data-pad="">R</span><span class="c">35</span>
         <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><div class="cd"></div></button>
+      <button class="slot" type="button" id="skillSlot" data-h="1" aria-label="Habilidad del arma: Embestida (G)" title="Embestida"><span class="k" data-kb="G" data-pad="R2">G</span>
+        <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><div class="cd"></div></button>
     </div>
   </div>
 
   <div id="hint" hidden>
-    <kbd>WASD</kbd> mover · <kbd>Clic</kbd> atacar · <kbd>Espacio</kbd> esquivar<br>
-    <kbd>1 2 3</kbd> armas · <kbd>Q E R</kbd> hechizos · arrastra para girar la cámara<br>
+    <div id="hintKb">
+      <b>Teclado y ratón</b><br>
+      <kbd>WASD</kbd> mover · <kbd>Ratón</kbd> cámara (clic en la escena para capturarlo, <kbd>Esc</kbd> lo suelta)<br>
+      <kbd>Clic izq.</kbd> atacar · <b>mantener</b> = ataque fuerte · <kbd>Clic der.</kbd>/<kbd>V</kbd> mantener = bloquear<br>
+      <kbd>F</kbd> magia elegida · <kbd>Rueda</kbd> elegir · <kbd>Q E R</kbd> directo · <kbd>G</kbd> habilidad del arma<br>
+      <kbd>Espacio</kbd> esquivar · <kbd>1 2 3</kbd> armas · <kbd>C</kbd> centrar cámara
+    </div>
+    <div id="hintPad" hidden>
+      <b id="padName">Mando</b><br>
+      <kbd>Stick izq.</kbd> mover · <kbd>Stick der.</kbd> cámara · <kbd>R3</kbd> centrar<br>
+      <kbd>R1</kbd> atacar · <b>mantener</b> = ataque fuerte · <kbd>L1</kbd> mantener = bloquear (a tiempo: parada)<br>
+      <kbd>L2</kbd> magia elegida · <kbd>◀ ▶</kbd> elegir magia · <kbd>R2</kbd> habilidad del arma<br>
+      <kbd class="ps x">✕</kbd> / <kbd class="ps o">○</kbd> esquivar · <kbd class="ps tr">△</kbd> / <kbd>▲</kbd> cambiar arma · <kbd>OPTIONS</kbd> demo
+    </div>
     Combo: escarcha ×2 congela, el martillo lo hace añicos y el fuego lo derrite.
   </div>
+  <div id="toast" role="status" aria-live="polite"></div>
   <div id="joy" hidden><div id="knob"></div></div>
   <div id="tbtns" hidden>
+    <button class="tbtn" id="tSkill" type="button">Habilidad</button>
+    <button class="tbtn" id="tBlock" type="button">Bloquear</button>
     <button class="tbtn" id="tDodge" type="button">Esquivar</button>
     <button class="tbtn" id="tAtk" type="button">Atacar</button>
   </div>
@@ -776,7 +804,13 @@ const P = {
   pos: K.g.position, yaw: 0, hp: 100, hpMax: 100, st: 100, stMax: 100, mp: 100, mpMax: 100,
   weapon: 'espada', act: null, actT: 0, actDone: false, combo: 0, cast: null,
   dodgeT: 0, dodgeDir: new V3(), stIdle: 0, cds: { fuego: 0, escarcha: 0, luz: 0 }, walk: 0, speed: 0,
-  coins: 0, down: false, downT: 0, bonus: 1, dodgeN: 0, castN: 0
+  coins: 0, down: false, downT: 0, bonus: 1, dodgeN: 0, castN: 0,
+  block: false, blockT: 0, atkHeld: false, atkHoldT: 0, charging: false, heavy: false, actDur: 0.5, skill: null, skillCd: 0
+};
+const SKILL = {
+  espada: { name: 'Embestida', cost: 30, cd: 6 },
+  martillo: { name: 'Terremoto', cost: 35, cd: 7 },
+  arco: { name: 'Andanada', cost: 25, cd: 5 }
 };
 const DODGE = 0.38;
 function setWeapon(w) {
@@ -864,7 +898,20 @@ const AX = new V3(1, 0, 0), AY = new V3(0, 1, 0), AZ = new V3(0, 0, 1);
       cape = { bones: capeBones, sgn: z1 < z0 ? 1 : -1, ang: 0, vel: 0, side: 0, prevYaw: P.yaw };
     }
     K.g.add(root);
-    GK = { root, mixer, acts, main: { key: '', cur: null }, upper: { key: '', cur: null }, hurtT: 0, hurtN: 0, handL, handR, cape };
+    // calibración del brazo izquierdo para la pose de bloqueo (signos medidos, no supuestos)
+    let blk = null;
+    const ua = bone('upperarm_l'), la = foreL;
+    if (ua) {
+      root.updateMatrixWorld(true);
+      for (const b of [ua, la]) { const pw = new THREE.Quaternion(); b.parent.getWorldQuaternion(pw); b.userData.pw = pw; b.userData.pwInv = pw.clone().invert(); b.userData.q0 = b.quaternion.clone(); }
+      const wp = (o) => { root.updateMatrixWorld(true); return o.getWorldPosition(new V3()); };
+      const reset = () => { ua.quaternion.copy(ua.userData.q0); la.quaternion.copy(la.userData.q0); };
+      const sgn = (b, axis, comp, up) => { reset(); const a = wp(handL)[comp]; rotB(b, [[axis, 0.4]]); const c = wp(handL)[comp]; reset(); return ((c - a) > 0) === up ? 1 : -1; };
+      const dir = wp(la).sub(wp(ua)).normalize(), elb = dir.clone().cross(AZ).normalize();
+      blk = { ua, la, down: Math.acos(clamp(-dir.y, -1, 1)), elb, downS: sgn(ua, AZ, 'y', false), raiseS: sgn(ua, AX, 'z', true), elbS: sgn(la, elb, 'z', true) };
+      reset();
+    }
+    GK = { root, mixer, acts, main: { key: '', cur: null }, upper: { key: '', cur: null }, hurtT: 0, hurtN: 0, handL, handR, cape, blk, bw: 0 };
     WEAP.espada.dur = 0.72; WEAP.espada.hit = 0.45;
     if (acts.martillazo) { WEAP.martillo.dur = 1.15; WEAP.martillo.hit = 0.47; } else { WEAP.martillo.dur = 1.05; WEAP.martillo.hit = 0.5; }
     if (acts.disparo_arco) { WEAP.arco.dur = 0.9; WEAP.arco.hit = 0.53; }
@@ -900,7 +947,7 @@ function knightAnim(dt) {
   let act = null, actKey = '', actTs = 1;
   if (P.act) {
     act = GK.acts[ACT_CLIP[P.act]] ? ACT_CLIP[P.act] : (P.act === 'arco' ? 'hechizo' : 'tajo');
-    actKey = act + P.combo; actTs = clipDur(act) / WEAP[P.act].dur;
+    actKey = act + P.combo; actTs = clipDur(act) / P.actDur;
   } else if (P.cast) {
     act = GK.acts[CAST_CLIP[P.cast]] ? CAST_CLIP[P.cast] : 'hechizo';
     actKey = act + P.castN; actTs = clipDur(act) / SPELL[P.cast].cdur;
@@ -921,6 +968,13 @@ function knightAnim(dt) {
   else { stopOn(U, 0.15); playOn(M, P.weapon === 'arco' ? 'reposo' : 'guardia', 'idle' + P.weapon, 1, false, 0.25); }
   GK.hurtT = Math.max(0, GK.hurtT - dt);
   GK.mixer.update(dt);
+  GK.bw += ((P.block ? 1 : 0) - GK.bw) * Math.min(1, dt * 14);
+  const BK = GK.blk;
+  if (BK && GK.bw > 0.01) {   // levanta el escudo: mezcla la pose de guardia alta sobre la animación
+    const qu = BK.ua.quaternion.clone(), ql = BK.la.quaternion.clone();
+    rotB(BK.ua, [[AZ, BK.downS * BK.down * 0.5], [AX, BK.raiseS * 1.25]]); rotB(BK.la, [[BK.elb, BK.elbS * 1.45]]);
+    BK.ua.quaternion.copy(qu.slerp(BK.ua.quaternion, GK.bw)); BK.la.quaternion.copy(ql.slerp(BK.la.quaternion, GK.bw));
+  }
   // capa: muelle amortiguado que se levanta con la velocidad y se ladea al girar
   const c = GK.cape;
   if (c && dt > 0) {
@@ -1149,7 +1203,7 @@ function explodeFire(pos) {
     smoke(pos, 16, 0x1e1a18, { spd: 2, up: 1.5, life: 1.6, grav: 0.8, spread: 0.3 });
     flash(pos, 0xff7a2e, 6, 0.55); ring(pos, 0xff8a3a, 0.4, 3.2, 0.45);
   }
-  shake(0.22);
+  shake(0.22); rumble(200, 0.35, 0.55);
   for (const e of enemies) {
     if (e.dead || e.spawnT > 0) continue;
     const d = tmp.subVectors(e.m.g.position, pos).setY(0).length();
@@ -1192,7 +1246,7 @@ function updateProjs(dt) {
       }
     } else if (!P.down) {
       const dx = pos.x - P.pos.x, dz = pos.z - P.pos.z;
-      if (dx * dx + dz * dz < 0.25 && pos.y < 2.1) { hit = true; hurtPlayer(p.dmg, p.kind === 'orbe' ? 0xa060ff : 0xd8cfb8); }
+      if (dx * dx + dz * dz < 0.25 && pos.y < 2.1) { hit = true; hurtPlayer(p.dmg, p.kind === 'orbe' ? 0xa060ff : 0xd8cfb8, { pos: p.m.position.clone().sub(p.v) }); }
     }
     if (pos.y < 0.05 || Math.hypot(pos.x, pos.z) > 16) { hit = true; if (p.kind === 'fuego') explodeFire(pos); }
     if (hit || p.life <= 0) freeProj(p, i);
@@ -1221,10 +1275,18 @@ function updateCamera(dt) {
 /* ---------- acciones del jugador ---------- */
 function nearestEnemy(maxD = 99, from = P.pos) { let best = null, bd = maxD; for (const e of enemies) { if (e.dead || e.spawnT > 0) continue; const d = e.m.g.position.distanceTo(from); if (d < bd) { bd = d; best = e; } } return best; }
 function faceTarget() { const t = nearestEnemy(16); if (t) P.yaw = Math.atan2(t.m.g.position.x - P.pos.x, t.m.g.position.z - P.pos.z); return t; }
-function attack() {
+function attack(kind) {
+  kind = kind === 'heavy' || kind === 'skill' ? kind : 'light';
   if (P.down || P.act || P.cast || P.dodgeT > 0) return false;
-  const w = WEAP[P.weapon]; if (P.st < w.cost) return false;
-  P.st -= w.cost; P.stIdle = 0; P.act = P.weapon; P.actT = 0; P.actDone = false; P.combo++; faceTarget(); return true;
+  const w = WEAP[P.weapon], sk = SKILL[P.weapon];
+  if (kind === 'skill' && P.skillCd > 0) return false;
+  const cost = kind === 'heavy' ? w.cost * 1.8 : kind === 'skill' ? sk.cost : w.cost;
+  if (P.st < cost) return false;
+  P.st -= cost; P.stIdle = 0; P.act = P.weapon; P.actT = 0; P.actDone = false; P.combo++; P.block = false;
+  P.heavy = kind === 'heavy'; P.skill = kind === 'skill' ? P.weapon : null;
+  P.actDur = w.dur * (P.heavy ? 1.35 : P.skill === 'martillo' ? 1.15 : P.skill === 'espada' ? 0.9 : 1);
+  if (P.skill) { P.skillCd = sk.cd; spawnNum(tmp.copy(P.pos).setY(2.5), sk.name, '#f0d890'); }
+  faceTarget(); return true;
 }
 function castSpell(s) {
   const sp = SPELL[s];
@@ -1264,21 +1326,39 @@ function meleeHit() {
   if (w.ranged) {
     const t = nearestEnemy(22), from = P.pos.clone().setY(1.4).add(new V3(Math.sin(P.yaw) * 0.5, 0, Math.cos(P.yaw) * 0.5));
     const dir = t ? tmp.copy(t.m.g.position).setY(t.def.h * t.sc * 0.6 + 0.25).sub(from).normalize().clone() : new V3(Math.sin(P.yaw), 0.05, Math.cos(P.yaw)).normalize();
-    spawnProj('flecha', from, dir, 'player', 24, w.dmg); return;
+    if (P.skill === 'arco') { for (const a of [-0.2, 0, 0.2]) spawnProj('flecha', from, dir.clone().applyAxisAngle(AY, a), 'player', 26, w.dmg * 1.1); }
+    else spawnProj('flecha', from, dir, 'player', P.heavy ? 32 : 24, w.dmg * (P.heavy ? 1.9 : 1));
+    rumble(80, 0.3, 0.2); return;
+  }
+  if (P.skill === 'martillo') {   // Terremoto: onda sísmica en círculo
+    for (const e of enemies) {
+      if (e.dead || e.spawnT > 0) continue;
+      const d = tmp.subVectors(e.m.g.position, P.pos).setY(0), dist = d.length();
+      if (dist > 4.6 + e.def.radius) continue;
+      damageEnemy(e, 48 * (e.frozen > 0 ? 2 : 1), '#f0d890', 'Terremoto', true); if (e.frozen > 0) { e.frozen = 0; e.frost = 0; }
+      e.kb.add(d.normalize().multiplyScalar(9 / e.sc)); e.stun = Math.max(e.stun || 0, 0.8);
+    }
+    ring(P.pos, 0xd8c08a, 0.5, 5, 0.7); ring(P.pos, 0x8a7a5a, 0.3, 3.5, 0.5);
+    smoke(tmp.copy(P.pos).setY(0.2), 60, 0x4a443c, { spd: 5, up: 0.5, life: 1.6, grav: 0.2, spread: 0.6 });
+    emit(tmp.copy(P.pos).setY(0.2), 50, 0xffd08a, { spd: 6, up: 1.2, life: 0.5, grav: -9, hdr: 2.2 });
+    flash(P.pos.clone().setY(1), 0xffc070, 4, 0.4);
+    hitStop = 0.12; shake(0.9); rumble(320, 0.8, 1); return;
   }
   const fwd = new V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)); let any = false;
   for (const e of enemies) {
     if (e.dead || e.spawnT > 0) continue;
     const d = tmp.subVectors(e.m.g.position, P.pos).setY(0), dist = d.length();
-    if (dist > w.reach + e.def.radius) continue;
-    d.normalize(); if (d.dot(fwd) < w.arc) continue;
-    let dmg = w.dmg * rr(0.9, 1.1), tag = null, col = '#ece2cc';
+    const reach = P.skill === 'espada' ? 2.7 : w.reach * (P.heavy ? 1.15 : 1), arc = P.skill === 'espada' ? -0.1 : w.arc;
+    if (dist > reach + e.def.radius) continue;
+    d.normalize(); if (d.dot(fwd) < arc) continue;
+    let dmg = (P.skill === 'espada' ? 34 : w.dmg) * (P.heavy ? 1.9 : 1) * rr(0.9, 1.1), tag = null, col = P.heavy || P.skill ? '#f0d890' : '#ece2cc';
     if (P.weapon === 'martillo') {
       if (e.frozen > 0) { dmg *= 2.6; tag = 'Hecho añicos'; col = '#9feeff'; e.frozen = 0; e.frost = 0; emit(tmp2.copy(e.m.g.position).setY(1), 70, 0xbff4ff, { spd: 6, up: 1, life: 0.9, grav: -8 }); }
       else if (e.def.undead) { dmg *= 1.5; tag = e.type === 'jefe' ? null : 'Contundente'; }
     } else if (e.frozen > 0) dmg *= 1.3;
-    damageEnemy(e, dmg, col, tag);
-    e.kb.add(d.multiplyScalar(P.weapon === 'martillo' ? 7 / e.sc : 3 / e.sc));
+    damageEnemy(e, dmg, col, tag || (P.heavy ? 'Golpe fuerte' : P.skill ? SKILL.espada.name : null), P.heavy);
+    e.kb.add(d.multiplyScalar((P.weapon === 'martillo' ? 7 : 3) * (P.heavy ? 1.6 : 1) / e.sc));
+    if (P.heavy) e.stun = Math.max(e.stun || 0, 0.5);
     emit(tmp2.copy(e.m.g.position).setY(1.1), 14, 0xfff0c0, { spd: 4, life: 0.3, grav: -8, hdr: 3 });
     any = true;
   }
@@ -1288,12 +1368,31 @@ function meleeHit() {
     emit(at, 18, 0xffd08a, { spd: 4, up: 1, life: 0.35, grav: -9, hdr: 2 });
     shake(0.4);
   }
-  if (any) { hitStop = P.weapon === 'martillo' ? 0.1 : 0.055; shake(P.weapon === 'martillo' ? 0.45 : 0.18); }
+  if (any) { hitStop = (P.weapon === 'martillo' ? 0.1 : 0.055) * (P.heavy ? 1.6 : 1); shake(P.weapon === 'martillo' ? 0.45 : 0.18); rumble(P.weapon === 'martillo' ? 170 : 90, 0.45, P.weapon === 'martillo' ? 0.95 : 0.4); }
 }
-function hurtPlayer(dmg, color = 0xff4040) {
+function hurtPlayer(dmg, color = 0xff4040, src = null) {
   if (P.down) return;
   if (P.dodgeT > 0) { spawnNum(tmp.copy(P.pos).setY(2.3), 'Esquivado', '#c9c2b0'); return; }
-  P.hp -= dmg; hurtFlash = 1; shake(0.28);
+  if (P.block && src && src.pos) {
+    const to = tmp3.subVectors(src.pos, P.pos).setY(0).normalize();
+    if (to.dot(tmp2.set(Math.sin(P.yaw), 0, Math.cos(P.yaw))) > 0.15) {
+      const at = tmp.copy(P.pos).addScaledVector(to, 0.5).setY(1.3);
+      if (P.blockT < 0.25) {   // parada: bloqueo justo a tiempo
+        spawnNum(tmp.copy(P.pos).setY(2.4), 'Parada', '#f0d890', null, true);
+        emit(at, 40, 0xffe2a0, { spd: 6, life: 0.4, grav: -6, hdr: 3.5 }); flash(at.clone(), 0xffd890, 4, 0.25);
+        hitStop = 0.14; shake(0.3); rumble(150, 0.6, 1);
+        if (src.enemy && !src.enemy.def.ranged) { src.enemy.stun = 1.5; src.enemy.atk = 0; src.enemy.kb.add(to.clone().multiplyScalar(-5 / src.enemy.sc)); }
+        P.st = Math.min(P.stMax, P.st + 12);
+        return;
+      }
+      const absorb = P.weapon === 'espada' ? 0.85 : 0.55;
+      P.st -= dmg * 1.6; P.stIdle = 0;
+      emit(at, 16, 0xffd8a0, { spd: 4, life: 0.3, grav: -8, hdr: 2.5 }); shake(0.12); rumble(90, 0.35, 0.45);
+      if (P.st <= 0) { P.st = 0; P.block = false; spawnNum(tmp.copy(P.pos).setY(2.4), 'Guardia rota', '#e0606a', null, true); dmg = Math.round(dmg * 0.6); }
+      else { spawnNum(tmp.copy(P.pos).setY(2.4), 'Bloqueado', '#c9c2b0'); dmg = Math.round(dmg * (1 - absorb)); if (dmg <= 0) return; }
+    }
+  }
+  P.hp -= dmg; hurtFlash = 1; shake(0.28); rumble(180, 0.35, 0.7);
   if (GK && !P.act && !P.cast) { GK.hurtT = clipDur('golpeado') * 0.9; GK.hurtN++; }
   spawnNum(tmp.copy(P.pos).setY(2.3), '-' + dmg, '#e0606a');
   emit(tmp.copy(P.pos).setY(1.2), 12, color, { spd: 3, life: 0.4, hdr: 1.4 });
@@ -1371,6 +1470,7 @@ function updateEnemies(dt) {
       continue;
     }
     if (e.frozen > 0) e.frozen -= dt;
+    if (e.stun > 0) { e.stun -= dt; if (Math.random() < dt * 6) emit(tmp.copy(e.m.g.position).setY(e.def.h * e.sc + 0.15), 1, 0xffe08a, { spd: 0.6, up: 0.3, life: 0.5, grav: 0, hdr: 2.5 }); }
     if (e.slow > 0) e.slow -= dt;
     e.m.ice.visible = e.frozen > 0;
     if (e.burn > 0) {
@@ -1382,7 +1482,7 @@ function updateEnemies(dt) {
     g.position.addScaledVector(e.kb, dt); e.kb.multiplyScalar(Math.exp(-dt * 7));
     const toP = tmp.subVectors(P.pos, g.position).setY(0), dist = toP.length(), dirP = toP.clone().normalize();
     const move = new V3(), spd = d.speed * (e.slow > 0 ? 0.45 : 1) * (e.phase === 2 ? 1.4 : 1);
-    if (e.frozen <= 0) {
+    if (e.frozen <= 0 && !(e.stun > 0)) {
       e.atkCd -= dt;
       if (e.atk > 0) {
         e.atk += dt; const wind = e.type === 'jefe' ? 0.65 : 0.45;
@@ -1390,8 +1490,8 @@ function updateEnemies(dt) {
           e.atk = 0; e.atkCd = d.cd * (e.phase === 2 ? 0.75 : 1);
           if (e.type === 'jefe' && (++e.slamN % 3 === 0)) {
             ring(g.position, 0xa060ff, 0.4, 4.2, 0.6); emit(tmp2.copy(g.position).setY(0.2), 60, 0xa060ff, { spd: 5, up: 0.6, life: 0.8, grav: -2 }); smoke(tmp2, 20, 0x2a2633, { spd: 3, up: 0.4, life: 1.3, grav: 0.2 }); shake(0.5);
-            if (dist < 4.2) hurtPlayer(d.dmg + 6, 0xa060ff);
-          } else if (dist < d.reach + 0.6) hurtPlayer(d.dmg);
+            if (dist < 4.2) hurtPlayer(d.dmg + 6, 0xa060ff, { pos: g.position, enemy: e });
+          } else if (dist < d.reach + 0.6) hurtPlayer(d.dmg, undefined, { pos: g.position, enemy: e });
         }
       } else if (!d.ranged) {
         e.apDodged = false;
@@ -1441,14 +1541,25 @@ let hitStop = 0, hurtFlash = 0;
 function updatePlayer(dt, intent) {
   if (P.down) { P.downT += dt; if (GK) knightAnim(dt); else K.g.rotation.x = -Math.min(1, P.downT / 0.6) * Math.PI / 2 * 0.95; if (P.downT > 3) resetRun(); return; }
   for (const s in P.cds) P.cds[s] = Math.max(0, P.cds[s] - dt);
+  P.skillCd = Math.max(0, P.skillCd - dt);
+  if (P.atkHeld) { P.atkHoldT = (performance.now() - P.atkT0) / 1000; P.charging = P.atkHoldT >= 0.3 && !P.act; if (P.atkHoldT >= 1.3) atkRelease(); } else P.charging = false;
   P.mp = Math.min(P.mpMax, P.mp + dt * 6); P.stIdle += dt; if (P.stIdle > 0.6) P.st = Math.min(P.stMax, P.st + dt * 28);
   if (intent.weapon && intent.weapon !== P.weapon) setWeapon(intent.weapon);
   if (intent.spell) castSpell(intent.spell);
-  if (intent.attack) attack();
+  if (intent.skill) attack('skill');
+  if (intent.attack) attack(intent.attack);
+  const canBlock = !P.act && !P.cast && P.dodgeT <= 0 && P.st > 2;
+  if (intent.block && canBlock) { if (!P.block) { P.block = true; P.blockT = 0; } else P.blockT += dt; } else P.block = false;
   if (intent.dodge) dodge(intent.move);
   const mv = intent.move; let speed = 4.3;
   if (P.act) speed *= GK ? (P.act === 'espada' ? 0.6 : P.act === 'martillo' ? 0.35 : 0.4) : (P.act === 'arco' ? 0.15 : 0.3);
   if (P.cast) speed *= GK ? 0.55 : 0.5;
+  if (P.block) { speed *= 0.45; P.stIdle = 0; const t = nearestEnemy(9); if (t) P.yaw = lerpAngle(P.yaw, Math.atan2(t.m.g.position.x - P.pos.x, t.m.g.position.z - P.pos.z), 1 - Math.exp(-dt * 10)); }
+  if (P.charging) { speed *= 0.6; if (Math.random() < dt * 30) emit(GK ? GK.handR.getWorldPosition(tmp3) : handPos(K.handR), 1, 0xffe0a0, { spd: 0.8, life: 0.3, grav: 0, hdr: 2.2 + P.atkHoldT * 2 }); }
+  if (P.act && P.skill === 'espada' && P.actT < P.actDur * 0.45) {   // Embestida: carrera hacia delante
+    P.pos.addScaledVector(tmp3.set(Math.sin(P.yaw), 0, Math.cos(P.yaw)), dt * 11);
+    emit(tmp.copy(P.pos).setY(1), 2, 0xffe0a0, { spd: 0.5, life: 0.35, grav: 0, hdr: 2.4 });
+  }
   if (P.dodgeT > 0) {
     const dd = GK ? 0.6 : DODGE;
     P.dodgeT -= dt; P.pos.addScaledVector(P.dodgeDir, dt * (GK ? 7.5 : 11) * (P.dodgeT / dd + 0.3));
@@ -1467,9 +1578,10 @@ function updatePlayer(dt, intent) {
   let ar = { x: -sw * 0.5 - 0.12, z: 0 }, al = { x: sw * 0.5 - 0.15 };
   if (P.weapon === 'martillo') ar.x -= 0.25;
   if (P.weapon === 'espada') al.x = -0.5;
+  if (P.block) al.x = -1.3;
   K.torso.rotation.y = 0;
   if (P.act) {
-    const w = WEAP[P.act]; P.actT += dt; const k = Math.min(1, P.actT / w.dur);
+    const w = WEAP[P.act]; P.actT += dt; const k = Math.min(1, P.actT / P.actDur);
     if (P.act === 'espada') {
       const side = P.combo % 2 ? 1 : -1;
       if (k < 0.38) { const a = ease(k / 0.38); ar = { x: -2.0 * a, z: side * 0.9 * a }; K.torso.rotation.y = -side * 0.4 * a; }
@@ -1479,7 +1591,7 @@ function updatePlayer(dt, intent) {
       else { const a = easeOut(Math.min(1, (k - 0.5) / 0.12)); ar = { x: -2.9 + 2.5 * a, z: 0 }; al.x = -2.4 + 2.0 * a; }
     } else { const a = ease(Math.min(1, k / 0.4)); ar = { x: -Math.PI / 2 * a, z: 0 }; al.x = -1.35 * a; }
     if (!P.actDone && k >= w.hit) { P.actDone = true; meleeHit(); }
-    if (k >= 1) P.act = null;
+    if (k >= 1) { P.act = null; P.heavy = false; P.skill = null; }
   }
   if (P.cast) {
     const sp = SPELL[P.cast];
@@ -1540,15 +1652,33 @@ function autopilot(dt) {
 }
 
 /* ---------- control manual ---------- */
-let mode = 'demo';
-const keys = new Set(), pending = { attack: false, spell: null, weapon: null, dodge: false }, joy = new V3();
+let mode = 'demo', device = 'kb';
+function refreshHint() {
+  const pad = device === 'pad';
+  $('#modeTag').textContent = mode === 'demo' ? 'Modo demo · juega solo' : pad ? PAD.name : (coarse ? 'Joystick · botones · arrastra la cámara' : 'Teclado y ratón');
+  $('#hint').hidden = !(mode === 'control' && (pad || !coarse));
+  $('#hintKb').hidden = pad; $('#hintPad').hidden = !pad; $('#padName').textContent = PAD.name;
+}
+function setDevice(d) {
+  if (device === d) return;
+  device = d; document.body.dataset.device = d;
+  refreshLabels();
+  if (mode === 'control') setMode('control'); else refreshHint();
+}
+let toastT = 0;
+function toast(msg, sec = 2.6) { const el = $('#toast'); el.textContent = msg; el.classList.add('on'); toastT = sec; }
+const keys = new Set(), pending = { attack: false, spell: null, weapon: null, dodge: false, skill: false }, joy = new V3();
+const held = { mouseBlock: false, padBlock: false, touchBlock: false };
+function atkPress() { takeControl(); if (!P.atkHeld) { P.atkHeld = true; P.atkHoldT = 0; P.atkT0 = performance.now(); } }   // se mide en tiempo real, no de juego
+function atkRelease(cancel) { if (!P.atkHeld) return; P.atkHeld = false; P.charging = false; if (!cancel) pending.attack = P.atkHoldT >= 0.3 ? 'heavy' : 'light'; }
 function setMode(m) {
   mode = m;
   $('#mode').textContent = m === 'demo' ? 'Jugar yo' : 'Ver demo';
-  $('#modeTag').textContent = m === 'demo' ? 'Modo demo · juega solo' : (coarse ? 'Joystick · botones · arrastra la cámara' : 'Teclado y ratón');
-  const touch = m === 'control' && coarse;
-  $('#joy').hidden = !touch; $('#tbtns').hidden = !touch; $('#hint').hidden = !(m === 'control' && !coarse);
+  const touch = m === 'control' && coarse && device !== 'pad';
+  $('#joy').hidden = !touch; $('#tbtns').hidden = !touch;
   document.body.classList.toggle('touchctl', touch);
+  if (m !== 'control' && document.pointerLockElement) document.exitPointerLock();
+  refreshHint();
 }
 function setQual(q) {
   qual = q; const Q = QUAL[q];
@@ -1566,26 +1696,61 @@ $('#mode').addEventListener('click', () => setMode(mode === 'demo' ? 'control' :
 $('#qual').addEventListener('click', () => setQual(qual === 'alta' ? 'baja' : qual === 'baja' ? 'media' : 'alta'));
 document.querySelectorAll('[data-w]').forEach((b) => b.addEventListener('click', () => { takeControl(); pending.weapon = b.dataset.w; }));
 document.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => { takeControl(); pending.spell = b.dataset.s; }));
-$('#tAtk').addEventListener('pointerdown', (e) => { e.preventDefault(); pending.attack = true; });
+$('#tAtk').addEventListener('pointerdown', (e) => { e.preventDefault(); atkPress(); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => $('#tAtk').addEventListener(ev, () => atkRelease()));
+$('#tBlock').addEventListener('pointerdown', (e) => { e.preventDefault(); held.touchBlock = true; });
+['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => $('#tBlock').addEventListener(ev, () => { held.touchBlock = false; }));
+$('#tSkill').addEventListener('pointerdown', (e) => { e.preventDefault(); pending.skill = true; });
+$('#skillSlot').addEventListener('click', () => { takeControl(); pending.skill = true; });
 $('#tDodge').addEventListener('pointerdown', (e) => { e.preventDefault(); pending.dodge = true; });
 addEventListener('keydown', (e) => {
   const c = e.code, map = { Digit1: 'espada', Digit2: 'martillo', Digit3: 'arco' }, sp = { KeyQ: 'fuego', KeyE: 'escarcha', KeyR: 'luz' };
+  setDevice('kb');
+  if (c === 'KeyF') { takeControl(); pending.spell = SPELLS[selSpell]; return; }
+  if (c === 'KeyG') { takeControl(); pending.skill = true; return; }
+  if (c === 'KeyV') { takeControl(); keys.add(c); return; }
+  if ((c === 'KeyJ' || c === 'Enter') && !e.repeat) { atkPress(); return; }
+  if (c === 'KeyC') { takeControl(); camYaw = P.yaw + Math.PI; return; }
   if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(c)) { keys.add(c); takeControl(); e.preventDefault(); }
   else if (map[c]) { takeControl(); pending.weapon = map[c]; }
   else if (sp[c]) { takeControl(); pending.spell = sp[c]; }
   else if (c === 'Space' || c === 'ShiftLeft') { takeControl(); pending.dodge = true; e.preventDefault(); }
   else if (c === 'KeyJ' || c === 'Enter') { takeControl(); pending.attack = true; }
 });
-addEventListener('keyup', (e) => keys.delete(e.code));
-addEventListener('blur', () => keys.clear());
-let drag = null;
-canvas.addEventListener('pointerdown', (e) => { drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0 }; try { canvas.setPointerCapture(e.pointerId); } catch (_) {} });
+addEventListener('keyup', (e) => { keys.delete(e.code); if (e.code === 'KeyJ' || e.code === 'Enter') atkRelease(); });
+addEventListener('blur', () => { keys.clear(); held.mouseBlock = held.padBlock = held.touchBlock = false; atkRelease(true); });
+let drag = null, selSpell = 0;
+const SPELLS = ['fuego', 'escarcha', 'luz'];
+const locked = () => document.pointerLockElement === canvas;
+function refreshLabels() {
+  document.querySelectorAll('.slot .k').forEach((k) => { k.textContent = device === 'pad' ? k.dataset.pad : k.dataset.kb; });
+  if (device === 'pad') document.querySelectorAll('[data-s] .k').forEach((k, i) => { k.textContent = i === selSpell ? 'L2' : ''; });
+}
+function markSel() { document.querySelectorAll('[data-s]').forEach((b, i) => b.classList.toggle('sel', i === selSpell)); refreshLabels(); }
+function lockMouse() { try { const r = canvas.requestPointerLock(); if (r && r.catch) r.catch(() => {}); } catch (_) {} }
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); setDevice('kb'); selSpell = (selSpell + (e.deltaY > 0 ? 1 : 2)) % 3; markSel(); }, { passive: false });
+document.addEventListener('mousemove', (e) => { if (!locked()) return; camYaw -= e.movementX * 0.0024; camPitch = clamp(camPitch + e.movementY * 0.0018, 0.08, 0.9); lastDrag = T; });
+document.addEventListener('pointerlockchange', () => { if (locked()) toast('Ratón capturado · Esc para soltarlo', 2); });
+canvas.addEventListener('pointerdown', (e) => {
+  if (e.pointerType === 'mouse') setDevice('kb');
+  if (e.pointerType === 'mouse' && e.button === 0) atkPress();
+  if (e.pointerType === 'mouse' && e.button === 2) { takeControl(); held.mouseBlock = true; }
+  if (e.button === 1) { takeControl(); pending.skill = true; }
+  if (locked()) return;
+  drag = { id: e.pointerId, x: e.clientX, y: e.clientY, moved: 0, button: e.button }; try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+});
 canvas.addEventListener('pointermove', (e) => {
   if (!drag || drag.id !== e.pointerId) return;
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y; drag.x = e.clientX; drag.y = e.clientY; drag.moved += Math.abs(dx) + Math.abs(dy);
   camYaw -= dx * 0.006; camPitch = clamp(camPitch + dy * 0.004, 0.08, 0.9); lastDrag = T;
 });
-canvas.addEventListener('pointerup', (e) => { if (drag && drag.id === e.pointerId && drag.moved < 6 && e.pointerType === 'mouse' && e.button === 0) { takeControl(); pending.attack = true; } drag = null; });
+canvas.addEventListener('pointerup', (e) => {
+  if (e.pointerType === 'mouse' && e.button === 2) held.mouseBlock = false;
+  if (e.pointerType === 'mouse' && e.button === 0) atkRelease(!!(drag && drag.moved >= 6));
+  if (drag && drag.id === e.pointerId && drag.moved < 6 && e.pointerType === 'mouse' && drag.button === 0 && !coarse && !locked()) lockMouse();
+  drag = null;
+});
 canvas.addEventListener('pointercancel', () => { drag = null; });
 (function joystick() {
   const el = $('#joy'), knob = $('#knob'); let id = null;
@@ -1595,13 +1760,73 @@ canvas.addEventListener('pointercancel', () => { drag = null; });
   const end = (e) => { if (e.pointerId !== id) return; id = null; joy.set(0, 0, 0); knob.style.transform = ''; };
   el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
 })();
+/* ---------- mando: DualSense (PS5), DualShock 4 (PS4) y cualquier mando con mapeo estándar ---------- */
+const PAD = { idx: -1, prev: [], name: 'Mando', blockedNote: false };
+const padMove = new THREE.Vector2();
+function padName(id) {
+  const s = (id || '').toLowerCase();
+  if (/dualsense|0ce6|0df2/.test(s)) return 'DualSense (PS5)';
+  if (/dualshock|05c4|09cc|0ba0/.test(s)) return 'DualShock 4 (PS4)';
+  if (/054c|wireless controller|playstation/.test(s)) return 'Mando de PlayStation';
+  return 'Mando';
+}
+function readPad() {
+  let pads;
+  try { pads = navigator.getGamepads ? navigator.getGamepads() : []; }
+  catch (err) { if (!PAD.blockedNote) { PAD.blockedNote = true; toast('Este visor bloquea los mandos: abre la maqueta en su propia pestaña', 5); } return null; }
+  for (const g of pads || []) {
+    if (g && g.connected) { if (PAD.idx !== g.index) { PAD.idx = g.index; PAD.name = padName(g.id); PAD.prev = []; } return g; }
+  }
+  return null;
+}
+addEventListener('gamepadconnected', (e) => { PAD.name = padName(e.gamepad && e.gamepad.id); toast(PAD.name + ' conectado · pulsa cualquier botón'); refreshHint(); });
+addEventListener('gamepaddisconnected', (e) => { if (e.gamepad && e.gamepad.index === PAD.idx) PAD.idx = -1; toast('Mando desconectado'); setDevice('kb'); });
+const dz = (v, d) => (Math.abs(v) < d ? 0 : (v - Math.sign(v) * d) / (1 - d));
+function pollPad(dt) {
+  padMove.set(0, 0);
+  const g = readPad(); if (!g) return;
+  const btn = (i) => !!(g.buttons[i] && (g.buttons[i].pressed || g.buttons[i].value > 0.45));
+  const down = (i) => btn(i) && !PAD.prev[i];
+  // stick izquierdo con zona muerta radial; derecho con zona muerta por eje
+  let lx = g.axes[0] || 0, ly = g.axes[1] || 0; const lm = Math.hypot(lx, ly);
+  if (lm < 0.17) { lx = 0; ly = 0; } else { const k = Math.min(1, (lm - 0.17) / 0.83) / lm; lx *= k; ly *= k; }
+  const rx = dz(g.axes[2] || 0, 0.13), ry = dz(g.axes[3] || 0, 0.13);
+  let pressed = false; for (let i = 0; i < Math.min(18, g.buttons.length); i++) if (btn(i)) { pressed = true; break; }
+  if (pressed || lx || ly || rx || ry) setDevice('pad');
+  if (down(9)) setMode(mode === 'demo' ? 'control' : 'demo');                       // OPTIONS
+  else if (mode === 'demo' && (lx || ly || down(0) || down(1) || down(2) || down(5))) takeControl();
+  if (mode !== 'control') held.padBlock = false;
+  if (mode === 'control') {
+    padMove.set(lx, ly);
+    if (rx || ry) { camYaw -= rx * 2.8 * dt; camPitch = clamp(camPitch + ry * 1.5 * dt, 0.08, 0.9); lastDrag = T; }
+    const up = (i) => !btn(i) && PAD.prev[i];
+    if (down(5) || down(2)) atkPress();                                              // R1 (□ también): pulsar = ataque, mantener = fuerte
+    if (up(5) || up(2)) atkRelease();
+    held.padBlock = btn(4);                                                          // L1 mantener = bloquear
+    if (down(6)) pending.spell = SPELLS[selSpell];                                   // L2 = magia elegida
+    if (down(7)) pending.skill = true;                                               // R2 = habilidad del arma
+    if (down(0) || down(1)) pending.dodge = true;                                    // ✕ / ○
+    if (down(14)) { selSpell = (selSpell + 2) % 3; markSel(); }                      // cruceta ◀ ▶ = elegir magia
+    if (down(15)) { selSpell = (selSpell + 1) % 3; markSel(); }
+    if (down(3) || down(12)) { const o = ['espada', 'martillo', 'arco']; pending.weapon = o[(o.indexOf(P.weapon) + 1) % 3]; }   // △ / ▲
+    if (down(11)) camYaw = P.yaw + Math.PI;                                          // R3
+    if (down(8) || down(17)) $('#qual').click();                                     // CREATE/SHARE o panel táctil
+  }
+  PAD.prev = g.buttons.map((b, i) => btn(i));
+}
+function rumble(ms, weak, strong) {
+  if (device !== 'pad') return;
+  const g = readPad(), a = g && g.vibrationActuator;
+  if (a && a.playEffect) { try { const r = a.playEffect('dual-rumble', { duration: ms, weakMagnitude: weak, strongMagnitude: strong }); if (r && r.catch) r.catch(() => {}); } catch (_) {} }
+}
 function manualIntent() {
-  const it = { move: new V3(), attack: pending.attack, spell: pending.spell, weapon: pending.weapon, dodge: pending.dodge };
-  pending.attack = false; pending.spell = null; pending.weapon = null; pending.dodge = false;
+  const it = { move: new V3(), attack: pending.attack, spell: pending.spell, weapon: pending.weapon, dodge: pending.dodge, skill: pending.skill,
+    block: keys.has('KeyV') || held.mouseBlock || held.padBlock || held.touchBlock };
+  pending.attack = false; pending.spell = null; pending.weapon = null; pending.dodge = false; pending.skill = false;
   let f = 0, s = 0;
   if (keys.has('KeyW') || keys.has('ArrowUp')) f += 1; if (keys.has('KeyS') || keys.has('ArrowDown')) f -= 1;
   if (keys.has('KeyD') || keys.has('ArrowRight')) s += 1; if (keys.has('KeyA') || keys.has('ArrowLeft')) s -= 1;
-  f += -joy.z; s += joy.x;
+  f += -joy.z - padMove.y; s += joy.x + padMove.x;
   it.move.addScaledVector(tmp.set(-Math.sin(camYaw), 0, -Math.cos(camYaw)), f).addScaledVector(tmp2.set(Math.cos(camYaw), 0, -Math.sin(camYaw)), s);
   if (it.move.length() > 1) it.move.normalize();
   return it;
@@ -1617,6 +1842,9 @@ function updateHud(dt) {
   hud.mpF.style.width = (P.mp / P.mpMax * 100) + '%'; hud.mpT.textContent = Math.floor(P.mp);
   hurtFlash = Math.max(0, hurtFlash - dt * 2.2);
   grade.uniforms.hurt.value = Math.max(hurtFlash * 0.8, P.hp < 30 ? 0.3 + Math.sin(T * 5) * 0.1 : 0);
+  const sk = SKILL[P.weapon], sb = $('#skillSlot');
+  sb.style.setProperty('--cd', (P.skillCd / sk.cd).toFixed(3)); sb.classList.toggle('dim', P.st < sk.cost);
+  if (sb.title !== sk.name) { sb.title = sk.name; sb.setAttribute('aria-label', 'Habilidad del arma: ' + sk.name + ' (G)'); }
   for (const b of spellBtns) { const s = b.dataset.s; b.style.setProperty('--cd', (P.cds[s] / SPELL[s].cd).toFixed(3)); b.classList.toggle('dim', P.mp < SPELL[s].cost); }
   hudT -= dt; if (hudT > 0) return; hudT = 0.15;
   hud.coins.textContent = P.coins;
@@ -1651,6 +1879,8 @@ function frame(now) {
   requestAnimationFrame(frame);
   const rdt = Math.min(0.05, (now - last) / 1000); last = now; T += rdt;
   let dt = rdt; if (hitStop > 0) { hitStop -= rdt; dt = rdt * 0.06; }
+  pollPad(rdt);
+  if (toastT > 0) { toastT -= rdt; if (toastT <= 0) $('#toast').classList.remove('on'); }
   const intent = mode === 'demo' ? autopilot(dt) : manualIntent();
   updatePlayer(dt, intent); updateEnemies(dt); updateProjs(dt); updateCoins(dt); updateWaves(dt);
   updateFx(dt); updateFlashes(dt); updateWorld(rdt);
@@ -1661,7 +1891,8 @@ function frame(now) {
   grade.uniforms.time.value = T;
   composer.render(rdt);
 }
-window.__GAME__ = { P, SPELL, WEAP, get GK() { return GK; }, get VFX() { return VFX; }, castSpell, attack, setMode };   // estado legible para pruebas
+window.__GAME__ = { P, SPELL, WEAP, get GK() { return GK; }, get VFX() { return VFX; }, castSpell, attack, setMode, get device() { return device; }, PAD, SKILL };   // estado legible para pruebas
+markSel();
 setMode('demo');
 setQual(qual);
 camPos.set(0, 3.5, -7);
