@@ -32,6 +32,12 @@ el detalle vive en los ficheros enlazados. Léelos bajo demanda, no todos de gol
    regístralo como ADR o en `notas` y sigue. No reescribas documentos de otro rol.
 6. **Contexto mínimo:** cada subagente recibe solo lo que necesita (rutas concretas, no "lee todo").
 
+## Estilo visual (afecta a todos los roles)
+**Fantasía oscura realista** con referencias de tono en *The Witcher 3* y *The Blood of Dawnwalker*:
+materiales PBR, iluminación y atmósfera cinematográficas. **Nunca low-poly ni cartoon** en el arte final.
+Son referencias de sensación: no se copia ningún personaje, nombre, lugar, UI ni asset de esos juegos.
+Detalle en `contexto/CONTEXTO_PROYECTO.md` y `docs/GUIA_VISUAL.md`.
+
 ## Convenciones de código (resumen; detalle en docs/ARQUITECTURA.md)
 - TypeScript estricto. Módulos ES. Sin `any` salvo justificado.
 - Bucle con **paso fijo** para la simulación (p. ej. 60 Hz) y render interpolado; la lógica no depende del FPS.

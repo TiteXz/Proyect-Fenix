@@ -25,7 +25,8 @@ cambiar de arma y de hechizo en mitad del combate para aprovechar las debilidade
 - Controles: teclado y ratón; mando (Gamepad API) en el hito de pulido.
   - WASD mover · Ratón cámara · Clic izq. ataque · Clic der. bloquear/apuntar · Espacio esquivar
   - 1-2-3 cambiar arma · Q/E/R lanzar hechizo · Rueda ciclar hechizos · Esc pausa
-- Rendimiento objetivo: 60 FPS en un portátil con gráfica integrada; carga inicial < 15 MB.
+- Rendimiento objetivo: 60 FPS en GPU dedicada de gama media (preset Alto) y ≥ 30 FPS en gráfica
+  integrada (preset Bajo). Carga inicial < 40 MB; el resto se carga en segundo plano.
 
 ## Sistemas principales
 - **Recursos del jugador:** Vida, Aguante (ataques fuertes, esquivar, bloquear) y Maná (hechizos), que se regenera lentamente.
@@ -58,18 +59,32 @@ cambiar de arma y de hechizo en mitad del combate para aprovechar las debilidade
   partida en la nube, editor de personaje, móvil.
 
 ## Estilo visual y sonoro
-- **Low-poly estilizado** con paleta oscura y acentos de color por elemento (fuego naranja, hielo cian,
-  luz dorado). Iluminación nocturna con antorchas. **[SUPUESTO]**
+- **Fantasía oscura realista. NO low-poly, NO cartoon.** Referencias de tono y calidad visual:
+  *The Witcher 3* y *The Blood of Dawnwalker* — mundo medieval sucio y creíble, proporciones humanas
+  realistas, materiales PBR detallados (piedra húmeda, cuero gastado, acero con arañazos, tela sucia),
+  iluminación cinematográfica, niebla y atmósfera densa.
+- Son referencias de **sensación**, no de contenido: no se copian personajes, nombres, lugares, logos,
+  interfaz, música ni assets de esos juegos. Todo lo que se cree es original.
+- Paleta desaturada y fría (grises piedra, verde musgo, marrón cuero) con acentos por elemento:
+  fuego naranja, hielo cian, luz dorada.
+- Iluminación: noche con luna fría + antorchas cálidas, entorno HDRI, sombras suaves, niebla
+  volumétrica aproximada, polvo y ceniza en suspensión.
+- Postproceso: tonemapping AgX/ACES, bloom contenido, SSAO, gradación de color, viñeta ligera;
+  profundidad de campo solo en menús/cinemáticas.
+- Realismo dentro de los límites del navegador: el "look" sale sobre todo de **iluminación, materiales
+  y postproceso**, no del número de polígonos. Presets de calidad Bajo/Medio/Alto/Ultra.
 - Los hechizos deben verse a simple vista: partículas, luz y destellos legibles sin saturar la pantalla.
 - Música orquestal/folk medieval; efectos de golpe con peso.
 
 ## Stack (por defecto; el arquitecto puede cambiarlo con un ADR)
-- Vite + TypeScript estricto + Three.js (WebGLRenderer)
+- Vite + TypeScript estricto + Three.js (WebGLRenderer; el arquitecto puede valorar WebGPURenderer con un ADR)
+- Postproceso: `postprocessing` (pmndrs) o el EffectComposer de Three.js; sombras en cascada (CSM)
 - Física y colisiones: Rapier (`@dimforge/rapier3d-compat`) para el personaje, proyectiles y hitboxes
 - ECS ligero (miniplex o propio); animaciones con `AnimationMixer` (glTF) y máquina de estados de animación
 - UI: DOM/HTML+CSS sobre el canvas
-- Assets: glTF/GLB (Meshopt) y texturas KTX2. Placeholders procedurales hasta tener modelos CC0
-  (p. ej. packs low-poly de Kenney o Quaternius)
+- Assets: glTF/GLB (Meshopt) con LOD y texturas KTX2 en sets PBR (color, normal, rugosidad/metal, AO).
+  Fuentes y licencias: ver `.claude/agents/artista-3d.md`. Los packs low-poly solo valen como
+  placeholder temporal de gameplay, nunca como arte final.
 - Tests: Vitest (fórmulas de daño, elementos, recursos) + Playwright (e2e en navegador)
 
 ## Restricciones

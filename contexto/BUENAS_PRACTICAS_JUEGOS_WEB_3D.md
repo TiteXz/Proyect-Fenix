@@ -30,7 +30,9 @@ debug/       stats, lil-gui, window.__GAME__
 ```
 
 ## Rendimiento (medir antes de optimizar)
-- Presupuesto orientativo: < 100–200 draw calls, < 1 M triángulos visibles, texturas ≤ 2K.
+- Presupuesto orientativo (estilo realista, preset Alto): < 300 draw calls, ~1,5–2 M triángulos visibles,
+  texturas 2K (4K solo en piezas protagonistas). El preset Bajo debe rondar la mitad.
+- Presets de calidad (sombras, SSAO, resolución, LOD, densidad de partículas) en lugar de un único nivel.
 - `InstancedMesh` / `BatchedMesh` para muchos objetos iguales; fusionar geometría estática.
 - Texturas KTX2 (Basis) y geometría Meshopt/Draco; LOD para objetos lejanos.
 - Sombras con moderación: una luz direccional con sombra, `shadow.mapSize` ajustado, sombras horneadas
