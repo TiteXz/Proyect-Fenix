@@ -6,6 +6,15 @@ referencia viva para el `director-arte`, el `artista-3d` y los programadores.
 
 Publicada en: https://claude.ai/artifact/YNiWbvQBq5CYroDscJQ3QA (privada; compártela desde su menú).
 
+## Probarla en tu PC (lo más rápido)
+1. Clona o descarga el repositorio (rama `claude/share-generated-agent-9lfcsr`).
+2. Abre **`prototipo/maqueta.html`** con doble clic en Chrome, Edge o Firefox. Lleva dentro las texturas,
+   el caballero y los efectos; solo necesita internet para cargar three.js y las fuentes desde la CDN.
+3. Conecta el mando de PS5/PS4 por USB o Bluetooth y pulsa cualquier botón (o usa teclado y ratón).
+   Pulsa **Jugar yo** (u OPTIONS en el mando) para tomar el control.
+
+Si cambias `maqueta.src.html`, vuelve a generar `maqueta.html` con el comando de abajo.
+
 ## Qué contiene
 | Ruta | Qué es |
 |---|---|
@@ -22,7 +31,7 @@ El modelo del caballero vive en `juego/public/assets/personajes/caballero.glb` (
 
 ## Generar la maqueta
 ```bash
-python3 prototipo/build.py prototipo/maqueta.src.html prototipo/texturas prototipo/dist/maqueta.html \
+python3 prototipo/build.py prototipo/maqueta.src.html prototipo/texturas prototipo/maqueta.html \
   juego/public/assets/personajes/caballero.glb vfx
 ```
 El 5º argumento `vfx` incrusta `vfx/vfx.js`; sin él se usan los efectos básicos de respaldo.
