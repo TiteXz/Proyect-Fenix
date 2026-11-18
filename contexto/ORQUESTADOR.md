@@ -28,7 +28,8 @@ Espera el resultado de cada subagente antes de dar un paso que dependa de él. L
 trabajos independientes (p. ej. `audio` y `director-arte` sobre features distintas).
 
 Ruta típica de una feature:
-`(disenador-juego / director-arte si falta diseño)` → `programador-motor | programador-gameplay | interfaz-ui | audio`
+`(disenador-juego / director-arte si falta diseño)` → `artista-3d si la feature necesita modelos o texturas`
+→ `programador-motor | programador-gameplay | interfaz-ui | audio`
 → `qa-tester` (escribe/ejecuta tests y pasos de verificación) → `revisor-codigo` (solo lectura)
 → si hay fallos, vuelve al programador con el informe (máx. 2 iteraciones) → `guardian-contexto`.
 

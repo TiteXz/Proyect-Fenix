@@ -7,3 +7,4 @@ juego/playwright-report/
 __pycache__/
 .venv/
 .env
+.assets-cache/

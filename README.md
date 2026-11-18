@@ -1,6 +1,6 @@
 # Equipo de agentes para construir un videojuego web 3D
 
-Un **orquestador** que reparte el trabajo entre 14 subagentes especializados y construye el juego
+Un **orquestador** que reparte el trabajo entre 15 subagentes especializados y construye el juego
 **una feature verificada cada vez**, guardando la memoria del proyecto en ficheros para que cada
 sesión pueda continuar donde lo dejó la anterior.
 
@@ -15,7 +15,7 @@ sesión pueda continuar donde lo dejó la anterior.
 optimizador-prompt     programador-motor / programador-gameplay      qa-tester ─┐ evaluador-
 disenador-juego        interfaz-ui / audio / director-arte           revisor ───┘ optimizador
 disenador-combate      optimizador-rendimiento
-director-arte                       guardian-contexto
+director-arte       artista-3d      guardian-contexto
 interfaz-ui (doc)
 arquitecto ─▶ planificador ─▶ estado/feature_list.json  (la definición de "terminado")
 ```
@@ -23,7 +23,7 @@ arquitecto ─▶ planificador ─▶ estado/feature_list.json  (la definición 
 ## Estructura
 ```
 CLAUDE.md                     reglas comunes (se carga en todas las sesiones)
-.claude/agents/*.md           los 14 subagentes (frontmatter: name, description, tools, model)
+.claude/agents/*.md           los 15 subagentes (frontmatter: name, description, tools, model)
 .claude/commands/*.md         /iniciar /siguiente /tarea /estado para Claude Code
 .claude/settings.json         permisos de Bash permitidos/denegados
 contexto/                     contexto del proyecto, procedimiento del orquestador, buenas prácticas
@@ -50,7 +50,7 @@ Claude Code detecta automáticamente los subagentes de `.claude/agents/` y lee `
 ## Opción B — harness autónomo en Python (sesiones sin supervisión)
 ```bash
 pip install -r orquestador/requirements.txt     # requiere Claude Code instalado y autenticado
-python orquestador/orquestador.py agentes        # comprueba que carga los 14 subagentes
+python orquestador/orquestador.py agentes        # comprueba que carga los 15 subagentes
 python orquestador/orquestador.py iniciar "tu idea" --aprobar   # pausa para revisar cada fase
 python orquestador/orquestador.py bucle --max 5 --presupuesto 5
 python orquestador/orquestador.py estado         # progreso sin gastar tokens

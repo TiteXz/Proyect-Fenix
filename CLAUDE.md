@@ -13,6 +13,7 @@ el detalle vive en los ficheros enlazados. Léelos bajo demanda, no todos de gol
 | `docs/COMBATE.md` | Armas, magias, enemigos y balance | disenador-combate |
 | `docs/ARQUITECTURA.md` + `estado/decisiones/ADR-*.md` | Arquitectura técnica y decisiones | arquitecto |
 | `docs/GUIA_VISUAL.md` | Dirección de arte, paleta, materiales, pipeline de assets | director-arte |
+| `juego/public/assets/` + `CREDITOS.md` | Modelos, texturas y su licencia | artista-3d |
 | `docs/GUIA_UI.md` | HUD, menús, flujo de pantallas, accesibilidad | interfaz-ui |
 | `estado/feature_list.json` | Backlog verificable (la definición de "terminado") | planificador |
 | `estado/PROGRESO.md` | Diario de sesiones, solo se añade al final | guardian-contexto |
@@ -49,6 +50,7 @@ el detalle vive en los ficheros enlazados. Léelos bajo demanda, no todos de gol
 | disenador-juego | Mecánicas, reglas, progresión, niveles → `docs/GDD.md` |
 | disenador-combate | Armas, magias, elementos, enemigos, fórmulas de daño y balance → `docs/COMBATE.md` |
 | director-arte | Estilo visual, iluminación, materiales, assets glTF → `docs/GUIA_VISUAL.md` |
+| artista-3d | Conseguir/generar modelos, animaciones y texturas gratuitos (CC0, procedurales) y optimizarlos |
 | interfaz-ui | Diseñar e implementar HUD, menús, pausa, ajustes, accesibilidad |
 | programador-motor | Bucle, render, cámara, input, física, carga de assets, escenas |
 | programador-gameplay | Entidades, componentes y sistemas de juego concretos |
