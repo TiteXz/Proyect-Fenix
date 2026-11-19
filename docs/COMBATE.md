@@ -26,18 +26,22 @@ Resumen de lo ya fijado en `contexto/CONTEXTO_PROYECTO.md`:
 3. **Combinar es la mejor estrategia**, pero cuesta: maná, complejidad e **inestabilidad**.
 4. **Determinismo:** toda tirada usa RNG con semilla (`semillaHechizo` + contador). Mismo estado ⇒ mismo resultado.
 5. **Topes de seguridad** antes que fórmulas abiertas: nada de bucles, nada de explosiones de entidades.
+6. **El nivel no bloquea:** toda receta se puede crear, equipar y lanzar desde el principio; el nivel de mago
+   solo cambia el **coste de maná** y la **probabilidad de fallo de ejecución** (2.11).
 
 ### 2.2 Estructura del hechizo
 
 ```
-Hechizo = Forma/Destino (1) + Núcleo (1–4 piezas) + Modificadores (0–3) + Disparador (0–1 → hechizo hijo)
+Hechizo = Forma/Destino (1) + Núcleo (1–4 piezas) + Modificadores (0–3) + Runa de control (0–1)
+          + Disparador (0–1 → hechizo hijo)
 ```
 
 | Pieza | Obligatoria | Qué decide | Límite |
 |---|---|---|---|
 | Forma/Destino | Sí | A quién/dónde va y cómo viaja | 1 |
-| Núcleo | Sí | Elemento(s), compuesto, arcano y/o efecto de alteración | 2 → 3 → 4 piezas por nivel de mago |
-| Modificadores | No | Ajustes numéricos y de comportamiento (incluye runas de control) | máx. 3 |
+| Núcleo | Sí | Elemento(s), compuesto, arcano y/o efecto de alteración | máx. 4 piezas (tope absoluto) |
+| Modificadores | No | Ajustes numéricos y de comportamiento | máx. 3 |
+| Runa de control | No | Ancla, Catalizador o Sangre: ajusta la inestabilidad | 1, **hueco propio** (no ocupa modificador) |
 | Disparador | No | Lanza un **hechizo hijo** ante un evento | 1; el hijo **no** puede tener disparador |
 
 **Escuela** = etiqueta derivada (no se elige): se calcula de destino + núcleo y sirve para afinidades,
@@ -98,7 +102,7 @@ progresión y reglas (p. ej. qué rompe la invisibilidad).
 | Disipar | +12 | 2 | Quita 1 buff enemigo o anula una zona/muro |
 | Buff (ver 2.8) | ver tabla | 1–2 | Solo con destino Yo/Aliado |
 
-#### Modificadores (máx. 3, incluidas las runas de control) [SUPUESTO]
+#### Modificadores (máx. 3) y runas de control (hueco propio, máx. 1) [SUPUESTO]
 | Modificador | C | Maná | Efecto | Inestab. |
 |---|---|---|---|---|
 | Potencia | 1 | ×1,3 | +25 % daño/efecto | +10 (agresivo) |
@@ -115,6 +119,7 @@ progresión y reglas (p. ej. qué rompe la invisibilidad).
 | Persistencia | 1 | +6 | Deja zona del núcleo 4 s al impactar | 0 |
 | Silencioso | 1 | +3 | Sin sonido ni círculo visible; no alerta a quien no impacta | 0 |
 | Eficiencia | 1 | ×0,75 | −20 % potencia | 0 |
+| *Hueco de control:* | | | | |
 | **Ancla** (control) | 1 | +0 | −15 % potencia | −20 |
 | **Catalizador** (control) | 1 | +0 | +25 % potencia | +15 |
 | **Sangre** (control) | 1 | 50 % del maná se paga en vida | — | −25 |
@@ -222,17 +227,17 @@ Prioridad de resolución: **Arcano** (conjunto exacto de 3) > **Legendaria** (mu
 | Sombra | Umbr- | -umbra | de la penumbra |
 | Aire | Vent- | -ento | del viento |
 
-**Ejemplo 1 — Proyectil + [Fuego, Fuego, Rayo] + Multiplicar** (nivel de mago 3)
+**Ejemplo 1 — Proyectil + [Fuego, Fuego, Rayo] + Multiplicar**
 - Dominante Fuego ⇒ explota. Estados: Fuego+Rayo = Plasma ⇒ Ardiendo + Cargado. Daño 67 % ardiente / 33 % eléctrico.
 - Potencia de núcleo 12 × 3 × 1,2 = 43,2 (× factor Proyectil 1,0) ⇒ con Multiplicar: 3 proyectiles de 25,9.
-- Maná (10 + 24) × 1,5 = **51**. Complejidad 1 + 6 + 2 = **9** (límite nivel 3: 10).
+- Maná (10 + 24) × 1,5 = **51**. Complejidad 1 + 6 + 2 = **9**; dificultad (2.11) **9**.
 - Inestabilidad: 3.ª pieza +15, Multiplicar +10 = **25 %**. Nombre: «Ascuástico».
 
 **Ejemplo 2 — Muro + [Hielo, Tierra, Aire]**
 - Empate triple ⇒ la semilla ordena Tierra, Hielo, Aire: dominante Tierra (persiste). Estados de los 2 primeros: Tierra+Hielo = Permafrost (Escarcha + Lastrado).
 - Muro de 8 s que lanza ráfagas cortantes heladas. Maná 20 + 24 = **44**; C = 2 + 6 = **8**; inestabilidad **15 %**. Nombre: «Terrino del viento».
 
-**Ejemplo 3 — Área + [Sombra, Sombra, Fuego, Hielo] + Ancla** (nivel 5)
+**Ejemplo 3 — Área + [Sombra, Sombra, Fuego, Hielo] + Ancla** (Ancla en el hueco de control)
 - Dominante Sombra (maldice). Estados: Sombra + (empate Fuego/Hielo ⇒ semilla: Fuego) = Fuego negro ⇒ Sin curación.
 - Inestabilidad: par Fuego/Hielo +30, piezas 3.ª y 4.ª +30, Ancla −20 = **40 %**. Potencia de núcleo 12 × 4 × 1,3 × 0,85 = 53 (× factor Área 1,2 = 64).
 - Maná 18 + 32 = **50**; C = 2 + 8 + 1 = **11**. Nombre: «Umbrardo de escarcha».
@@ -259,7 +264,7 @@ Prioridad de resolución: **Arcano** (conjunto exacto de 3) > **Legendaria** (mu
 | Salto lejano | 40 | 30 s | Teletransporte a punto visible ≤ 150 m; transición 1 s |
 | Intercambio mayor | 25 | 12 s | Cambia de lugar con objetivo ≤ 40 m |
 | Ancla rúnica | 20 | 20 s | Marca un punto; reactivar en ≤ 60 s te devuelve |
-| **Piedra de paso** | 60 crear / 30 viajar | 120 s viajar | Crea tu propio punto de viaje rápido (máx. 3–5 por nivel). Viajar: fuera de combate, transición 2–3 s con precarga de celdas |
+| **Piedra de paso** | 60 crear / 30 viajar | 120 s viajar | Crea tu propio punto de viaje rápido (máx. 5; en cualquier lugar **salvo dentro de dungeons**). Viajar: fuera de combate, transición 2–3 s con precarga de celdas |
 | Portal | 80 | 180 s | Une dos piedras de paso 15 s; pasan aliados y caballo |
 | Gravedad | 25 | 10 s | Atrae o repele en radio 8 m durante 2 s |
 | Vacío | 30 | 15 s | Esfera de 3 m que traga proyectiles 4 s |
@@ -338,6 +343,7 @@ los más cortos pagan coste normal. Si un buff sufre contragolpe, se aplica su *
 | Al ser detectado | El enemigo te ve 3 s (contorno) sin romper el Velo |
 | Contra | Revelar (y Luz en arma/zona) |
 | Visual | Refracción translúcida (distorsión de pantalla), sin sombra proyectada |
+| A caballo | El Velo cubre **jinete y caballo** (mismo coste); el galope cuenta como "correr" para el ruido |
 
 ### 2.10 Movimiento mágico
 
@@ -357,13 +363,17 @@ Hielo = deja un clon de hielo que atrae ataques 3 s; Tierra = emerges del suelo 
 **Aéreo:** solo levitación, planeo e impulsos (no hay vuelo libre). Aire es el elemento principal; otros dan
 variantes (Fuego: impulso con explosión; Rayo: impulso instantáneo; Hielo: plataforma de hielo 3 s).
 
+**A caballo:** Planeo e Impulso se permiten con el caballo (el jinete lanza; el caballo planea con él) con los
+mismos límites de velocidad, techo y zonas de anulación; el daño por caída al aterrizar se aplica a ambos.
+
 **Límites:**
 - Velocidad aérea ≤ 1,5 × galope (galope ≈ 14 m/s [SUPUESTO] ⇒ ≤ 21 m/s).
 - Techo ≈ 300 m sobre el terreno (por encima, planeo e impulso no suben).
 - Viajes largos: transición de 1–3 s con precarga de celdas destino.
 - **Daño por caída:** a partir de 10 m, 4 % vida máx. por metro extra; letal a ≥ 35 m. Planeo/Levitación activos lo anulan.
-- **Zonas de anulación** (dungeons, salas de jefe, santuarios marcados): bloquean Salto lejano, Piedra de paso
-  (crear y viajar), Portal, Ancla rúnica, Planeo e Impulso. **Destello, Intercambio y Zancada sí funcionan.**
+- **Zonas de anulación** (dungeons, salas de jefe, santuarios marcados): bloquean Salto lejano, Portal, Ancla
+  rúnica, Planeo e Impulso. **Piedra de paso** (crear y viajar) solo se bloquea **dentro de dungeons**.
+  **Destello, Intercambio, Zancada, Rebobinar y Estasis sí funcionan.**
   El HUD muestra esas runas apagadas con aviso; lanzar una bloqueada no gasta maná.
 
 ### 2.11 Fórmulas: coste, complejidad, inestabilidad [SUPUESTO]
@@ -376,17 +386,46 @@ complejidad = C_forma + Σ C_núcleo + Σ C_mod + C_disparador + C_hijo / 2
 potencia   = 12 × piezas × (1 + 0,10 × (piezas − 1)) × factor_forma × Π mod_potencia
 ```
 
-| Nivel de mago | 1 | 2 | 3 | 4 | 5 |
-|---|---|---|---|---|---|
-| Complejidad máx. | 6 | 8 | 10 | 12 | 14 |
-| Piezas de núcleo | 2 | 2 | 3 | 3 | 4 |
-| Hechizos equipados | 4 | 4 | 5 | 5 | 6 |
-| Piedras de paso | — | — | 3 | 4 | 5 |
+**Topes absolutos (no dependen del nivel):** 4 piezas de núcleo, 3 modificadores, 1 runa de control,
+disparador de profundidad 1, topes de entidades de 2.3. **Equipados:** 6 + 1 por arcano descubierto (máx. 8).
+**Piedras de paso:** máx. 5. [SUPUESTO]
+
+#### Dominio, margen y fallo de ejecución [SUPUESTO]
+```
+dificultad D = complejidad + 2 × max(0, elementos_distintos − 2)
+dominio    Do = 5 + nivel_mago (1–10) + afinidad(elemento dominante, 0–5)   (sin elemento: ⌊afinidad máx. / 2⌋)
+margen     M  = Do − D ;  déficit d = max(0, −M)
+M ≥ 0 ⇒ coste = maná × (1 − min(0,15; 0,03 × M)) ; P_fallo = 0
+M < 0 ⇒ coste = maná × (1 + min(0,8; 0,10 × d))   ; P_fallo = min(78 %; 12 % × d)       (redondeo arriba)
+```
+**Fallo de ejecución** (falta de dominio): se tira **antes** que la inestabilidad (semilla
+`hash(semillaHechizo, nºLanzamiento, 0)`; la de inestabilidad usa `…, 1`). Si falla, el hechizo se disipa al
+terminar el lanzamiento, sin efecto, gasta el **50 % del coste** y aplica el 50 % de la recarga; no hay tirada de
+inestabilidad. Con **d ≥ 5**, el fallo dispara además un contragolpe (físico 70 % / mental 30 %, tabla de abajo).
+**Inestabilidad** (por la receta: opuestos, nº de piezas, modificadores) solo se tira si la ejecución tiene éxito y
+no depende del nivel. El grimorio muestra D, M, coste final, % de fallo y % de inestabilidad antes de equipar.
+
+**Niveles (XP acumulada):** 2: 100 · 3: 250 · 4: 450 · 5: 700 · 6: 1000 · 7: 1400 · 8: 1900 · 9: 2500 · 10: 3200.
+| Fuente | XP | Peso objetivo |
+|---|---|---|
+| (B) Runa nueva / fusión descubierta / legendaria / arcano | 40 / 30 / 120 / 200 | |
+| (B) Entrada del Códice / lugar, POI o santuario / altar rúnico | 10 / 15 / 25 | ≈ 75–80 % (≈ 100–120 XP/h explorando) |
+| (A) Lanzamiento válido (combate real, regla 2.13.1) | 1 × 0,8^(n−1), n = usos del mismo hechizo en la última hora | |
+| (A) Tope de uso | 4 XP por hechizo y hora; 25 XP/h en total | ≈ 20–25 % (≤ 25 XP/h) |
+
+**Afinidad** (0–5 por elemento): +1 punto por lanzamiento válido con ese elemento dominante (mismo decrecimiento);
+umbrales 30 / 100 / 250 / 500 / 900. Solo cuenta en hechizos cuyo dominante es ese elemento.
+
+**Ejemplo A — novato** (nivel 1, afinidad 0): Proyectil + [Fuego, Hielo, Rayo, Aire]. C = 1 + 8 = 9; 4 distintos
+⇒ D = 13; Do = 6; M = −7. Maná base 42 ⇒ **72** (×1,7); fallo **78 %** (tope) y, si falla, pierde 36 y sufre
+contragolpe (d ≥ 5). Si se ejecuta (22 %), aún tira inestabilidad 60 % (par opuesto +30, 3.ª y 4.ª pieza +30).
+**Ejemplo B — avanzado** (nivel 8, afinidad Fuego 4): Proyectil + [Fuego] + Velocidad. C = D = 4; Do = 17;
+M = +13 ⇒ maná 21 × 0,85 = **18**; fallo **0 %**; inestabilidad 0 %.
 
 **Inestabilidad I (0–100 %):** +30 por par opuesto (+15 si es fusión descubierta), +15 por cada pieza de
 núcleo a partir de la 3.ª, +modificadores agresivos (tabla 2.3), ± runas de control. Se limita a [0, 100].
 
-Tirada por lanzamiento (semilla = `hash(semillaHechizo, nºLanzamiento)`):
+Tirada de inestabilidad por lanzamiento (semilla = `hash(semillaHechizo, nºLanzamiento, 1)`):
 | Resultado | Probabilidad | Efecto en ataque | En buff | En teletransporte |
 |---|---|---|---|---|
 | Sobrecarga | 0,25·I | ×1,5 potencia + debuff físico o mental extra 4 s al objetivo | +50 % duración | +50 % alcance + estallido en origen |
@@ -415,7 +454,7 @@ encantamientos temporales **no** cuentan para el tope de 3 bendiciones.
 ### 2.13 Creación de hechizos: grimorio y mutación
 
 **(A) Grimorio:** combinar libremente runas conocidas; solo en altares y campamentos (no en combate). Grimorio
-ilimitado con favoritos y archivo; equipados 4–6 según nivel. Código compartible (p. ej. `FX-3F7A`), nombres
+ilimitado con favoritos y archivo; equipados 6–8 (2.11). Código compartible (p. ej. `FX-3F7A`), nombres
 generados y renombrables. Las runas se aprenden explorando (santuarios, ruinas, cultistas) y por mutación.
 
 **(C) Mutación:**
@@ -428,7 +467,7 @@ generados y renombrables. Las runas se aprenden explorando (santuarios, ruinas, 
 3. La elegida se guarda como **hechizo nuevo**; el **original nunca se borra** y su resonancia vuelve a 0.
 4. Si no eliges, queda como **propuesta pendiente** (máx. 5; la sexta sustituye a la más antigua).
 5. **Árbol genealógico** por hechizo (padre → hijos), visible en el grimorio.
-6. Las variantes respetan el nivel de mago: si superan la complejidad, aparecen bloqueadas con candado.
+6. Las variantes nunca se bloquean por nivel: muestran su margen, coste y % de fallo con el dominio actual.
 
 ### 2.14 Reglas de jefes
 
@@ -440,6 +479,8 @@ generados y renombrables. Las runas se aprenden explorando (santuarios, ruinas, 
 - Reflejo y Vacío no afectan a sus ataques marcados como **imparables** (señal roja).
 - El cambio de fase limpia todos sus debuffs y le da 3 s de inmunidad a control.
 - Detecta invisibilidad a 4 m y al recibir daño.
+- **Rebobinar y Estasis funcionan** en salas de jefe: Estasis sobre el jefe dura 1 s y cuenta como *inmovilizar*
+  (rendimientos decrecientes); Rebobinar solo afecta al jugador.
 
 ### 2.15 Accesibilidad
 
@@ -461,6 +502,10 @@ generados y renombrables. Las runas se aprenden explorando (santuarios, ruinas, 
 - **Rebobinar:** búfer circular solo del jugador, 5 s a 10 Hz (50 instantáneas de posición, vida y aguante).
 - **Viaje largo:** transición 1–3 s con precarga de celdas destino; el streaming debe exponer una "precarga forzada".
 - **Zonas de anulación:** volúmenes de datos en celdas y dungeons; la consulta la hace el sistema de magia.
+- **Dependencia:** las inscripciones permanentes (2.12) requieren **inventario y crafteo básico** en la fase 2
+  (materiales, altar/forja); hay que planificarlo antes que las inscripciones.
+- **Progresión:** XP y afinidad persistentes en el guardado; contador de usos por hechizo en ventana de 1 h de juego.
+- **Caballo:** el Velo y el planeo/impulso se aplican a la entidad montura + jinete.
 - **VFX compartidos** (~15–25 piezas parametrizadas por color/intensidad): círculo de runas, núcleo, estela,
   impacto, explosión, zona, muro, haz, cadena, aura de arma, aura de armadura, cúpula, nube, refracción, portal,
   piedra de paso, chispas. Partir de `prototipo/vfx/vfx.js`.
@@ -471,9 +516,9 @@ generados y renombrables. Las runas se aprenden explorando (santuarios, ruinas, 
 
 | ID | Regla | Test |
 |---|---|---|
-| M-01 | Máx. 3 modificadores, 1 disparador, hijo sin disparador | Validador rechaza recetas que lo violan |
-| M-02 | Complejidad > límite de nivel ⇒ no equipable | Unitario sobre `calcularComplejidad` |
-| M-03 | Coste, lanzamiento y recarga según 2.11 | Ejemplos 1–3 dan 51/44/50 de maná y C 9/8/11 |
+| M-01 | Máx. 4 núcleo, 3 modificadores, 1 runa de control (hueco propio), 1 disparador, hijo sin disparador | Validador rechaza recetas que lo violan; 3 mods + Ancla es válida |
+| M-02 | Ningún bloqueo por nivel: toda receta válida se equipa y lanza a nivel 1 | Equipar y lanzar Ejemplo A a nivel 1 |
+| M-03 | Coste base, lanzamiento y recarga según 2.11 (con M = 0) | Ejemplos 1–3 dan 51/44/50 de maná y C 9/8/11 |
 | M-04 | Inestabilidad según 2.11 | Ejemplos 1–3 dan 25/15/40 % |
 | M-05 | Tirada determinista | Misma semilla y nº de lanzamiento ⇒ mismo resultado |
 | M-06 | Distribución de resultados | 10 000 tiradas con I = 100 ⇒ sobrecarga 25 / normal 25 / físico 35 / mental 15 % (± 1 %) |
@@ -492,17 +537,27 @@ generados y renombrables. Las runas se aprenden explorando (santuarios, ruinas, 
 | M-19 | Mutación determinista | Mismas 3 variantes con misma semilla y nº |
 | M-20 | Jefes: rendimientos decrecientes y sustitución mental | Aplicar 4 aturdimientos en 20 s |
 | M-21 | Opción accesible sustituye Confusión/Miedo | Unitario con ajuste activo |
-| M-22 | Piedras de paso ≤ máximo por nivel | Crear una de más ⇒ pide borrar |
+| M-22 | Piedras de paso ≤ 5 y nunca dentro de dungeons | Crear la 6.ª ⇒ pide borrar; crear en dungeon ⇒ rechazo sin gastar maná |
+| M-23 | Margen ≥ 0 nunca falla por ejecución | 10 000 lanzamientos con M ∈ {0, 5} ⇒ 0 fallos |
+| M-24 | P_fallo = min(78 %, 12 % × d) | 10 000 tiradas con d = 3 ⇒ 36 % ± 1,5; con d = 9 ⇒ 78 % ± 1,5 |
+| M-25 | Coste y fallo según margen | Ejemplo A ⇒ 72 maná, 78 %; Ejemplo B ⇒ 18 maná, 0 % |
+| M-26 | Fallo de ejecución ≠ inestabilidad | Fallo forzado: sin efecto, gasta 50 %, sin tirada de inestabilidad; contragolpe solo si d ≥ 5 |
+| M-27 | Explorar da ≥ 3× más XP por hora que lanzar | Perfil simulado de 1 h: uso máximo ≤ 25 XP; perfil de exploración de referencia ≥ 75 XP |
+| M-28 | Rendimientos decrecientes del uso | 50 lanzamientos del mismo hechizo en 1 h ⇒ ≤ 4 XP; muñecos ⇒ 0 |
+| M-29 | Afinidad sube dominio solo con su elemento | Afinidad Fuego 3 no cambia el margen de un hechizo de dominante Hielo |
+| M-30 | Equipados = 6 + arcanos (máx. 8) | 0 arcanos ⇒ 6; 2 arcanos ⇒ 8 |
+| M-31 | Rebobinar/Estasis en sala de jefe; Velo y planeo a caballo | e2e: Estasis al jefe 1 s; Velo oculta caballo; planeo montado ≤ 21 m/s |
 
 ### 2.18 Preguntas abiertas
 
-1. ¿Las runas de control (Ancla, Catalizador, Sangre) deben ocupar hueco de modificador o tener un hueco propio?
-2. ¿Cómo se sube de nivel de mago: experiencia por uso, por descubrimientos del Códice o por ambos?
-3. Formato del código compartible: ¿se acepta un código largo para recetas complejas o se guarda en servidor (fuera de alcance sin backend)?
-4. ¿Los enemigos (cultista mago, jefes) usan también recetas de runas y pueden sufrir inestabilidad?
-5. ¿El Velo y la Niebla negra se pueden usar a caballo? ¿Y el planeo con el caballo (propuesta: no)?
-6. Piedra de paso: ¿se permite crear piedras dentro de asentamientos y en islas? ¿Persisten entre partidas (sí, en `localStorage`)?
-7. Rebobinar y Estasis en jefes: ¿se desactivan en salas de jefe para evitar abusos?
-8. ¿La mutación puede proponer un cambio de forma que cambie la escuela (p. ej. ataque → encantamiento)?
-9. Materiales de inscripción: dependen de inventario/crafteo (fuera del MVP); hay que alinearlo con las armaduras modulares de fase 2.
-10. Raíces de nombres generados: validar con `disenador-juego` el tono (idioma inventado vs. castellano).
+*Resueltas:* runas de control (hueco propio), progresión del mago (2.11, sin bloqueos), Velo y planeo a caballo
+(sí), Piedra de paso (todo salvo dungeons, incluidos asentamientos e islas), Rebobinar/Estasis en jefes (sí),
+materiales de inscripción (inventario y crafteo básico en fase 2, ver 2.16).
+
+1. Formato del código compartible: ¿se acepta un código largo para recetas complejas o se guarda en servidor (fuera de alcance sin backend)?
+2. ¿Los enemigos (cultista mago, jefes) usan también recetas de runas y pueden sufrir inestabilidad?
+3. ¿La Niebla negra afecta al caballo como el Velo (propuesta: sí, es una zona)? ¿Las piedras persisten entre partidas (propuesta: sí, en el guardado)?
+4. ¿La mutación puede proponer un cambio de forma que cambie la escuela (p. ej. ataque → encantamiento)?
+5. Alcance del inventario y crafteo básico (materiales, recetas, interfaz) y encaje con las armaduras modulares: `disenador-juego` + `planificador`.
+6. Validar con `disenador-juego` la cantidad de runas, fusiones, POI y entradas del Códice: el ritmo de XP (≈ 25 h a nivel 10) depende de ello.
+7. Raíces de nombres generados: validar con `disenador-juego` el tono (idioma inventado vs. castellano).
