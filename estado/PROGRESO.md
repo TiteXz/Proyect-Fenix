@@ -41,3 +41,7 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
   central, puentes, rampas, torre central y desfiladero de entrada). Edificios aún placeholder. CONTEXTO actualizado.
 - 2026-11-19 (cont.): añadidos a CONTEXTO la hoja de ruta tras el MVP (fase 2 magia modular/armas/armaduras, fase 3 NPCs/casas/
   castillo/animales/vegetación, fase 4 barcos/pesca/mar) y los presupuestos de tamaño total (MVP ≤ 1,5 GB, completo ≤ 3,5 GB).
+- 2026-11-19 (cont.): `disenador-combate` crea `docs/COMBATE.md` (§1 combate MVP pendiente; §2 sistema de magia de la fase 2:
+  runas, 7 elementos, 21 fusiones = reacciones, combinaciones generadas, 8 legendarias, arcanos Espacio/Tiempo, buffs/debuffs,
+  invisibilidad, teletransporte/planeo/impulso, inestabilidad, grimorio + mutación, inscripciones, 22 reglas comprobables
+  M-01..M-22 y 10 preguntas abiertas). Pendiente ADR: runas en JSON vs .ts, precarga forzada de celdas, escala de tiempo por entidad.
