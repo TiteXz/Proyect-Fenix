@@ -104,7 +104,10 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   no entra), guardar partida en la
   nube, editor de personaje, móvil, agua con simulación (solo plano con shader barato), destrucción del terreno.
 - **Hoja de ruta tras el MVP** (cada fase se replanifica con `planificador` antes de empezar) **[SUPUESTO]**:
-  - **Fase 2:** magia modular (forma + elemento + modificadores) con creación/edición de hechizos; más armas; armaduras modulares.
+  - **Fase 2:** **sistema de magia por runas** (detalle en `docs/COMBATE.md`): 7 elementos (+Aire), 21 fusiones, combinaciones
+    generadas, legendarias y arcanos (Espacio, Tiempo); hechizos de ataque, buffs/debuffs, encantar armas/armaduras,
+    invisibilidad, teletransporte, planeo e impulsos (sin vuelo libre); inestabilidad; grimorio + mutación sin perder el
+    original; más armas; armaduras modulares.
   - **Fase 3:** NPCs modulares, casas por kit de piezas, castillo y Ciudad de la Roca con arte final; animales; vegetación mejorada.
   - **Fase 4:** barcos y navegación, pesca, mar mejorado (olas, espuma, reflejos).
   - Contenido **por piezas reutilizables** (atlas compartidos, kits modulares) y magia por componentes para contener el peso.
