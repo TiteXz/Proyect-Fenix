@@ -26,3 +26,6 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
 - *Floating origin* entra en el alcance; celdas media ≤ 0,5 MB, mundo ≤ 1 GB acumulado con caché en IndexedDB.
 - Riesgo: volumen de contenido y presupuesto de descarga. Siguiente: `/iniciar`.
 - 2026-11-19 (cont.): biomas fijados por el usuario: bosque, costa, desierto y monte nevado; añadida su variante de paleta.
+- 2026-11-19 (cont.): el usuario descarta la fantasía oscura → **fantasía realista luminosa** (refs. de tono [SUPUESTO]:
+  Ghost of Tsushima, Dragon's Dogma 2) y **ciclo día/noche dinámico dentro del MVP**. Actualizados CONTEXTO_PROYECTO.md,
+  CLAUDE.md y los agentes director-arte y artista-3d. Pendiente: `prototipo/` (maqueta y su README) sigue en tono oscuro.

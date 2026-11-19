@@ -6,7 +6,7 @@
 
 ## Elevator pitch
 Juego de acción 3D de fantasía medieval para navegador, en un **mundo abierto hiper optimizado**.
-El jugador explora a pie y a caballo un reino oscuro y combina **armas cuerpo a cuerpo, a distancia
+El jugador explora a pie y a caballo un reino de fantasía vivo y luminoso y combina **armas cuerpo a cuerpo, a distancia
 y magia** contra enemigos de mundo y, en los **dungeons** (instancias de oleadas y jefe), contra
 hordas organizadas. La gracia está en cambiar de arma y de hechizo en pleno combate para aprovechar
 las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
@@ -87,27 +87,28 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
     con semilla** (heightmap + reglas de colocación); asentamientos, POI y dungeon colocados a mano.
   - Recorrido a pie y a caballo; enemigos de mundo; streaming por celdas; clima/niebla fijos por zona.
   - **Dungeon "Patio del castillo en ruinas"**: 5 oleadas + jefe, como instancia cargada desde el mundo.
+  - **Ciclo día/noche dinámico** (≈ 24 min reales por día **[SUPUESTO]**): sol/luna como única luz direccional
+    con sombra, cielo analítico (scattering) y entorno/IBL actualizado de forma escalonada, no cada frame.
   - 3 armas, 3 hechizos, 4 tipos de enemigo; HUD (vida/aguante/maná, arma y hechizos activos con su
     tiempo de recarga, brújula/minimapa); menú principal, pausa, ajustes, pantalla de victoria/derrota;
     tienda de mejoras; sonido y música; guardado de partida en `localStorage`.
-- **Fuera del MVP:** multijugador, mundo mayor de ≈ 24 km², ciclo día/noche dinámico completo (solo
-  momento del día fijo por zona), clima dinámico, misiones/diálogos complejos (como mucho 1–2 encargos
+- **Fuera del MVP:** multijugador, mundo mayor de ≈ 24 km², clima dinámico completo (lluvia/tormentas
+  más allá de lo fijo por bioma), misiones/diálogos complejos (como mucho 1–2 encargos
   simples de "ve y limpia"), inventario y crafteo, más de 1 dungeon (el sistema los permite, el contenido
   no entra), guardar partida en la
   nube, editor de personaje, móvil, agua con simulación (solo plano con shader barato), destrucción del terreno.
 
 ## Estilo visual y sonoro
-- **Fantasía oscura realista. NO low-poly, NO cartoon.** Referencias de tono y calidad visual:
-  *The Witcher 3* y *The Blood of Dawnwalker* — mundo medieval sucio y creíble, proporciones humanas
-  realistas, materiales PBR detallados (piedra húmeda, cuero gastado, acero con arañazos, tela sucia),
-  iluminación cinematográfica, niebla y atmósfera densa.
+- **Fantasía realista luminosa (NO fantasía oscura). NO low-poly, NO cartoon.** Referencias de tono y
+  calidad: *Ghost of Tsushima* y *Dragon's Dogma 2* **[SUPUESTO]** — naturaleza viva y colorida, cielos amplios, sensación de aventura
+  heroica; proporciones humanas realistas, materiales PBR detallados (piedra, madera, cuero, acero, tela).
 - Son referencias de **sensación**, no de contenido: no se copia nada de esos juegos; todo es original.
-- Paleta desaturada y fría (grises piedra, verde musgo, marrón cuero) con acentos por elemento:
-  fuego naranja, hielo cian, luz dorada. Cada bioma con su variante igual de sombría: bosque (musgo,
-  niebla), costa (gris pizarra, espuma), desierto (ocre apagado, calima, ruinas), nevado (blanco sucio, ventisca).
-- Iluminación: noche con luna fría + antorchas cálidas, entorno HDRI, sombras suaves, niebla
-  volumétrica aproximada (la niebla de distancia también oculta el cambio de LOD), polvo y ceniza.
-- Postproceso: tonemapping AgX/ACES, bloom contenido, SSAO, gradación de color, viñeta ligera;
+- Paleta natural y saturada con acentos por elemento (fuego naranja, hielo cian, luz dorada). Por bioma:
+  bosque (verdes intensos, luz filtrada), costa (turquesa, arena clara), desierto (dorados y ocres cálidos),
+  monte nevado (blancos limpios, cielos azules). Los dungeons sí pueden ser más sombríos por contraste.
+- Iluminación: día dominante con sol cálido y cielo físico; atardeceres dorados; noches claras de luna
+  azulada con antorchas. Bruma atmosférica ligera de distancia (oculta el cambio de LOD), sin niebla densa.
+- Postproceso: tonemapping AgX/ACES, bloom contenido, SSAO, gradación de color, viñeta muy ligera;
   profundidad de campo solo en menús/cinemáticas.
 - Realismo dentro de los límites del navegador: el "look" sale sobre todo de **iluminación, materiales
   y postproceso**, no del número de polígonos. Presets de calidad Bajo/Medio/Alto/Ultra.
