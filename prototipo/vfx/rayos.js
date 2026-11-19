@@ -6,6 +6,7 @@
  *   api.update(dt, time) avanza la simulacion (dt se limita a 1/20 s)
  *   api.resize(pixelHeight), api.dispose(), api.stats()
  *   opts.widthScale / opts.reachScale: grosor y alcance de arcos, zarcillos y chispas (por defecto 1)
+ *   opts.tendrils: false desactiva los zarcillos (cintas onduladas); los arcos y las chispas no cambian
  * Coste fijo: 4 draw calls (arco nucleo HDR, arco halo, zarcillos negros, chispas).
  *   24 arcos x 33 puntos (rebuild a 25 Hz), 4 hojas x 8 zarcillos x 20 puntos, 200 chispas.
  * Los colores son lineales HDR (>1 brilla con bloom). Sin asignaciones por frame: pools y buffers fijos.
@@ -218,6 +219,9 @@
       new THREE.Mesh(TR.geo, tendMat), new THREE.Points(SP.geo, sparkMat)
     ];
     meshes.forEach(function (m, k) { m.frustumCulled = false; m.renderOrder = k; root.add(m); });
+    // opts.tendrils === false: sin zarcillos (a escala de juego se leen como franjas rojas); arcos y chispas intactos
+    var TENDRILS = opts.tendrils !== false;
+    meshes[2].visible = TENDRILS;
 
     // ------------------------------------------------------------ estado
     var atts = [];
@@ -466,7 +470,7 @@
       }
       AR.geo.attributes.aFade.needsUpdate = true;
 
-      updateTendrils(dt);
+      if (TENDRILS) updateTendrils(dt);
       updateSparks(dt);
 
       arcCoreMat.uniforms.uGain.value = 1 + flash * 2.5;
