@@ -34,3 +34,5 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
   solo como referencia visual, no es código del juego.
 - 2026-11-19 (cont.): mundo reestructurado a petición del usuario: cuadrícula 6,4 × 6,4 km, franja costera entre tierra y mar,
   transiciones de bioma de ~1 km, montañas escarpadas tipo macizo con lago glaciar y solo 3–4 islas a > 1 km de la costa.
+- 2026-11-19 (cont.): maqueta de concepto con red de caminos de tierra (Aldea del Vado, Puerto Gaviota, Caleta, Oasis de Arenal,
+  Refugio del lago, dungeon del castillo y salida oeste) y edificios placeholder (bloques de tamaños variados orientados al camino).
