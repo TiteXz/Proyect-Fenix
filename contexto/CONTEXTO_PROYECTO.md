@@ -81,8 +81,9 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 
 ## Alcance
 - **Dentro del MVP:**
-  - **Mundo abierto ≈ mitad de GTA V:** ≈ 24 km² de tierra (GTA V ≈ 48 km²) en una cuadrícula de ≈ 5,5 × 5,5 km
-    con costa y lagos; **4 biomas: bosque, costa, desierto y monte nevado** (transiciones graduales) + **archipiélago de islas** en el mar,
+  - **Mundo abierto ≈ mitad de GTA V:** ≈ 24 km² de tierra (GTA V ≈ 48 km²) en una cuadrícula de ≈ 6,4 × 6,4 km
+    con costa y lagos; **4 biomas: bosque, costa, desierto y monte nevado** con transiciones amplias (~1 km); una **franja costera** separa
+    bosque, montaña y desierto del mar; **monte nevado** con macizos escarpados y un **lago glaciar**; 3–4 **islas** a > 1 km de la costa,
     2–3 asentamientos y 40–60 puntos de interés **[SUPUESTO]**. Terreno y vegetación base **procedurales
     con semilla** (heightmap + reglas de colocación); asentamientos, POI y dungeon colocados a mano.
   - Recorrido a pie y a caballo; enemigos de mundo; streaming por celdas; clima/niebla fijos por zona.

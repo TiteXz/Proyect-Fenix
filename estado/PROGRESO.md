@@ -32,3 +32,5 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
 - 2026-11-19 (cont.): añadida zona de **islas** (archipiélago en el mar del este). Hecha una maqueta de concepto del mundo
   (mapa + 7 vistas) con Three.js, texturas PBR CC0 de Poly Haven e impostores de árboles horneados de modelos CC0;
   solo como referencia visual, no es código del juego.
+- 2026-11-19 (cont.): mundo reestructurado a petición del usuario: cuadrícula 6,4 × 6,4 km, franja costera entre tierra y mar,
+  transiciones de bioma de ~1 km, montañas escarpadas tipo macizo con lago glaciar y solo 3–4 islas a > 1 km de la costa.
