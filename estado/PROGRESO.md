@@ -45,3 +45,6 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
   runas, 7 elementos, 21 fusiones = reacciones, combinaciones generadas, 8 legendarias, arcanos Espacio/Tiempo, buffs/debuffs,
   invisibilidad, teletransporte/planeo/impulso, inestabilidad, grimorio + mutación, inscripciones, 22 reglas comprobables
   M-01..M-22 y 10 preguntas abiertas). Pendiente ADR: runas en JSON vs .ts, precarga forzada de celdas, escala de tiempo por entidad.
+- 2026-11-19 (cont.): COMBATE.md actualizado: runas de control con hueco propio; sin bloqueos por nivel (dificultad vs dominio
+  → coste y fallo de ejecución); XP 75–80 % exploración / resto uso con rendimientos decrecientes; afinidad por elemento;
+  Rebobinar/Estasis válidos con jefes; piedras de paso fuera de dungeons; Velo y planeo a caballo; inscripciones → inventario/crafteo.
