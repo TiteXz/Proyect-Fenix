@@ -107,7 +107,8 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   - **Fase 2:** **sistema de magia por runas** (detalle en `docs/COMBATE.md`): 7 elementos (+Aire), 21 fusiones, combinaciones
     generadas, legendarias y arcanos (Espacio, Tiempo); hechizos de ataque, buffs/debuffs, encantar armas/armaduras,
     invisibilidad, teletransporte, planeo e impulsos (sin vuelo libre); inestabilidad; grimorio + mutación sin perder el
-    original; más armas; armaduras modulares.
+    original; sin bloqueos por nivel (el nivel, que sube sobre todo explorando, cambia coste y fallo); más armas;
+    armaduras modulares; inventario y crafteo básico (materiales para inscripciones).
   - **Fase 3:** NPCs modulares, casas por kit de piezas, castillo y Ciudad de la Roca con arte final; animales; vegetación mejorada.
   - **Fase 4:** barcos y navegación, pesca, mar mejorado (olas, espuma, reflejos).
   - Contenido **por piezas reutilizables** (atlas compartidos, kits modulares) y magia por componentes para contener el peso.
