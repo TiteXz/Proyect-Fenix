@@ -34,8 +34,8 @@ el detalle vive en los ficheros enlazados. Léelos bajo demanda, no todos de gol
 6. **Contexto mínimo:** cada subagente recibe solo lo que necesita (rutas concretas, no "lee todo").
 
 ## Estilo visual (afecta a todos los roles)
-**Fantasía oscura realista** con referencias de tono en *The Witcher 3* y *The Blood of Dawnwalker*:
-materiales PBR, iluminación y atmósfera cinematográficas. **Nunca low-poly ni cartoon** en el arte final.
+**Fantasía realista luminosa** (no fantasía oscura) con referencias de tono en *Ghost of Tsushima* y *Dragon's Dogma 2*:
+mundo vivo y colorido, materiales PBR, ciclo día/noche e iluminación cinematográfica. **Nunca low-poly ni cartoon** en el arte final.
 Son referencias de sensación: no se copia ningún personaje, nombre, lugar, UI ni asset de esos juegos.
 Detalle en `contexto/CONTEXTO_PROYECTO.md` y `docs/GUIA_VISUAL.md`.
 
