@@ -29,3 +29,6 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
 - 2026-11-19 (cont.): el usuario descarta la fantasía oscura → **fantasía realista luminosa** (refs. de tono [SUPUESTO]:
   Ghost of Tsushima, Dragon's Dogma 2) y **ciclo día/noche dinámico dentro del MVP**. Actualizados CONTEXTO_PROYECTO.md,
   CLAUDE.md y los agentes director-arte y artista-3d. Pendiente: `prototipo/` (maqueta y su README) sigue en tono oscuro.
+- 2026-11-19 (cont.): añadida zona de **islas** (archipiélago en el mar del este). Hecha una maqueta de concepto del mundo
+  (mapa + 7 vistas) con Three.js, texturas PBR CC0 de Poly Haven e impostores de árboles horneados de modelos CC0;
+  solo como referencia visual, no es código del juego.

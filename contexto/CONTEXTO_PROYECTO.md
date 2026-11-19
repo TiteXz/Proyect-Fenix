@@ -82,7 +82,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 ## Alcance
 - **Dentro del MVP:**
   - **Mundo abierto ≈ mitad de GTA V:** ≈ 24 km² de tierra (GTA V ≈ 48 km²) en una cuadrícula de ≈ 5,5 × 5,5 km
-    con costa y lagos; **4 biomas: bosque, costa, desierto y monte nevado** (con transiciones graduales),
+    con costa y lagos; **4 biomas: bosque, costa, desierto y monte nevado** (transiciones graduales) + **archipiélago de islas** en el mar,
     2–3 asentamientos y 40–60 puntos de interés **[SUPUESTO]**. Terreno y vegetación base **procedurales
     con semilla** (heightmap + reglas de colocación); asentamientos, POI y dungeon colocados a mano.
   - Recorrido a pie y a caballo; enemigos de mundo; streaming por celdas; clima/niebla fijos por zona.
@@ -105,7 +105,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - Son referencias de **sensación**, no de contenido: no se copia nada de esos juegos; todo es original.
 - Paleta natural y saturada con acentos por elemento (fuego naranja, hielo cian, luz dorada). Por bioma:
   bosque (verdes intensos, luz filtrada), costa (turquesa, arena clara), desierto (dorados y ocres cálidos),
-  monte nevado (blancos limpios, cielos azules). Los dungeons sí pueden ser más sombríos por contraste.
+  monte nevado (blancos limpios, cielos azules), islas (aguas turquesa, calas y arboleda mediterránea). Los dungeons sí pueden ser más sombríos por contraste.
 - Iluminación: día dominante con sol cálido y cielo físico; atardeceres dorados; noches claras de luna
   azulada con antorchas. Bruma atmosférica ligera de distancia (oculta el cambio de LOD), sin niebla densa.
 - Postproceso: tonemapping AgX/ACES, bloom contenido, SSAO, gradación de color, viñeta muy ligera;
