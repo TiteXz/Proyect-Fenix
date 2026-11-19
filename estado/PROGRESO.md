@@ -25,3 +25,4 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
   5–6 biomas, 2–3 asentamientos, 40–60 POI; terreno/vegetación procedurales con semilla, POI y dungeon a mano.
 - *Floating origin* entra en el alcance; celdas media ≤ 0,5 MB, mundo ≤ 1 GB acumulado con caché en IndexedDB.
 - Riesgo: volumen de contenido y presupuesto de descarga. Siguiente: `/iniciar`.
+- 2026-11-19 (cont.): biomas fijados por el usuario: bosque, costa, desierto y monte nevado; añadida su variante de paleta.

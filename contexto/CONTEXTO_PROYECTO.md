@@ -82,7 +82,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 ## Alcance
 - **Dentro del MVP:**
   - **Mundo abierto ≈ mitad de GTA V:** ≈ 24 km² de tierra (GTA V ≈ 48 km²) en una cuadrícula de ≈ 5,5 × 5,5 km
-    con costa y lagos; 5–6 biomas (bosque oscuro, páramo, ciénaga, colinas con ruinas, montaña, costa),
+    con costa y lagos; **4 biomas: bosque, costa, desierto y monte nevado** (con transiciones graduales),
     2–3 asentamientos y 40–60 puntos de interés **[SUPUESTO]**. Terreno y vegetación base **procedurales
     con semilla** (heightmap + reglas de colocación); asentamientos, POI y dungeon colocados a mano.
   - Recorrido a pie y a caballo; enemigos de mundo; streaming por celdas; clima/niebla fijos por zona.
@@ -103,7 +103,8 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   iluminación cinematográfica, niebla y atmósfera densa.
 - Son referencias de **sensación**, no de contenido: no se copia nada de esos juegos; todo es original.
 - Paleta desaturada y fría (grises piedra, verde musgo, marrón cuero) con acentos por elemento:
-  fuego naranja, hielo cian, luz dorada.
+  fuego naranja, hielo cian, luz dorada. Cada bioma con su variante igual de sombría: bosque (musgo,
+  niebla), costa (gris pizarra, espuma), desierto (ocre apagado, calima, ruinas), nevado (blanco sucio, ventisca).
 - Iluminación: noche con luna fría + antorchas cálidas, entorno HDRI, sombras suaves, niebla
   volumétrica aproximada (la niebla de distancia también oculta el cambio de LOD), polvo y ceniza.
 - Postproceso: tonemapping AgX/ACES, bloom contenido, SSAO, gradación de color, viñeta ligera;
