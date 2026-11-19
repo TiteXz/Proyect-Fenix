@@ -36,3 +36,6 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
   transiciones de bioma de ~1 km, montañas escarpadas tipo macizo con lago glaciar y solo 3–4 islas a > 1 km de la costa.
 - 2026-11-19 (cont.): maqueta de concepto con red de caminos de tierra (Aldea del Vado, Puerto Gaviota, Caleta, Oasis de Arenal,
   Refugio del lago, dungeon del castillo y salida oeste) y edificios placeholder (bloques de tamaños variados orientados al camino).
+- 2026-11-19 (cont.): mundo ampliado a 6,4 × 8,4 km (≈ 33 km² de tierra, ≈ 2/3 de GTA V) hacia el sur: desierto mayor con oasis
+  (estanque + vegetación), zona rocosa de mesetas/cañones y la Ciudad de la Roca (4 niveles en terrazas alrededor de un pozo
+  central, puentes, rampas, torre central y desfiladero de entrada). Edificios aún placeholder. CONTEXTO actualizado.

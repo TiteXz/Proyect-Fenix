@@ -17,7 +17,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 2. **Arma + magia combinadas:** los combos y las interacciones elementales premian alternar
    (p. ej. congelar con escarcha y romper con la maza).
 3. **Respuesta inmediata:** golpes con peso (hit-stop, retroceso, sonido, partículas) y controles precisos.
-4. **Mundo grande que invita a explorar sin perder el combate:** ≈ la mitad del mapa de GTA V, con puntos
+4. **Mundo grande que invita a explorar sin perder el combate:** ≈ 2/3 del mapa de GTA V, con puntos
    de interés repartidos; explorar nunca penaliza la fluidez (ningún frame > 33 ms al cruzar zonas).
 
 ## Género y perspectiva
@@ -81,10 +81,13 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 
 ## Alcance
 - **Dentro del MVP:**
-  - **Mundo abierto ≈ mitad de GTA V:** ≈ 24 km² de tierra (GTA V ≈ 48 km²) en una cuadrícula de ≈ 6,4 × 6,4 km
+  - **Mundo abierto ≈ 2/3 de GTA V:** ≈ 33 km² de tierra (GTA V ≈ 48 km²) en una cuadrícula de ≈ 6,4 × 8,4 km
     con costa y lagos; **4 biomas: bosque, costa, desierto y monte nevado** con transiciones amplias (~1 km); una **franja costera** separa
-    bosque, montaña y desierto del mar; **monte nevado** con macizos escarpados y un **lago glaciar**; 3–4 **islas** a > 1 km de la costa,
-    2–3 asentamientos y 40–60 puntos de interés **[SUPUESTO]**. Terreno y vegetación base **procedurales
+    bosque, montaña y desierto del mar; **monte nevado** con macizos escarpados y un **lago glaciar**; 4–5 **islas** a > 1 km de la costa;
+    **desierto ampliado** con **oasis** y una **zona rocosa** de mesetas y cañones con la **Ciudad de la Roca** (maravilla):
+    ciudad excavada en un macizo, con varios niveles en terrazas alrededor de un **gran pozo central** que los conecta
+    (puentes, rampas y torre central) y entrada por un desfiladero; caminos entre asentamientos; 6–7 asentamientos y
+    50–70 puntos de interés **[SUPUESTO]**. Terreno y vegetación base **procedurales
     con semilla** (heightmap + reglas de colocación); asentamientos, POI y dungeon colocados a mano.
   - Recorrido a pie y a caballo; enemigos de mundo; streaming por celdas; clima/niebla fijos por zona.
   - **Dungeon "Patio del castillo en ruinas"**: 5 oleadas + jefe, como instancia cargada desde el mundo.
@@ -93,7 +96,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   - 3 armas, 3 hechizos, 4 tipos de enemigo; HUD (vida/aguante/maná, arma y hechizos activos con su
     tiempo de recarga, brújula/minimapa); menú principal, pausa, ajustes, pantalla de victoria/derrota;
     tienda de mejoras; sonido y música; guardado de partida en `localStorage`.
-- **Fuera del MVP:** multijugador, mundo mayor de ≈ 24 km², clima dinámico completo (lluvia/tormentas
+- **Fuera del MVP:** multijugador, mundo mayor de ≈ 33 km², clima dinámico completo (lluvia/tormentas
   más allá de lo fijo por bioma), misiones/diálogos complejos (como mucho 1–2 encargos
   simples de "ve y limpia"), inventario y crafteo, más de 1 dungeon (el sistema los permite, el contenido
   no entra), guardar partida en la
