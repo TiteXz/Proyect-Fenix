@@ -19,3 +19,9 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
   - Choque de tecla F: interactuar (pulsar) vs montar/desmontar caballo (mantener); "cero tirones" en pilar 4 vs hitch permitido ≤ 33 ms.
 - Siguiente recomendada: `/iniciar` o replanificación — disenador-juego (GDD del mundo y dungeons), arquitecto (ADRs de streaming, terreno y dungeons), planificador (`feature_list.json`). Motivo: el backlog actual no cubre el nuevo alcance y `estado/feature_list.json` no existe (solo `feature_list.ejemplo.json`).
 - Progreso: n/a (`estado/feature_list.json` ausente; no se pudo calcular n/total)
+
+## 2026-11-19 — Tamaño del mundo: ≈ mitad de GTA V
+- Petición del usuario: mapa ≈ mitad de GTA V. CONTEXTO_PROYECTO.md: ≈ 24 km² de tierra (cuadrícula ≈ 5,5 × 5,5 km),
+  5–6 biomas, 2–3 asentamientos, 40–60 POI; terreno/vegetación procedurales con semilla, POI y dungeon a mano.
+- *Floating origin* entra en el alcance; celdas media ≤ 0,5 MB, mundo ≤ 1 GB acumulado con caché en IndexedDB.
+- Riesgo: volumen de contenido y presupuesto de descarga. Siguiente: `/iniciar`.

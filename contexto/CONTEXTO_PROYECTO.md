@@ -17,8 +17,8 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 2. **Arma + magia combinadas:** los combos y las interacciones elementales premian alternar
    (p. ej. congelar con escarcha y romper con la maza).
 3. **Respuesta inmediata:** golpes con peso (hit-stop, retroceso, sonido, partículas) y controles precisos.
-4. **Mundo que invita a explorar sin perder el combate:** el mundo es acotado pero denso en puntos de
-   interés; explorar nunca penaliza la fluidez (sin tirones perceptibles (ningún frame > 33 ms) al cruzar zonas).
+4. **Mundo grande que invita a explorar sin perder el combate:** ≈ la mitad del mapa de GTA V, con puntos
+   de interés repartidos; explorar nunca penaliza la fluidez (ningún frame > 33 ms al cruzar zonas).
 
 ## Género y perspectiva
 - Acción/RPG ligero en **tercera persona**, cámara detrás del hombro controlada con el ratón. **[SUPUESTO]**
@@ -41,8 +41,8 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 | Memoria GPU (texturas+geom.) | ≤ 400 MB | ≤ 600 MB | ≤ 900 MB | ≤ 1,3 GB |
 - **Carga inicial < 40 MB** (JS + menú + celda de inicio con LOD bajo); **jugable en ≤ 10 s** con 50 Mbps
   y ≤ 20 s en caché fría con 20 Mbps **[SUPUESTO]**. El resto se descarga en segundo plano.
-- **Celdas:** 128 × 128 m, ≤ 2 MB comprimidas cada una (glTF Meshopt + KTX2 + datos de colocación).
-  Radio de carga 5×5 celdas (visual) y 3×3 (simulación) **[SUPUESTO]**.
+- **Celdas** 128 m: media ≤ 0,5 MB, máx. 2 MB; mundo ≤ 1 GB acumulado, cacheado en IndexedDB **[SUPUESTO]**.
+  Radio 5×5 celdas (visual detallado; el horizonte lo da el LOD de terreno) y 3×3 (simulación).
 - **Hitch al cruzar celdas:** ningún frame > 33 ms y trabajo del hilo principal ≤ 4 ms/frame para
   streaming (el resto en Workers, subida a GPU repartida entre frames).
 - **Memoria JS estable** tras 10 min recorriendo el mundo (las celdas se `dispose()`an).
@@ -81,17 +81,19 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 
 ## Alcance
 - **Dentro del MVP:**
-  - **Mundo abierto acotado** ≈ 1–2 km² en 3–4 zonas/biomas conectados (p. ej. bosque oscuro, páramo,
-    ciénaga, colinas con ruinas), con un asentamiento y 8–12 puntos de interés **[SUPUESTO]**.
+  - **Mundo abierto ≈ mitad de GTA V:** ≈ 24 km² de tierra (GTA V ≈ 48 km²) en una cuadrícula de ≈ 5,5 × 5,5 km
+    con costa y lagos; 5–6 biomas (bosque oscuro, páramo, ciénaga, colinas con ruinas, montaña, costa),
+    2–3 asentamientos y 40–60 puntos de interés **[SUPUESTO]**. Terreno y vegetación base **procedurales
+    con semilla** (heightmap + reglas de colocación); asentamientos, POI y dungeon colocados a mano.
   - Recorrido a pie y a caballo; enemigos de mundo; streaming por celdas; clima/niebla fijos por zona.
   - **Dungeon "Patio del castillo en ruinas"**: 5 oleadas + jefe, como instancia cargada desde el mundo.
   - 3 armas, 3 hechizos, 4 tipos de enemigo; HUD (vida/aguante/maná, arma y hechizos activos con su
     tiempo de recarga, brújula/minimapa); menú principal, pausa, ajustes, pantalla de victoria/derrota;
     tienda de mejoras; sonido y música; guardado de partida en `localStorage`.
-- **Fuera del MVP:** multijugador, mundo mayor que el MVP, ciclo día/noche dinámico completo (solo
+- **Fuera del MVP:** multijugador, mundo mayor de ≈ 24 km², ciclo día/noche dinámico completo (solo
   momento del día fijo por zona), clima dinámico, misiones/diálogos complejos (como mucho 1–2 encargos
   simples de "ve y limpia"), inventario y crafteo, más de 1 dungeon (el sistema los permite, el contenido
-  no entra), *floating origin* (innecesario si el mundo cabe en precisión f32), guardar partida en la
+  no entra), guardar partida en la
   nube, editor de personaje, móvil, agua con simulación (solo plano con shader barato), destrucción del terreno.
 
 ## Estilo visual y sonoro
@@ -123,6 +125,8 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - Tests: Vitest (fórmulas de daño, elementos, recursos, streaming) + Playwright (e2e en navegador)
 - **Técnicas de mundo abierto** (el arquitecto debe formalizarlas en ADRs antes de implementar):
   - **Streaming por celdas** con carga/descarga asíncrona, cola priorizada por distancia y `dispose()` completo.
+  - **Floating origin** (recentrar a > 1 km) y **generación procedural con semilla** en Workers: las celdas
+    viajan como datos ligeros (alturas, máscaras, POI), no como mallas.
   - **Terreno** por heightmap con LOD (clipmaps o quadtree) y *splatting* de materiales PBR (4 capas máx.).
   - **Vegetación y rocas** con `InstancedMesh`/`BatchedMesh`; **impostores** (billboards) para lejanía; LOD de modelos.
   - **Culling:** frustum + distancia + oclusión simple solo si compensa (p. ej. interiores/colinas).
