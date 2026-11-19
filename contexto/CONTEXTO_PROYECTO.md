@@ -39,6 +39,8 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 | Draw calls por frame | ≤ 150 | ≤ 220 | ≤ 300 | ≤ 400 |
 | Triángulos visibles | ≤ 0,75 M | ≤ 1,2 M | ≤ 2 M | ≤ 3 M |
 | Memoria GPU (texturas+geom.) | ≤ 400 MB | ≤ 600 MB | ≤ 900 MB | ≤ 1,3 GB |
+- **Tamaño total** (preset Alto, texturas 2K; 4K solo en piezas protagonistas): MVP ≤ 1,5 GB; juego completo ≤ 3,5 GB.
+  Se descarga por zonas bajo demanda y se cachea; el juego debe funcionar si el navegador purga la caché.
 - **Carga inicial < 40 MB** (JS + menú + celda de inicio con LOD bajo); **jugable en ≤ 10 s** con 50 Mbps
   y ≤ 20 s en caché fría con 20 Mbps **[SUPUESTO]**. El resto se descarga en segundo plano.
 - **Celdas** 128 m: media ≤ 0,5 MB, máx. 2 MB; mundo ≤ 1 GB acumulado, cacheado en IndexedDB **[SUPUESTO]**.
@@ -101,6 +103,11 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   simples de "ve y limpia"), inventario y crafteo, más de 1 dungeon (el sistema los permite, el contenido
   no entra), guardar partida en la
   nube, editor de personaje, móvil, agua con simulación (solo plano con shader barato), destrucción del terreno.
+- **Hoja de ruta tras el MVP** (cada fase se replanifica con `planificador` antes de empezar) **[SUPUESTO]**:
+  - **Fase 2:** magia modular (forma + elemento + modificadores) con creación/edición de hechizos; más armas; armaduras modulares.
+  - **Fase 3:** NPCs modulares, casas por kit de piezas, castillo y Ciudad de la Roca con arte final; animales; vegetación mejorada.
+  - **Fase 4:** barcos y navegación, pesca, mar mejorado (olas, espuma, reflejos).
+  - Contenido **por piezas reutilizables** (atlas compartidos, kits modulares) y magia por componentes para contener el peso.
 
 ## Estilo visual y sonoro
 - **Fantasía realista luminosa (NO fantasía oscura). NO low-poly, NO cartoon.** Referencias de tono y

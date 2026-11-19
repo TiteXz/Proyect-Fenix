@@ -39,3 +39,5 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
 - 2026-11-19 (cont.): mundo ampliado a 6,4 × 8,4 km (≈ 33 km² de tierra, ≈ 2/3 de GTA V) hacia el sur: desierto mayor con oasis
   (estanque + vegetación), zona rocosa de mesetas/cañones y la Ciudad de la Roca (4 niveles en terrazas alrededor de un pozo
   central, puentes, rampas, torre central y desfiladero de entrada). Edificios aún placeholder. CONTEXTO actualizado.
+- 2026-11-19 (cont.): añadidos a CONTEXTO la hoja de ruta tras el MVP (fase 2 magia modular/armas/armaduras, fase 3 NPCs/casas/
+  castillo/animales/vegetación, fase 4 barcos/pesca/mar) y los presupuestos de tamaño total (MVP ≤ 1,5 GB, completo ≤ 3,5 GB).
