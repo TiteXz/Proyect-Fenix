@@ -142,3 +142,18 @@ API esperada: `MAGIA.compilar(r)`, `MAGIA.equipar(slot, r)`, `MAGIA.lanzar(slot)
 | MQ-12 | Grimorio: B abre y pausa (`paused` true); equipar en ranura 4 y cambiar página ⇒ Q lanza ese hechizo |
 | MQ-13 | L2 + ✕ sigue disparando la habilidad del arma con el grimorio activo |
 | MQ-14 | La demo automática lanza ≥ 6 hechizos distintos y provoca ≥ 2 reacciones distintas en 90 s (semilla fija) |
+
+## 10. Pendiente (lo que la implementación de la maqueta deja fuera)
+Estado tras la sesión de implementación (`maqueta.src.html`, `vfx/vfx.js`, `magia/magia.js`, `pruebas/magia.js`).
+- **VFX.md §1.1 soft particles:** no hay RT con `depthTexture`; los bordes contra el suelo se suavizan con la erosión por umbral y el alfa, no con profundidad.
+- **VFX.md §1.8 heat haze / refracción** (calor del fuego, onda de Aire, distorsión de Sombra): no implementado (pide un RT de copia de pantalla). Aire se ve por polvo, hojas y estelas helicoidales; la onda de choque es un anillo muy tenue.
+- **VFX.md §1.2 flipbook 4x4 con mezcla de dos frames:** hay atlas 2x2 de humo fBm (256 px/celda) y una celda de llama fBm, sin mezcla entre frames; el atlas de humo es el único con dominio deformado.
+- **VFX.md §1.6 humo iluminado por 1/d²:** el humo es NormalBlending con autosombreado por densidad, pero sin luz del hechizo ni del sol (color fijo por emisión).
+- **VFX.md §2 presupuesto:** los círculos, ondas y decals siguen siendo un `Mesh` cada uno (hasta 44 quads, solo los activos cuentan como draw call); la meta de <= 6 draw calls de VFX no se cumple. Los presets Bajo/Medio/Alto/Ultra no escalan aún las partículas.
+- **VFX.md §4 por elemento:** cono de Hielo/Tierra/Sombra comparten el chorro genérico (`elemPuff`); aura de Rayo/Tierra/Sombra son versiones mínimas; no hay Cellisca ni Tempestad (reacciones 4-5 de VFX.md §6) porque DISENO.md solo incluye 6 fusiones.
+- **VFX.md §5 estados:** emisores de partículas/arcos por estado (<= 4 enemigos con VFX completo); no hay capa de shader sobre el albedo (escarcha creciendo, brasas en la malla) salvo el cuerpo de hielo del Congelado.
+- **DISENO.md §3 tabla de elementos:** Luz "Iluminado" no revela enemigos a través de obstáculos; Sombra "penumbra: −50 % alcance" se aproxima (los enemigos a distancia solo disparan a < 6,5 m); Aire "Desequilibrado" cancela el ataque en preparación pero no hay animación de tropiezo.
+- **DISENO.md §7:** el grimorio no guarda en `localStorage`; no se pueden renombrar hechizos. Mando: el grimorio se abre desde el menú de pausa (no hay atajo directo).
+- **DISENO.md §4 reacciones de suelo:** solo convierten suelos con estilo de elemento puro (Persistencia/Zona de un elemento); las Zonas de fusión no se vuelven a convertir.
+- **Contragolpe:** el hechizo se lanza igualmente (el jugador pierde 10 de vida); DISENO.md no especifica si debe anularse.
+- **Niebla negra:** "enemigos a > 6 m no te ven" se implementa como quedarse quietos y sin atacar; no pierden el objetivo de cámara.

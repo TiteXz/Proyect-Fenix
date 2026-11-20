@@ -96,9 +96,52 @@ body {
 .slot .cd { position: absolute; inset: 0; background: conic-gradient(rgba(4,4,8,.75) calc(var(--cd, 0) * 360deg), transparent 0); }
 .slot.on { border-color: var(--holy); box-shadow: 0 0 0 1px rgba(232,196,106,.6), 0 0 14px rgba(232,196,106,.25); }
 .slot.dim svg { opacity: .35; }
-.slot[data-s="fuego"] { color: var(--ember); }
-.slot[data-s="escarcha"] { color: var(--frost); }
-.slot[data-s="luz"] { color: var(--holy); }
+
+/* ---------- ranuras de magia y grimorio ---------- */
+.slot[data-s] { color: var(--parch-dim); }
+.slot.empty svg { opacity: .35; }
+.slot .ic { width: 26px; height: 26px; }
+.row .pg { align-self: center; font-size: 11px; font-weight: 700; color: var(--parch-dim); letter-spacing: .08em; width: 22px; text-align: center; }
+#grim { --gilt: #b8924f; --gilt-hi: #e2c27a; --gilt-dim: rgba(184,146,79,.42); position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; padding: 14px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(8,9,13,.3), rgba(3,3,6,.86) 80%); -webkit-backdrop-filter: blur(6px) saturate(.65) brightness(.7); backdrop-filter: blur(6px) saturate(.65) brightness(.7); overflow: auto; place-items: safe center; }
+.gr-panel { position: relative; width: min(1120px, 100%); padding: 18px 22px 12px; background: linear-gradient(180deg, rgba(22,21,24,.97), rgba(10,10,13,.97)); border: 1px solid var(--gilt-dim);
+  box-shadow: inset 0 0 0 4px rgba(6,6,9,.9), inset 0 0 0 5px rgba(184,146,79,.22), 0 30px 80px rgba(0,0,0,.75); }
+.gr-panel header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 10px; }
+.gr-panel h2 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 30px; letter-spacing: .14em; text-transform: uppercase; color: var(--parch); }
+.gr-sub { font-size: 12px; color: var(--parch-dim); letter-spacing: .05em; flex: 1; }
+#grClose { padding: 3px 10px; border: 1px solid var(--gilt-dim); background: transparent; color: var(--parch-dim); font: 700 12px var(--f-body); cursor: pointer; }
+.gr-cols { display: grid; grid-template-columns: 138px 150px 148px minmax(250px, 1.5fr) minmax(220px, 1.2fr); gap: 12px; align-items: start; }
+.gr-col h3 { margin: 0 0 6px; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--gilt); font-weight: 700; border-bottom: 1px solid rgba(184,146,79,.22); padding-bottom: 4px; }
+.gr-list { display: grid; gap: 3px; }
+.gr-b { position: relative; display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; padding: 6px 8px; font: 600 13px var(--f-body); color: var(--parch-dim);
+  background: rgba(255,255,255,.03); border: 1px solid rgba(214,200,170,.12); border-radius: 2px; cursor: pointer; }
+.gr-b small { display: block; font-size: 10px; font-weight: 500; color: rgba(166,157,138,.8); letter-spacing: .04em; }
+.gr-b svg { width: 20px; height: 20px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.gr-b:hover { background: rgba(226,194,122,.08); color: var(--parch); }
+.gr-b:focus-visible { outline: 2px solid var(--gilt-hi); outline-offset: 1px; color: var(--parch); }
+.gr-b[aria-pressed="true"] { color: var(--parch); border-color: var(--gilt-hi); background: rgba(226,194,122,.14); box-shadow: inset 0 0 0 1px rgba(226,194,122,.25); }
+.gr-b[aria-disabled="true"] { opacity: .38; cursor: not-allowed; }
+.gr-b.el i { width: 11px; height: 11px; border-radius: 50%; flex: none; box-shadow: 0 0 8px currentColor; }
+.gr-b.el em { margin-left: auto; font-style: normal; font-size: 11px; color: var(--gilt-hi); }
+.gr-prev { padding: 8px 10px; border: 1px solid rgba(184,146,79,.2); background: rgba(0,0,0,.25); cursor: grab; }
+#grName { margin: 0 0 6px; font-family: var(--f-display); font-size: 22px; font-weight: 700; color: var(--parch); letter-spacing: .03em; }
+#grCv { display: block; margin: 4px auto 8px; width: 168px; height: 168px; }
+#grInfo { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; margin: 0; font-size: 12.5px; }
+#grInfo dt { color: var(--parch-dim); } #grInfo dd { margin: 0; color: var(--parch); }
+#grInfo .i1 { color: #9cc96a; } #grInfo .i2 { color: #e0b24a; } #grInfo .i3 { color: #e0606a; }
+#grErr { min-height: 16px; margin: 6px 0 0; font-size: 12px; color: #e0856a; }
+.gr-act { display: flex; gap: 6px; margin-top: 6px; } .gr-act .gr-b { justify-content: center; }
+#grEquip.on { background: rgba(226,194,122,.25); border-color: var(--gilt-hi); color: #f3dc9c; }
+#grEquip:disabled { opacity: .4; }
+.slot6 { display: grid; grid-template-columns: 18px 1fr; gap: 0 6px; align-items: center; padding: 5px 8px; }
+.slot6 b { grid-row: 1 / 3; color: var(--gilt-hi); font-size: 14px; } .slot6 span { font-size: 12.5px; } .slot6 .vac { color: rgba(166,157,138,.45); font-weight: 500; }
+.slot6.cur { border-color: rgba(226,194,122,.4); } .slot6.arm { animation: grArm 1s ease-in-out infinite; }
+@keyframes grArm { 50% { border-color: var(--gilt-hi); background: rgba(226,194,122,.12); } }
+#grPre { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; margin-top: 4px; } .gr-b.pre { padding: 4px 6px; font-size: 11.5px; display: block; }
+#grCod { margin: 8px 0 0; font-size: 11.5px; color: var(--parch-dim); }
+#grFoot { margin: 10px 0 0; padding-top: 8px; border-top: 1px solid rgba(184,146,79,.16); font-size: 11.5px; color: rgba(166,157,138,.8); display: flex; flex-wrap: wrap; gap: 4px 14px; }
+#grFoot kbd { font: 700 10.5px var(--f-body); color: var(--parch); padding: 1px 5px; margin-right: 3px; border: 1px solid var(--gilt-dim); border-radius: 2px; }
+@media (max-width: 900px) { .gr-cols { grid-template-columns: 1fr 1fr; } }
 .slot[data-w] { color: var(--parch); }
 .slot[data-h] { color: #e8d39a; }
 #weapName { font-family: var(--f-display); font-weight: 600; font-size: 15px; color: var(--parch-dim); letter-spacing: .04em; text-shadow: 0 1px 3px #000; }
@@ -231,12 +274,10 @@ body.touchctl #pauseBtn { width: 40px; }
         <svg viewBox="0 0 24 24"><path d="M5 4c8 0 15 7 15 15M5 4l15 15M4 20 15 9M15 9h-3M15 9v3"/></svg></button>
     </div>
     <div class="row">
-      <button class="slot" type="button" data-s="fuego" aria-label="Bola de fuego (Q)"><span class="k" data-kb="Q" data-pad="">Q</span><span class="c">25</span>
-        <svg viewBox="0 0 24 24"><path d="M12 3c1 4 5 5.5 5 10.5a5 5 0 0 1-10 0c0-3 1.8-4 2-6.5 1.2 1 2 2.2 2 3.5.4-3.4.2-5.4 1-7.5z"/></svg><div class="cd"></div></button>
-      <button class="slot" type="button" data-s="escarcha" aria-label="Lanza de escarcha (E)"><span class="k" data-kb="E" data-pad="">E</span><span class="c">14</span>
-        <svg viewBox="0 0 24 24"><path d="M12 2v20M3.4 7l17.2 10M3.4 17 20.6 7M9.5 3.5 12 6l2.5-2.5M9.5 20.5 12 18l2.5 2.5"/></svg><div class="cd"></div></button>
-      <button class="slot" type="button" data-s="luz" aria-label="Destello sagrado (R)"><span class="k" data-kb="R" data-pad="">R</span><span class="c">35</span>
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg><div class="cd"></div></button>
+      <span class="pg" id="pgInd" title="Página de ranuras (Tab)">1/2</span>
+      <button class="slot" type="button" data-s="0" aria-label="Ranura 1 (Q)"><span class="k" data-kb="Q" data-pad="">Q</span><span class="c"></span><svg class="ic" viewBox="0 0 24 24"></svg><div class="cd"></div></button>
+      <button class="slot" type="button" data-s="1" aria-label="Ranura 2 (E)"><span class="k" data-kb="E" data-pad="">E</span><span class="c"></span><svg class="ic" viewBox="0 0 24 24"></svg><div class="cd"></div></button>
+      <button class="slot" type="button" data-s="2" aria-label="Ranura 3 (R)"><span class="k" data-kb="R" data-pad="">R</span><span class="c"></span><svg class="ic" viewBox="0 0 24 24"></svg><div class="cd"></div></button>
       <button class="slot" type="button" id="skillSlot" data-h="1" aria-label="Habilidad del arma: Embestida (G)" title="Embestida"><span class="k" data-kb="G" data-pad="R2">G</span>
         <svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg><div class="cd"></div></button>
     </div>
@@ -247,17 +288,17 @@ body.touchctl #pauseBtn { width: 40px; }
       <b>Teclado y ratón</b><br>
       <kbd>WASD</kbd> mover · <kbd>Ratón</kbd> cámara (clic en la escena para capturarlo)<br>
       <kbd>Clic izq.</kbd> atacar · <b>mantener</b> = ataque fuerte · <kbd>Clic der.</kbd>/<kbd>V</kbd> mantener = bloquear<br>
-      <kbd>F</kbd> magia elegida · <kbd>Rueda</kbd> elegir · <kbd>Q E R</kbd> directo · <kbd>G</kbd> habilidad del arma<br>
+      <kbd>F</kbd> magia elegida · <kbd>Rueda</kbd> elegir · <kbd>Q E R</kbd> directo · <kbd>Tab</kbd> página · <kbd>B</kbd> grimorio · <kbd>G</kbd> habilidad del arma<br>
       <kbd>Espacio</kbd> esquivar · <kbd>1 2 3</kbd> armas · <kbd>T</kbd> fijar objetivo · <kbd>Z</kbd>/<kbd>X</kbd> cambiar objetivo · <kbd>C</kbd> centrar cámara · <kbd>Esc</kbd>/<kbd>P</kbd> pausa
     </div>
     <div id="hintPad" hidden>
       <b id="padName">Mando</b><br>
       <kbd>Stick izq.</kbd> mover · <kbd>Stick der.</kbd> cámara · <kbd>R3</kbd> fijar objetivo (fijado: stick der. ◀ ▶ cambia)<br>
       <kbd>R1</kbd> atacar · <b>mantener</b> = ataque fuerte · <kbd>L1</kbd> mantener = bloquear (a tiempo: parada)<br>
-      <kbd>L2</kbd> mantener + <kbd class="ps sq">□</kbd> fuego · <kbd class="ps tr">△</kbd> escarcha · <kbd class="ps o">○</kbd> curación · <kbd class="ps x">✕</kbd> habilidad · <kbd>R2</kbd> habilidad del arma<br>
+      <kbd>L2</kbd> mantener + <kbd class="ps sq">□</kbd> <kbd class="ps tr">△</kbd> <kbd class="ps o">○</kbd> ranuras 1-3 · <kbd>▲▼</kbd> página · <kbd class="ps x">✕</kbd> habilidad · <kbd>R2</kbd> habilidad del arma<br>
       <kbd class="ps x">✕</kbd> / <kbd class="ps o">○</kbd> esquivar · <kbd class="ps tr">△</kbd> / <kbd>▲</kbd> cambiar arma · <kbd>OPTIONS</kbd> pausa
     </div>
-    Combo: escarcha ×2 congela, el martillo lo hace añicos y el fuego lo derrite.
+    Magia rúnica: compón hechizos en el grimorio. Reacciones: hielo+fuego = vapor, tierra+fuego = magma…
   </div>
   <div id="toast" role="status" aria-live="polite"></div>
   <div id="mountPrompt" hidden><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15"/><circle class="fg" id="mountRing" cx="18" cy="18" r="15"/></svg><span id="mountText">Mantén <b>E</b> para montar</span></div>
@@ -283,6 +324,7 @@ body.touchctl #pauseBtn { width: 40px; }
     <div id="pmMain">
       <ul class="pm-list">
         <li><button class="pm-item primary" type="button" data-testid="pause-resume" id="pmResume">Volver a la batalla</button></li>
+        <li><button class="pm-item" type="button" data-testid="pause-grimorio" id="pmGrim">Grimorio</button></li>
         <li><button class="pm-item" type="button" data-testid="pause-controls" id="pmCtl">Controles</button></li>
         <li><button class="pm-item" type="button" data-testid="pause-quality" id="pmQual">Calidad <small id="pmQualV">Alta</small></button></li>
         <li><button class="pm-item" type="button" data-testid="pause-demo" id="pmDemo">Salir a la demo</button></li>
@@ -294,6 +336,25 @@ body.touchctl #pauseBtn { width: 40px; }
       <ul class="pm-list"><li><button class="pm-item" type="button" data-testid="pause-controls-back" id="pmBack">Volver</button></li></ul>
     </div>
     <p class="pm-foot" id="pmFoot"></p>
+  </div>
+</div>
+<div id="grim" role="dialog" aria-modal="true" aria-label="Grimorio" data-testid="grimorio" hidden>
+  <div class="gr-panel">
+    <header><h2>Grimorio</h2><span class="gr-sub">Compón un hechizo con runas: 1 forma · 1 o 2 elementos · hasta 3 modificadores</span><button id="grClose" type="button">Cerrar (B)</button></header>
+    <div class="gr-cols">
+      <section class="gr-col"><h3>Forma</h3><div class="gr-list" id="grForma"></div></section>
+      <section class="gr-col"><h3>Núcleo</h3><div class="gr-list" id="grNucleo"></div></section>
+      <section class="gr-col"><h3>Modificadores</h3><div class="gr-list" id="grMods"></div></section>
+      <section class="gr-col"><h3>Vista previa</h3>
+        <div class="gr-prev" id="grPrev" draggable="true" title="Arrástralo a una ranura">
+          <p id="grName">Receta incompleta</p><canvas id="grCv" width="168" height="168"></canvas><dl id="grInfo"></dl><p id="grErr"></p>
+        </div>
+        <div class="gr-act"><button class="gr-b" id="grEquip" type="button">Equipar</button><button class="gr-b" id="grClear" type="button">Vaciar</button></div>
+      </section>
+      <section class="gr-col"><h3>Ranuras</h3><div class="gr-list" id="grSlots"></div><h3 style="margin-top:10px">Precompuestos</h3><div id="grPre"></div></section>
+    </div>
+    <p id="grCod"></p>
+    <p id="grFoot"></p>
   </div>
 </div>
 <div id="loading">Cargando el patio…</div>
@@ -309,6 +370,7 @@ body.touchctl #pauseBtn { width: 40px; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
 <script>/*__VFX__*/</script>
 <script>/*__RAYOS__*/</script>
+<script>/*__MAGIA__*/</script>
 <script>
 (() => {
 const THREE = window.THREE;
@@ -897,7 +959,7 @@ const smoke = (p, n, color, o = {}) => (VFX ? VFX.emit(p, n, color, Object.assig
 const ASH = makeParticles(260, THREE.AdditiveBlending, 0.05);
 
 /* luces de hechizo reutilizables (número fijo: no recompila shaders) */
-const flashes = [0, 1, 2].map(() => { const l = new THREE.PointLight(0xffffff, 0, 10, 2); scene.add(l); return { l, t: 1, dur: 1, int: 0, follow: null }; });
+const flashes = [0, 1, 2, 3].map(() => { const l = new THREE.PointLight(0xffffff, 0, 10, 2); scene.add(l); return { l, t: 1, dur: 1, int: 0, follow: null }; });
 function flash(pos, color, int, dur, follow = null) {
   return flashImpl(pos, color, int, dur, follow);
 }
@@ -940,7 +1002,10 @@ function spawnNum(pos, text, color, sub = null, big = false) {
   const el = document.createElement('div'); el.className = 'num' + (big ? ' big' : ''); el.style.color = color; el.textContent = text;
   if (sub) { const s = document.createElement('small'); s.textContent = sub; el.appendChild(s); }
   dmgLayer.appendChild(el);
-  nums.push({ el, p: pos.clone().add(new V3(rr(-0.3, 0.3), 0, rr(-0.3, 0.3))), t: 0, dur: sub ? 1.3 : 0.9 });
+  const np = pos.clone().add(new V3(rr(-0.4, 0.4), 0, rr(-0.4, 0.4)));
+  let k = 0; for (const n of nums) if (n.t < 0.7 && n.p.distanceToSquared(np) < 1.6) k++;   // apila los números cercanos en el tiempo
+  np.y += k * 0.42;
+  nums.push({ el, p: np, t: 0, dur: sub ? 1.3 : 0.9 });
   if (nums.length > 40) { const o = nums.shift(); o.el.remove(); }
 }
 function updateNums(dt) {
@@ -1051,15 +1116,11 @@ const WEAP = {
   martillo: { name: 'Martillo de guerra', dur: 0.88, hit: 0.56, cost: 22, dmg: 42, reach: 2.5, arc: -0.15 },
   arco: { name: 'Arco', dur: 0.62, hit: 0.62, cost: 6, dmg: 22, ranged: true }
 };
-const SPELL = {
-  fuego: { cost: 25, cd: 3.2, color: 0xff7a2e, name: 'Bola de fuego', cdur: 0.42, crel: 0.55 },
-  escarcha: { cost: 14, cd: 1.0, color: 0x7fe3ff, name: 'Lanza de escarcha', cdur: 0.42, crel: 0.55 },
-  luz: { cost: 35, cd: 8, color: 0xffd36a, name: 'Destello sagrado', cdur: 0.42, crel: 0.55 }
-};
+const SPELL = {};   // derivado: lo rellena MG.refrescar() desde las recetas (ver bloque MAGIA)
 const P = {
   pos: K.g.position, yaw: 0, hp: 100, hpMax: 100, st: 100, stMax: 100, mp: 100, mpMax: 100,
   weapon: 'espada', act: null, actT: 0, actDone: false, combo: 0, cast: null,
-  dodgeT: 0, dodgeDir: new V3(), stIdle: 0, cds: { fuego: 0, escarcha: 0, luz: 0 }, walk: 0, speed: 0,
+  dodgeT: 0, dodgeDir: new V3(), stIdle: 0, cds: {}, walk: 0, speed: 0,
   coins: 0, down: false, downT: 0, bonus: 1, dodgeN: 0, castN: 0,
   mounted: false, mountAnim: 1, mountFrom: null,
   block: false, blockT: 0, atkHeld: false, atkHoldT: 0, charging: false, heavy: false, actDur: 0.5, skill: null, skillCd: 0
@@ -1191,8 +1252,6 @@ const AX = new V3(1, 0, 0), AY = new V3(0, 1, 0), AZ = new V3(0, 0, 1);
     WEAP.espada.dur = 0.72; WEAP.espada.hit = 0.45;
     if (acts.martillazo) { WEAP.martillo.dur = 1.15; WEAP.martillo.hit = 0.47; } else { WEAP.martillo.dur = 1.05; WEAP.martillo.hit = 0.5; }
     if (acts.disparo_arco) { WEAP.arco.dur = 0.9; WEAP.arco.hit = 0.53; }
-    if (acts.conjurar) { SPELL.fuego.cdur = 0.95; SPELL.fuego.crel = 0.58; SPELL.escarcha.cdur = 0.72; SPELL.escarcha.crel = 0.58; }
-    if (acts.invocar) { SPELL.luz.cdur = 1.25; SPELL.luz.crel = 0.55; }
     knightAnim(0);
   }, (err) => console.warn('No se pudo cargar el caballero GLB', err));
 })();
@@ -1375,7 +1434,7 @@ function rotB(b, rots) {   // gira un hueso alrededor de ejes del modelo, sobre 
 }
 const clipDur = (n) => (GK.acts[n] ? GK.acts[n].getClip().duration : 1);
 const ACT_CLIP = { espada: 'tajo', martillo: 'martillazo', arco: 'disparo_arco' };
-const CAST_CLIP = { fuego: 'conjurar', escarcha: 'conjurar', luz: 'invocar' };
+const castClip = () => (SPELL[P.cast] && SPELL[P.cast].forma === 'yo' ? 'invocar' : 'conjurar');   // clip del caballero según la forma del hechizo
 function playOn(ch, name, key, ts, once, fade, syncWith) {
   const a = GK.acts[name]; if (!a) return;
   if (key !== ch.key) {
@@ -1412,7 +1471,7 @@ function knightAnim(dt) {
     act = GK.acts[ACT_CLIP[P.act]] ? ACT_CLIP[P.act] : (P.act === 'arco' ? 'hechizo' : 'tajo');
     actKey = act + P.combo; actTs = clipDur(act) / P.actDur;
   } else if (P.cast) {
-    act = GK.acts[CAST_CLIP[P.cast]] ? CAST_CLIP[P.cast] : 'hechizo';
+    act = GK.acts[castClip()] ? castClip() : 'hechizo';
     actKey = act + P.castN; actTs = clipDur(act) / SPELL[P.cast].cdur;
   }
   if (P.down) { stopOn(U, 0.1); playOn(M, 'morir', 'morir', 1, true, 0.1); }
@@ -1802,7 +1861,7 @@ function weaponAvoid(dt) {
 function castHandPos() {
   if (!GK) return handPos(K.handL);
   const l = GK.handL.getWorldPosition(new V3());
-  return P.cast === 'luz' ? l.add(GK.handR.getWorldPosition(new V3())).multiplyScalar(0.5) : l;
+  return (SPELL[P.cast] && SPELL[P.cast].forma === 'yo') ? l.add(GK.handR.getWorldPosition(new V3())).multiplyScalar(0.5) : l;
 }
 
 /* ---------- enemigos ---------- */
@@ -1812,8 +1871,8 @@ const ETYPES = {
   cultista: { hp: 55, speed: 1.8, dmg: 11, cd: 3.4, radius: 0.42, ranged: true, coins: 3, h: 1.9 },
   jefe: { hp: 640, speed: 1.6, reach: 2.6, dmg: 16, cd: 2.1, radius: 0.85, undead: true, coins: 20, h: 1.8, scale: 1.7 }
 };
-const iceGeo = new THREE.IcosahedronGeometry(1, 1);
-const iceMat = new THREE.MeshStandardMaterial({ color: 0xbfefff, emissive: 0x0a3242, transparent: true, opacity: 0.5, flatShading: true, roughness: 0.06, metalness: 0, envMapIntensity: 2 });
+const iceGeo = VFX && VFX.iceGeometry ? VFX.iceGeometry : new THREE.IcosahedronGeometry(1, 1);   // con VFX: cuerpo de hielo translúcido (shader de Fresnel)
+const iceMat = VFX && VFX.iceMaterial ? VFX.iceMaterial : new THREE.MeshStandardMaterial({ color: 0xbfefff, emissive: 0x0a3242, transparent: true, opacity: 0.5, flatShading: true, roughness: 0.06, metalness: 0, envMapIntensity: 2 });
 const barBg = new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.6, depthTest: false, fog: false });
 const barFg = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.55, 0.08, 0.1), depthTest: false, fog: false });
 const barGeoBg = new THREE.PlaneGeometry(0.9, 0.08), barGeoFg = new THREE.PlaneGeometry(0.86, 0.045);
@@ -1912,8 +1971,8 @@ function spawnEnemy(type, pos) {
   const bar = new THREE.Group(); const bg = new THREE.Mesh(barGeoBg, barBg), fg = new THREE.Mesh(barGeoFg, barFg);
   bg.renderOrder = 10; fg.renderOrder = 11; fg.position.z = 0.001; bar.add(bg, fg); bar.visible = false; scene.add(bar);
   const capeList = capes.filter((c) => { let o = c.m; while (o) { if (o === m.g) return true; o = o.parent; } return false; });
-  const e = { type, m, hp: d.hp, max: d.hp, def: d, sc, yaw: Math.atan2(-pos.x, -pos.z), spawnT: 1.2, dead: false, deathT: 0,
-    atkCd: rr(0.6, 1.4), atk: 0, frost: 0, frozen: 0, slow: 0, burn: 0, burnTick: 0, hurtT: 0, kb: new V3(), vy: 0, hy: 0, stagger: 0, lean: 0, kbHid: 0, stagDirX: 0, stagDirZ: 0, walk: Math.random() * 6,
+  const e = { type, m, est: window.FenixMagia.nuevoEstados(), hp: d.hp, max: d.hp, def: d, sc, yaw: Math.atan2(-pos.x, -pos.z), spawnT: 1.2, dead: false, deathT: 0,
+    atkCd: rr(0.6, 1.4), atk: 0, burnTick: 0.5, hurtT: 0, kb: new V3(), vy: 0, hy: 0, stagger: 0, lean: 0, kbHid: 0, stagDirX: 0, stagDirZ: 0, walk: Math.random() * 6,
     bar, fg, strafe: Math.random() < 0.5 ? 1 : -1, phase: 1, slamN: 0, apDodged: false, castAnim: 0, capes: capeList, mv: 0 };
   enemies.push(e);
   smoke(tmp.copy(pos).setY(0.3), 18, 0x2a2633, { spd: 1.2, up: 1.5, life: 1.6, grav: 0.6, spread: 0.5 });
@@ -2052,12 +2111,13 @@ function projMesh(kind) {
   return g;
 }
 const projs = [];
-function spawnProj(kind, from, dir, owner, speed, dmg, hid = 0) {
+function spawnProj(kind, from, dir, owner, speed, dmg, hid = 0, sp = null) {
   const useV = !!(VFX && kind !== 'flecha');
-  const m = useV ? VFX.projectileMesh(kind) : projMesh(kind); m.position.copy(from); m.quaternion.setFromUnitVectors(new V3(0, 0, 1), dir); scene.add(m);
-  const p = { kind, m, v: dir.clone().multiplyScalar(speed), owner, dmg, life: 2.2, light: null, vfx: useV, hid: hid || newHit(), kbPow: P.heavy ? 3.4 : 2.2 };
+  const m = sp ? (VFX ? VFX.spellProjectile(sp.el) : projMesh(sp.el[0] === 'fuego' ? 'fuego' : sp.el[0] === 'hielo' ? 'escarcha' : 'orbe')) : useV ? VFX.projectileMesh(kind) : projMesh(kind); m.position.copy(from); m.quaternion.setFromUnitVectors(new V3(0, 0, 1), dir); scene.add(m);
+  const p = { kind, m, v: dir.clone().multiplyScalar(speed), owner, dmg, life: 2.2, light: null, vfx: useV || !!(sp && VFX), hid: hid || newHit(), kbPow: P.heavy ? 3.4 : 2.2, sp };
   if (kind === 'fuego') p.light = flash(from, 0xff7a2e, 3, 9, m);
   if (kind === 'orbe') p.light = flash(from, 0xa060ff, 1.8, 9, m);
+  if (sp && sp.first && sp.el.some((x) => x === 'fuego' || x === 'rayo' || x === 'luz')) p.light = flash(from, sp.el.includes('fuego') ? 0xff7a2e : sp.el.includes('luz') ? 0xffd890 : 0xb9a8ff, 2.6, 9, m);
   projs.push(p);
 }
 function freeProj(p, i) {
@@ -2066,25 +2126,6 @@ function freeProj(p, i) {
   if (p.light) { p.light.follow = null; p.light.t = p.light.dur; }
   projs.splice(i, 1);
 }
-function explodeFire(pos) {
-  if (VFX) VFX.fireExplosion(pos.clone());
-  else {
-    emit(pos, 80, 0xff7a22, { spd: 6, up: 1, life: 0.7, grav: 2, spread: 0.2 });
-    emit(pos, 30, 0xffe08a, { spd: 3, up: 1, life: 0.5, grav: 1, hdr: 3 });
-    smoke(pos, 16, 0x1e1a18, { spd: 2, up: 1.5, life: 1.6, grav: 0.8, spread: 0.3 });
-    flash(pos, 0xff7a2e, 6, 0.55); ring(pos, 0xff8a3a, 0.4, 3.2, 0.45);
-  }
-  shake(0.22); rumble(200, 0.35, 0.55);
-  const hid = newHit();
-  for (const e of enemies) {
-    if (e.dead || e.spawnT > 0) continue;
-    const d = tmp.subVectors(e.m.g.position, pos).setY(0).length();
-    if (d > 2.9 + e.def.radius) continue;
-    if (e.frozen > 0) { e.frozen = 0; e.frost = 0; damageEnemy(e, 70, '#ffb35c', 'Derretido', true); emit(tmp2.copy(e.m.g.position).setY(1), 40, 0xbff4ff, { spd: 4, life: 0.8 }); smoke(tmp2, 14, 0x9aa4b0, { spd: 1.5, up: 2, life: 1.2, grav: 1 }); }
-    else { e.burn = 3; damageEnemy(e, 26, '#ff9a4a'); }
-    knock(e, hid, e.m.g.position.x - pos.x, e.m.g.position.z - pos.z, 5 * (1 - 0.5 * Math.min(1, d / (2.9 + e.def.radius))), 1.6, 0.3);
-  }
-}
 function updateProjs(dt) {
   for (let i = projs.length - 1; i >= 0; i--) {
     const p = projs[i]; p.life -= dt;
@@ -2092,7 +2133,7 @@ function updateProjs(dt) {
     p.m.position.addScaledVector(p.v, dt);
     if (p.kind === 'flecha') p.m.quaternion.setFromUnitVectors(tmp3.set(0, 0, 1), tmp.copy(p.v).normalize());
     const pos = p.m.position;
-    if (p.vfx) { if (p.m.userData.tick) p.m.userData.tick(dt); VFX.trail(p.kind, pos, dt); }
+    if (p.vfx) { if (p.m.userData.tick) p.m.userData.tick(dt); if (p.sp) VFX.trail(p.sp.el[0], pos, dt, p.sp.el[1]); else VFX.trail(p.kind, pos, dt); }
     else {
       if (p.kind === 'fuego') { emit(pos, 3, Math.random() < 0.5 ? 0xff6a1a : 0xffb040, { spd: 0.8, life: 0.45, grav: 2, spread: 0.1 }); if (Math.random() < 0.3) smoke(pos, 1, 0x1a1614, { spd: 0.3, life: 0.9, grav: 0.6 }); }
       if (p.kind === 'escarcha') emit(pos, 2, 0x9feeff, { spd: 0.4, life: 0.4, grav: -1, spread: 0.08 });
@@ -2105,12 +2146,8 @@ function updateProjs(dt) {
         const ep = e.m.g.position, dx = pos.x - ep.x, dz = pos.z - ep.z;
         if (dx * dx + dz * dz < (e.def.radius + 0.3) ** 2 && pos.y < e.def.h * e.sc + 0.3) {
           hit = true;
-          if (p.kind === 'fuego') explodeFire(pos);
-          else if (p.kind === 'escarcha') {
-            e.slow = 2.5; e.frost++; if (VFX) VFX.frostImpact(pos.clone()); else emit(pos, 22, 0x9feeff, { spd: 3, life: 0.6 });
-            if (e.frost >= 2 && e.type !== 'jefe') { e.frozen = 3.2; e.frost = 0; damageEnemy(e, 10, '#9feeff', 'Congelado'); }
-            else damageEnemy(e, 10, '#9feeff');
-          } else {
+          if (p.sp) MG.impactoProy(p, pos, e);
+          else {
             damageEnemy(e, p.dmg, '#ece2cc'); knock(e, p.hid, p.v.x, p.v.z, p.kbPow, 0, 0.12); emit(pos, 6, 0xd8cfb8, { spd: 2, life: 0.3, hdr: 1 });
           }
           break;
@@ -2120,10 +2157,409 @@ function updateProjs(dt) {
       const dx = pos.x - P.pos.x, dz = pos.z - P.pos.z;
       if (dx * dx + dz * dz < 0.25 && pos.y < 2.1) { hit = true; hurtPlayer(p.dmg, p.kind === 'orbe' ? 0xa060ff : 0xd8cfb8, { pos: p.m.position.clone().sub(p.v) }); }
     }
-    if (pos.y < 0.05 || Math.hypot(pos.x, pos.z) > 16) { hit = true; if (p.kind === 'fuego') explodeFire(pos); }
+    if (!hit && (pos.y < 0.05 || Math.hypot(pos.x, pos.z) > 16)) { hit = true; if (p.sp && p.owner === 'player') MG.impactoProy(p, pos, null); }
     if (hit || p.life <= 0) freeProj(p, i);
   }
 }
+
+/* ---------- MAGIA rúnica: recetas, ranuras, lanzamiento, estados, reacciones, suelos, grimorio ----------
+   Reglas puras en magia/magia.js (FenixMagia); aquí va el pegamento con enemigos, proyectiles, VFX y HUD. Valores: magia/DISENO.md. */
+const FM = window.FenixMagia;
+const ELC = { fuego: '#ff9a4a', hielo: '#9feeff', luz: '#ffe08a', rayo: '#cfc4ff', tierra: '#d8b480', sombra: '#b88cf0', aire: '#d8f0e4' };
+const FUS_TAG = { vapor: 'Vapor', magma: 'Magma', incendio: 'Incendio', escarcha_electrica: 'Escarcha eléctrica', juicio: 'Juicio', niebla_negra: 'Niebla negra' };
+const FORMA_ICON = {
+  proyectil: '<circle cx="6" cy="12" r="2.6"/><path d="M10 12h11M17 8l4 4-4 4"/>',
+  area: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+  zona: '<ellipse cx="12" cy="16" rx="9" ry="4"/><path d="M8 12c0-3 2-4 4-8 2 4 4 5 4 8"/>',
+  cono: '<path d="M3 12 21 4v16z"/>',
+  yo: '<circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-5 3-8 7-8s7 3 7 8"/>'
+};
+const mV1 = new V3(), mV2 = new V3(), mV3 = new V3(), mV4 = new V3();
+const uniqEl = (a) => a.filter((x, i) => a.indexOf(x) === i);
+const MG = {
+  ranuras: [null, null, null, null, null, null], pagina: 0, codice: [], semilla: 20240611,
+  suelos: Array.from({ length: 8 }, () => ({ activo: false, tipo: 'suelo', estilo: 'fuego', x: 0, z: 0, r: 2, r1: 2, t: 0, dur: 1, h: null, tick: 0, tickB: 0, n: 0, dps: 0, comp: null, conv: false, orden: 0 })),
+  ordenN: 0, stats: { lanzados: {}, reacciones: {}, estados: {} }, tareas: Array.from({ length: 16 }, () => ({ activo: false, t: 0, fn: null })),
+  oculto: false, aura: null, regen: { t: 0, rate: 0 }, fxT: 0, editor: { forma: null, nucleo: [], mods: [] }, cache: {}
+};
+P.buff = { fuego: 0, hielo: 0, luz: 0, rayo: 0, tierra: 0, sombra: 0, aire: 0 };
+Object.assign(MG, {
+  prec: (id) => FM.PRECOMPUESTOS.find((p) => p.id === id),
+  // spec de una clave de lanzamiento: 'm0'..'m5' (ranuras) o 'd1'..'d10' (precompuestos: lo usa la demo)
+  spec(key) {
+    if (key[0] === 'm') { const r = MG.ranuras[+key.slice(1)]; return r ? { receta: r.receta, nombre: r.nombre } : null; }
+    const p = MG.prec(+key.slice(1)); return p ? { receta: p.receta, nombre: p.nombre } : null;
+  },
+  comp(key) { const s = MG.spec(key); if (!s) return null; const c = FM.compilar(s.receta, MG.codice); c.nombreP = s.nombre; return c; },
+  nombreDe(receta, c) { const p = FM.PRECOMPUESTOS.find((x) => FM.recetaKey(x.receta) === FM.recetaKey(receta)); return p ? p.nombre : c.nombre; },
+  compilar(r) { return FM.compilar(r, MG.codice); },
+  // SPELL derivado: una entrada por clave con lo que necesita el bucle de acciones (coste, recarga, animación)
+  refrescar() {
+    const keys = []; for (let i = 0; i < 6; i++) keys.push('m' + i); for (const p of FM.PRECOMPUESTOS) keys.push('d' + p.id);
+    for (const k of keys) {
+      const c = MG.comp(k);
+      if (!c || !c.ok) { delete SPELL[k]; if (P.cds[k] === undefined) P.cds[k] = 0; continue; }
+      const cdur = c.lanz + 0.2;
+      SPELL[k] = { cost: c.mana, cd: c.rec, color: c.color[0], name: c.nombreP || c.nombre, cdur, crel: c.lanz / cdur, forma: c.forma, I: c.I };
+      if (P.cds[k] === undefined) P.cds[k] = 0;
+    }
+    MG.hudSlots();
+  },
+  equipar(slot, receta) {
+    slot = slot | 0;
+    if (slot < 0 || slot > 5) return false;
+    if (receta === null) { MG.ranuras[slot] = null; MG.refrescar(); return true; }
+    const c = FM.compilar(receta, MG.codice); if (!c.ok) return false;
+    MG.ranuras[slot] = { receta: JSON.parse(JSON.stringify(receta)), nombre: MG.nombreDe(receta, c) };
+    P.cds['m' + slot] = 0; MG.refrescar(); return true;
+  },
+  lanzar(slot) { return castSpell('m' + (slot | 0)); },
+  descubrir(id) {
+    if (!id || MG.codice.includes(id)) return;
+    MG.codice.push(id); toast('Códice: ' + FUS_TAG[id] + ' descubierta · su inestabilidad baja', 3.2);
+    const el = document.querySelector('#grim:not([hidden])'); if (el) grRender();
+  },
+  /* ---------- lanzamiento ---------- */
+  objetivoPt(comp, out) {   // punto del suelo hacia el que apuntan Área y Zona
+    const t = aimTarget(18), maxD = comp.forma === 'zona' ? 12 : 18;
+    if (t) out.copy(t.m.g.position); else out.set(Math.sin(P.yaw) * 8, 0, Math.cos(P.yaw) * 8).add(P.pos);
+    out.y = 0;
+    mV4.copy(out).sub(P.pos).setY(0); const d = mV4.length();
+    if (d > maxD) out.copy(P.pos).addScaledVector(mV4.normalize(), maxD).setY(0);
+    return out;
+  },
+  alLanzar(key) {
+    const c = MG.comp(key); if (!c) return;
+    const spl = SPELL[key]; if (spl.forma !== 'yo') faceTarget();
+    P.roll = FM.tirada(c.I, (c.semilla ^ MG.semilla) >>> 0, P.castN);
+    MG.stats.lanzados[c.key] = (MG.stats.lanzados[c.key] || 0) + 1;
+    MG.stats.nombres = MG.stats.nombres || {}; MG.stats.nombres[c.nombreP || c.nombre] = (MG.stats.nombres[c.nombreP || c.nombre] || 0) + 1;
+    if (P.roll === 'contragolpe') { P.hp = Math.max(1, P.hp - 10); hurtFlash = 0.8; spawnNum(mV1.copy(P.pos).setY(2.5), 'Contragolpe', '#e0606a', null, true); shake(0.35); }
+    if (VFX) { if (P.castFX) VFX.castCancel(P.castFX); P.castFX = VFX.castStart(c.elems[0], { kind2: c.elems[1] && c.elems[1] !== c.elems[0] ? c.elems[1] : null, I: c.I }); }
+    if (c.forma === 'area' || c.forma === 'zona') {
+      P.castPt = P.castPt || new V3(); MG.objetivoPt(c, P.castPt);
+      if (VFX) VFX.senal(P.castPt, c.forma === 'area' ? 3 : 3.5, c.lanz, c.elems[0]);
+    }
+    if (c.fusion === 'juicio' && VFX && c.forma === 'proyectil') { /* la señal sale al impactar */ }
+    MG.descubrir(c.fusion);   // la 1.ª vez que sale una fusión se descubre (después de la tirada)
+    P.castComp = c;
+  },
+  liberar(key) {
+    const c = P.castComp && SPELL[key] ? P.castComp : MG.comp(key); if (!c) return;
+    const roll = P.roll, sobre = roll === 'sobrecarga' ? 1.5 : 1;
+    if (roll === 'sobrecarga') { spawnNum(mV1.copy(P.pos).setY(2.5), 'Sobrecarga', '#ffd36a', null, true); shake(0.3); }
+    const fwd = mV2.set(Math.sin(P.yaw), 0, Math.cos(P.yaw));
+    const from = GK ? castHandPos().addScaledVector(fwd, 0.2) : P.pos.clone().setY(1.35).addScaledVector(fwd, 0.6);
+    const el = uniqEl(c.elems), pot = c.potencia * sobre;
+    if (c.forma === 'yo') return MG.liberarYo(c, el[0]);
+    if (c.forma === 'proyectil') {
+      const t = aimTarget(18);
+      const dir0 = t ? mV3.copy(t.m.g.position).setY(t.def.h * t.sc * 0.55).sub(from).normalize().clone() : fwd.clone();
+      const speed = (el.includes('luz') ? 27 : 18), angs = c.tiros > 1 ? [-0.1745, 0, 0.1745] : [0], hid = newHit();
+      angs.forEach((a, i) => {
+        const d = dir0.clone().applyAxisAngle(AY, a);
+        spawnProj('hechizo', from, d, 'player', speed, 0, hid, { comp: c, el, pot: pot * c.frac, first: i === 0, color: ELEMS_HEX(el[0]) });
+        projs[projs.length - 1].life = 22 / speed;
+      });
+      return;
+    }
+    if (c.forma === 'area') {
+      const pt = P.castPt.clone();
+      if (c.fusion === 'juicio') MG.juicio(pt, 3, c, pot, true);
+      else MG.explosion(c, pt, 3, pot);
+      return;
+    }
+    if (c.forma === 'zona') { MG.crearZona(c, P.castPt.clone(), pot); return; }
+    if (c.forma === 'cono') MG.cono(c, from, pot);
+  },
+  liberarYo(c, el) {
+    P.buff[el] = 8; MG.stats.estados['yo:' + el] = 1;
+    if (VFX) { if (MG.aura && MG.aura.active) VFX.auraStop(MG.aura); MG.aura = VFX.aura(el, P.pos, 8); }
+    if (el === 'luz') {
+      if (VFX) { VFX.holyBurst(P.pos.clone(), 1.9); VFX.healSparkles(P.pos.clone()); } else { pillar(P.pos, 0xffd36a, 0.9); ring(P.pos, 0xffd36a, 0.5, 5.5, 0.6); }
+      P.hp = Math.min(P.hpMax, P.hp + 20); MG.regen.t = 5; MG.regen.rate = 2;
+      spawnNum(mV1.copy(P.pos).setY(2.4), '+20', '#b8e890');
+    } else {
+      emit(mV1.copy(P.pos).setY(1), 30, FM.ELEMS[el].hex, { spd: 2.5, up: 1, life: 0.7, grav: 0, spread: 0.4 });
+      spawnNum(mV1.copy(P.pos).setY(2.4), FM.ELEMS[el].nombre, ELC[el]);
+    }
+  },
+  /* ---------- daño sobre un enemigo ---------- */
+  golpear(e, receta, o = {}) {   // receta puede ser una receta o un compilado
+    const c = receta.mana !== undefined ? receta : FM.compilar(receta, MG.codice); if (!c.ok || !e || e.dead) return null;
+    const el = uniqEl(c.elems), fus = c.fusion ? FM.FUSIONES[c.fusion] : null;
+    const pot = o.pot !== undefined ? o.pot : c.potencia * c.frac;
+    const res = FM.resolverGolpe(e.est, e.type, el, pot, { estados: o.sinEstados ? [] : fus ? fus.estados : null, reac: o.reac, sinEstados: o.sinEstados });
+    MG.aplicarVisual(e, res, c, o);
+    return res;
+  },
+  aplicarVisual(e, res, c, o) {
+    let tag = null, big = false;
+    if (res.reaccion) { tag = FUS_TAG[res.reaccion] + (res.cong ? ' ×2' : ''); big = true; MG.reaccionEnemigo(e, res, c); }
+    else if (res.fuertes.length) { tag = res.fuertes[0] === 'congelado' ? 'Congelado' : res.fuertes[0] === 'aturdido' ? 'Aturdido' : 'Derribado'; big = true; }
+    for (const f of res.fuertes) MG.stats.estados[f] = (MG.stats.estados[f] || 0) + 1;
+    const col = res.reaccion ? '#ffe9b0' : ELC[uniqEl(c.elems)[0]] || '#ece2cc';
+    damageEnemy(e, res.total, col, tag, big);
+    if (res.fuertes.includes('congelado') && VFX && !e.dead) VFX.impacto('hielo', mV1.copy(e.m.g.position).setY(1), 1);
+  },
+  daño(e, v, color, tag) { if (e && !e.dead) damageEnemy(e, v, color, tag || null); },
+  /* ---------- reacciones ---------- */
+  reaccionEnemigo(e, res, c) {
+    const id = res.reaccion, pos = mV2.copy(e.m.g.position).setY(0.05), p0 = pos.clone();
+    MG.stats.reacciones[id] = (MG.stats.reacciones[id] || 0) + 1; MG.descubrir(id);
+    if (VFX) VFX.reaccion(id, mV3.copy(e.m.g.position).setY(e.def.h * e.sc * 0.55), res.cong);
+    if (id === 'vapor') MG.suelo('vapor', p0, 2.5, 3);
+    else if (id === 'magma') { FM.aplicarEstado(e.est, e.type, 'costra', 1.5); MG.suelo('magma', p0, 2, 5); }
+    else if (id === 'incendio') {
+      for (const o of enemies) { if (o === e || o.dead || o.spawnT > 0) continue; if (o.m.g.position.distanceTo(e.m.g.position) < 4) { FM.aplicarEstado(o.est, o.type, 'ardiendo', 4); if (VFX) VFX.arc(mV3.copy(e.m.g.position).setY(1.1), mV4.copy(o.m.g.position).setY(1.1), { life: 0.25, amp: 0.25, col: [7, 3, 0.8], w: 1.6, halo: [1.4, 0.45, 0.1] }); } }
+    } else if (id === 'escarcha_electrica') {
+      for (const o of enemies) {
+        if (o === e || o.dead || o.spawnT > 0) continue;
+        if ((o.est.escarcha > 0 || o.est.congelado > 0) && o.m.g.position.distanceTo(e.m.g.position) < 8) {
+          if (VFX) VFX.arc(mV3.copy(e.m.g.position).setY(1.1), mV4.copy(o.m.g.position).setY(1.1), { life: 0.22, amp: 0.25, col: [2.2, 5, 8], w: 1.2 });
+          FM.aplicarEstado(o.est, o.type, 'cargado', 5); MG.daño(o, Math.max(1, Math.round(res.base * 0.5)), '#9feeff', 'Cadena');
+        }
+      }
+    } else if (id === 'juicio') {
+      const pt = e.m.g.position.clone(); if (VFX) VFX.senal(pt, 1.2, 0.6, 'luz');
+      MG.despues(0.6, () => { if (VFX) VFX.skyBolt(pt, false); for (const o of enemies) if (!o.dead && o.m.g.position.distanceTo(pt) < 1.6) { MG.daño(o, Math.max(8, Math.round(res.base * 0.5)), '#ffe9b0', 'Rayo'); FM.aplicarEstado(o.est, o.type, 'aturdido', 1); } shake(0.2); });
+    } else if (id === 'niebla_negra') MG.suelo('niebla_negra', p0, 2.5, 3);
+  },
+  despues(t, fn) { const k = MG.tareas.find((x) => !x.activo); if (k) { k.activo = true; k.t = t; k.fn = fn; } else fn(); },
+  /* ---------- impactos ---------- */
+  impactoProy(p, pos, e) {
+    const s = p.sp, c = s.comp, el = s.el, fus = c.fusion;
+    const at = pos.clone(); at.y = Math.max(0.05, Math.min(at.y, 1.6));
+    const ground = new V3(at.x, 0, at.z);
+    MG.convertirSuelos(ground, el);
+    if (fus === 'juicio') { MG.juicio(ground, 1.6, c, s.pot, false); return; }
+    MG.vfxImpacto(c, at, 1.2, true);
+    if (e) { MG.golpear(e, c, { pot: s.pot }); MG.empuje(e, el, p.hid, p.v); }
+    if (el.includes('fuego') && !fus) {   // explota r 2 m: 50 % del daño
+      for (const o of enemies) { if (o === e || o.dead || o.spawnT > 0) continue; if (o.m.g.position.distanceTo(ground) < 2 + o.def.radius) MG.golpear(o, c, { pot: s.pot * 0.5 }); }
+      shake(0.2); rumble(160, 0.3, 0.5);
+    }
+    if (el.includes('rayo') && !fus && e) MG.cadenaRayo(e, c, s.pot);
+    if (fus === 'escarcha_electrica' && e) MG.cadenaFrio(e, c, s.pot);
+    if (fus) MG.efectoFusion(fus, ground, c);
+    if (c.mods.includes('persistencia')) MG.suelo(fus || el[0], ground, 2, 4, c);
+  },
+  vfxImpacto(c, at, R, pequeno) {
+    if (!VFX) { emit(at, 30, c.color[0], { spd: 4, life: 0.6 }); flash(at, c.color[0], 4, 0.4); return; }
+    const el = uniqEl(c.elems);
+    if (c.fusion) { VFX.reaccion(c.fusion, at, false); }
+    else for (const x of el) VFX.impacto(x, at, R, { pequeno });
+  },
+  empuje(e, el, hid, v) {
+    const dx = v ? v.x : 0, dz = v ? v.z : 0, pow = el.includes('aire') ? 6.5 : el.includes('tierra') ? 5 : 2.2;
+    knock(e, hid, dx, dz, pow, el.includes('tierra') ? 0.8 : 0, el.includes('aire') || el.includes('tierra') ? 0.25 : 0.12);
+  },
+  cadenaRayo(e, c, pot) {   // salta 2 veces, 6 m, 70 %
+    let from = e, dmg = pot; const vistos = [e];
+    for (let k = 0; k < 2; k++) {
+      let best = null, bd = 6;
+      for (const o of enemies) { if (vistos.includes(o) || o.dead || o.spawnT > 0) continue; const d = o.m.g.position.distanceTo(from.m.g.position); if (d < bd) { bd = d; best = o; } }
+      if (!best) break;
+      dmg *= 0.7; vistos.push(best);
+      if (VFX) VFX.arc(mV3.copy(from.m.g.position).setY(1.1), mV4.copy(best.m.g.position).setY(1.1), { life: 0.2, amp: 0.22, w: 1.2 });
+      MG.golpear(best, c, { pot: dmg }); from = best;
+    }
+  },
+  cadenaFrio(e, c, pot) {   // salta solo entre enemigos con Escarcha (máx. 4)
+    let from = e, dmg = pot; const vistos = [e];
+    for (let k = 0; k < 3; k++) {
+      let best = null, bd = 8;
+      for (const o of enemies) { if (vistos.includes(o) || o.dead || o.spawnT > 0 || !(o.est.escarcha > 0 || o.est.congelado > 0)) continue; const d = o.m.g.position.distanceTo(from.m.g.position); if (d < bd) { bd = d; best = o; } }
+      if (!best) break;
+      dmg *= 0.7; vistos.push(best);
+      if (VFX) VFX.arc(mV3.copy(from.m.g.position).setY(1.1), mV4.copy(best.m.g.position).setY(1.1), { life: 0.22, amp: 0.25, col: [2.2, 5, 8], w: 1.2 });
+      MG.golpear(best, c, { pot: dmg }); from = best;
+    }
+  },
+  efectoFusion(id, pos, c) {
+    if (id === 'vapor') MG.suelo('vapor', pos, 3, 4, c, 4);
+    else if (id === 'magma') MG.suelo('magma', pos, 2, 5, c);
+    else if (id === 'niebla_negra') MG.suelo('niebla_negra', pos, 3, 5, c);
+  },
+  juicio(pt, r, c, pot, area) {    // rayo del cielo tras señal de 0,6 s
+    if (VFX) VFX.senal(pt, r, 0.6, 'luz');
+    MG.convertirSuelos(pt, ['luz', 'rayo']);
+    MG.despues(0.6, () => {
+      if (VFX) { VFX.skyBolt(pt, area); if (area) VFX.reaccion('juicio', pt, false); }
+      const hid = newHit();
+      for (const o of enemies) {
+        if (o.dead || o.spawnT > 0) continue;
+        const d = o.m.g.position.distanceTo(pt); if (d > r + o.def.radius) continue;
+        MG.golpear(o, c, { pot });
+        knock(o, hid, o.m.g.position.x - pt.x, o.m.g.position.z - pt.z, 3, 0.6, 0.25);
+      }
+      shake(0.35); rumble(200, 0.4, 0.7);
+    });
+  },
+  explosion(c, pt, R, pot) {
+    const el = uniqEl(c.elems), hid = newHit();
+    MG.convertirSuelos(pt, el);
+    MG.vfxImpacto(c, mV1.copy(pt).setY(0.3), R, false);
+    for (const o of enemies) {
+      if (o.dead || o.spawnT > 0) continue;
+      const d = o.m.g.position.distanceTo(pt); if (d > R + o.def.radius) continue;
+      MG.golpear(o, c, { pot });
+      knock(o, hid, o.m.g.position.x - pt.x, o.m.g.position.z - pt.z, (el.includes('aire') ? 6.5 : 4.5) * (1 - 0.5 * Math.min(1, d / (R + 0.5))), 1.2, 0.3);
+    }
+    if (c.fusion) MG.efectoFusion(c.fusion, pt, c);
+    if (c.mods.includes('persistencia')) MG.suelo(c.fusion || el[0], pt, 2, 4, c);
+    shake(0.3); rumble(220, 0.4, 0.7);
+  },
+  cono(c, from, pot) {
+    const el = uniqEl(c.elems), fx = Math.sin(P.yaw), fz = Math.cos(P.yaw), hid = newHit();
+    if (VFX) VFX.cono(el[0], el[1] || '', from, fx, fz, 5, Math.PI / 3);
+    else emit(from, 40, c.color[0], { spd: 6, life: 0.5 });
+    MG.convertirSuelos(mV1.set(P.pos.x + fx * 2.5, 0, P.pos.z + fz * 2.5), el);
+    for (const o of enemies) {
+      if (o.dead || o.spawnT > 0) continue;
+      const dx = o.m.g.position.x - P.pos.x, dz = o.m.g.position.z - P.pos.z, d = Math.hypot(dx, dz);
+      if (d > 5 + o.def.radius) continue;
+      const cos = d > 0.01 ? (dx * fx + dz * fz) / d : 1; if (cos < Math.cos(Math.PI / 6) - (o.def.radius / Math.max(d, 0.5)) * 0.4) continue;
+      MG.golpear(o, c, { pot }); knock(o, hid, dx, dz, el.includes('aire') ? 6 : 2.5, 0, 0.2);
+    }
+    shake(0.15);
+  },
+  /* ---------- suelos (zonas del jugador: máx. 2; suelos de persistencia/reacción: máx. 6) ---------- */
+  crearZona(c, pt, pot) {
+    const el = uniqEl(c.elems), est = c.fusion || el[0];
+    MG.convertirSuelos(pt, el);
+    return MG.nuevoSuelo('zona', est, pt, 3.5, 6, c, pot, c.fusion === 'vapor' ? 4 : 0);
+  },
+  suelo(estilo, pos, r, dur, c = null, r1 = 0) { return MG.nuevoSuelo('suelo', estilo, pos, r, dur, c, 0, r1); },
+  nuevoSuelo(tipo, estilo, pos, r, dur, c, dps, r1) {
+    const mine = MG.suelos.filter((z) => z.activo && z.tipo === tipo), max = tipo === 'zona' ? 2 : 6;
+    if (mine.length >= max) { const old = mine.reduce((a, b) => (a.orden < b.orden ? a : b)); MG.apagar(old); }
+    const z = MG.suelos.find((q) => !q.activo) || MG.suelos.filter((q) => q.tipo === 'suelo').reduce((a, b) => (a.orden < b.orden ? a : b));
+    if (z.activo) MG.apagar(z);
+    Object.assign(z, { activo: true, tipo, estilo, x: pos.x, z: pos.z, r, r1: r1 || r, t: 0, dur, tick: 0.25, tickB: 0, n: 0, dps: dps || 0, comp: c, conv: false, orden: ++MG.ordenN });
+    z.h = VFX ? VFX.zona(estilo, pos, r, dur, z.r1) : null;
+    return z;
+  },
+  apagar(z) { z.activo = false; if (z.h && VFX) VFX.zonaStop(z.h); z.h = null; },
+  convertirSuelos(pos, elems) {     // reacción en suelo: un impacto B dentro de un suelo A lo convierte (1 vez)
+    for (const z of MG.suelos) {
+      if (!z.activo || z.conv) continue;
+      if (Math.hypot(pos.x - z.x, pos.z - z.z) > z.r + 0.5) continue;
+      for (const b of elems) {
+        const f = FM.fusionDe(z.estilo, b); if (!f) continue;
+        z.estilo = f.id; z.conv = true; if (f.id === 'incendio') z.r *= 1.5; z.r1 = Math.max(z.r1, z.r);
+        if (VFX && z.h && z.h.active) { z.h.r = z.r; VFX.zonaStyle(z.h, f.id, z.r1); }
+        MG.stats.reacciones['suelo:' + f.id] = (MG.stats.reacciones['suelo:' + f.id] || 0) + 1; MG.descubrir(f.id);
+        spawnNum(mV1.set(z.x, 1.8, z.z), FUS_TAG[f.id], '#ffe9b0', null, true);
+        break;
+      }
+    }
+  },
+  efectosSuelo(z, dt) {
+    const st = z.estilo, r = z.r + 0.0;
+    z.tick -= dt; z.tickB -= dt;
+    const tickA = z.tick <= 0; if (tickA) { z.tick += 0.5; z.n++; }
+    const estados = z.n % 2 === 0;   // los estados acumulables entran a 1/s
+    const spell = z.comp && z.tipo === 'zona';
+    const dmgSec = spell ? z.dps : (st === 'fuego' || st === 'magma' || st === 'incendio' ? 6 : 0);
+    const reps = FM.FUSIONES[st] ? FM.FUSIONES[st].par : [st];
+    for (const e of enemies) {
+      if (e.dead || e.spawnT > 0) continue;
+      const g = e.m.g.position, d = Math.hypot(g.x - z.x, g.z - z.z);
+      if (d > r + e.def.radius * 0.5) continue;
+      const s = e.est;
+      if (st === 'hielo') s.zlento = 0.3;
+      if (st === 'sombra') s.penumbra = 0.3;
+      if (st === 'vapor') s.cegado = Math.max(s.cegado, 2);
+      if (st === 'niebla_negra') s.cegado = Math.max(s.cegado, 3);
+      if (st === 'aire') { const k = d > 0.05 ? 2 * dt / d : 0; g.x += (g.x - z.x) * k; g.z += (g.z - z.z) * k; }
+      if (!tickA) continue;
+      if (dmgSec > 0) {
+        if (spell) { const res = MG.golpear(e, z.comp, { pot: dmgSec * 0.5, reac: false, sinEstados: !estados }); if (res) { /* daño ya mostrado */ } }
+        else { MG.daño(e, dmgSec * 0.5, '#ff9a4a'); if (!e.dead && estados) FM.aplicarEstado(s, e.type, 'ardiendo', 4); }
+      } else if (estados && !spell) {
+        if (st === 'rayo') FM.aplicarEstado(s, e.type, 'cargado', 5);
+        if (st === 'tierra') FM.aplicarEstado(s, e.type, 'lastrado', 5);
+        if (st === 'escarcha_electrica') { FM.aplicarEstado(s, e.type, 'escarcha', 5); FM.aplicarEstado(s, e.type, 'cargado', 5); }
+      }
+      if (!e.dead && (st === 'magma' || st === 'incendio') && !spell && estados && st === 'magma') FM.aplicarEstado(s, e.type, 'lastrado', 5);
+    }
+    if (tickA && Math.hypot(P.pos.x - z.x, P.pos.z - z.z) < r && (st === 'luz')) { P.hp = Math.min(P.hpMax, P.hp + 1); }   // consagrado: +2 vida/s
+    if (tickA && st === 'juicio') {   // 1 rayo/s al enemigo más cercano
+      if (z.n % 2 === 0) {
+        let best = null, bd = 9; for (const e of enemies) { if (e.dead || e.spawnT > 0) continue; const d = Math.hypot(e.m.g.position.x - z.x, e.m.g.position.z - z.z); if (d < bd) { bd = d; best = e; } }
+        if (best) { if (VFX) VFX.skyBolt(best.m.g.position, false); MG.daño(best, 12, '#ffe9b0', 'Rayo'); }
+      }
+    }
+  },
+  pierde(dist) { return dist > 6 && (MG.oculto || P.buff.sombra > 0); },
+  /* ---------- por frame ---------- */
+  update(dt) {
+    for (const k of MG.tareas) { if (!k.activo) continue; k.t -= dt; if (k.t <= 0) { k.activo = false; const f = k.fn; k.fn = null; f(); } }
+    let oc = false;
+    for (const z of MG.suelos) {
+      if (!z.activo) continue;
+      z.t += dt;
+      if (z.t >= z.dur) { z.activo = false; z.h = null; continue; }
+      const rr_ = z.r + (z.r1 - z.r) * Math.min(1, z.t / (z.dur * 0.5));
+      const save = z.r; z.r = rr_; MG.efectosSuelo(z, dt); z.r = save;
+      if (z.estilo === 'niebla_negra' && Math.hypot(P.pos.x - z.x, P.pos.z - z.z) < rr_) oc = true;
+    }
+    MG.oculto = oc;
+    for (const k in P.buff) if (P.buff[k] > 0) P.buff[k] = Math.max(0, P.buff[k] - dt);
+    if (MG.regen.t > 0) { MG.regen.t -= dt; P.hp = Math.min(P.hpMax, P.hp + MG.regen.rate * dt); }
+    // los 4 enemigos más cercanos reciben VFX completo de estados
+    for (const e of enemies) e.fx = false;
+    for (let k = 0; k < 4; k++) { let best = null, bd = 99; for (const e of enemies) { if (e.fx || e.dead || e.spawnT > 0) continue; const d = e.m.g.position.distanceTo(P.pos); if (d < bd) { bd = d; best = e; } } if (best) best.fx = true; else break; }
+  },
+  tickEnemy(e, dt) {   // devuelve false si muere
+    const s = e.est; FM.tickEstados(s, dt);
+    if (s.ardiendo > 0) { e.burnTick -= dt; if (e.burnTick <= 0) { e.burnTick = 0.5; damageEnemy(e, 3, '#ff9a4a'); if (e.dead) return false; } }
+    if (s.maldito > 0) { e.curseTick = (e.curseTick || 0) - dt; if (e.curseTick <= 0) { e.curseTick = 0.5; damageEnemy(e, 1, '#b88cf0'); P.hp = Math.min(P.hpMax, P.hp + 1); if (e.dead) return false; } }
+    if (s.cancelaAtaque) { s.cancelaAtaque = false; e.atk = 0; e.atkCd = Math.max(e.atkCd, 0.8); }
+    const inc = Math.max(s.aturdido, s.derribado, s.costra); if (inc > (e.stun || 0)) e.stun = inc;
+    e.m.ice.visible = s.congelado > 0;
+    e.fxT = (e.fxT || 0) + dt;
+    if (VFX && e.fx && e.fxT > 0.07) {
+      e.fxT = 0; const g = e.m.g.position, h = e.def.h * e.sc;
+      for (const k of ['ardiendo', 'escarcha', 'congelado', 'iluminado', 'cargado', 'aturdido', 'lastrado', 'derribado', 'costra', 'maldito', 'desequilibrado', 'cegado']) if (s[k] > 0) VFX.estadoFX(k, g.x, g.y, g.z, h, P.pos.x, P.pos.z);
+    } else if (s.ardiendo > 0 && !e.fx) emit(mV1.copy(e.m.g.position).setY(rr(0.3, e.def.h * e.sc)), 1, Math.random() < 0.5 ? 0xff5a10 : 0xffa030, { spd: 0.6, life: 0.5, grav: 2.5, spread: 0.2 });
+    return true;
+  },
+  hurtHook(src) {   // Yo: efectos al recibir un golpe cuerpo a cuerpo
+    if (!src || !src.enemy || src.enemy.dead) return;
+    const e = src.enemy;
+    if (P.buff.fuego > 0) { MG.daño(e, 6, '#ff9a4a', 'Escudo de fuego'); if (!e.dead) FM.aplicarEstado(e.est, e.type, 'ardiendo', 4); }
+    if (P.buff.hielo > 0 && !e.dead) FM.aplicarEstado(e.est, e.type, 'escarcha', 5);
+  },
+  reset() {
+    for (const z of MG.suelos) MG.apagar(z);
+    for (const k of MG.tareas) k.activo = false;
+    for (const k in P.buff) P.buff[k] = 0; MG.regen.t = 0;
+    if (VFX && MG.aura && MG.aura.active) VFX.auraStop(MG.aura);
+  },
+  /* ---------- HUD: ranuras de la página activa ---------- */
+  hudSlots() {
+    const btns = document.querySelectorAll('.slot[data-s]');
+    btns.forEach((b) => {
+      const i = this.pagina * 3 + (+b.dataset.s), r = this.ranuras[i], c = r ? FM.compilar(r.receta, this.codice) : null;
+      b.classList.toggle('empty', !c);
+      const svg = b.querySelector('svg.ic');
+      if (c) {
+        const f = FM.ELEMS[c.elems[0]], g = FM.ELEMS[c.elems[c.elems.length - 1]];
+        b.style.color = f.css; b.style.borderColor = c.elems.length > 1 && g !== f ? g.css : '';
+        svg.innerHTML = FORMA_ICON[c.forma]; b.querySelector('.c').textContent = c.mana; b.title = r.nombre + ' · ' + c.mana + ' maná'; b.setAttribute('aria-label', r.nombre + ' (' + c.mana + ' maná)');
+      } else { b.style.color = ''; b.style.borderColor = ''; svg.innerHTML = '<path d="M7 12h10"/>'; b.querySelector('.c').textContent = ''; b.title = 'Ranura vacía'; b.setAttribute('aria-label', 'Ranura vacía'); }
+    });
+    const pg = $('#pgInd'); if (pg) pg.textContent = (this.pagina + 1) + '/2';
+  },
+  slotKey(i) { return 'm' + (this.pagina * 3 + i); },
+  cambiarPagina(d) { this.pagina = d === undefined ? 1 - this.pagina : ((this.pagina + d) % 2 + 2) % 2; this.hudSlots(); toast('Ranuras ' + (this.pagina * 3 + 1) + '–' + (this.pagina * 3 + 3), 1.2); }
+});
+const ELEMS_HEX = (e) => FM.ELEMS[e].hex;
+// ranuras iniciales: página 1 = Ascua, Lanza gélida, Destello sagrado; página 2 = Estallido de vapor, Cadena helada, Juicio
+[1, 2, 3, 4, 5, 6].forEach((id, i) => { const p = MG.prec(id); MG.ranuras[i] = { receta: JSON.parse(JSON.stringify(p.receta)), nombre: p.nombre }; });
+MG.refrescar();
 
 /* ---------- cámara ---------- */
 let camYaw = Math.PI, camPitch = 0.3, shakeAmt = 0, lastDrag = -99;
@@ -2162,7 +2598,7 @@ const LOCK = { t: null, range: 16, keep: 21, snap: 0, fade: 0, padArmed: true };
 const lockV = new V3(), lockS = new V3(), lockS2 = new V3(), lockOff = new V3();
 const lockable = (e) => !!e && !e.dead && e.spawnT <= 0 && enemies.includes(e);
 const lockAim = (e, out) => out.copy(e.m.g.position).setY(e.def.h * e.sc * 0.62);
-function aimTarget(maxD) { return lockable(LOCK.t) ? LOCK.t : nearestEnemy(maxD); }   // hechizos, flechas y giros apuntan al fijado
+function aimTarget(maxD) { if (lockable(LOCK.t)) return LOCK.t; if (mode === 'demo' && lockable(AP.tgt)) return AP.tgt; return nearestEnemy(maxD); }   // hechizos, flechas y giros apuntan al fijado
 function pickTarget(exclude = null) {        // el más cercano al centro de la cámara, ponderando la distancia
   const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw); let best = null, bs = Infinity;
   for (const e of enemies) {
@@ -2239,15 +2675,15 @@ function attack(kind) {
   if (P.st < cost) return false;
   P.st -= cost; P.stIdle = 0; P.act = P.weapon; P.actT = 0; P.actDone = false; P.combo++; P.block = false;
   P.heavy = kind === 'heavy'; P.skill = kind === 'skill' ? P.weapon : null;
-  P.actDur = w.dur * (P.heavy ? 1.35 : P.skill === 'martillo' ? 1.15 : P.skill === 'espada' ? 0.9 : 1);
+  P.actDur = w.dur * (P.heavy ? 1.35 : P.skill === 'martillo' ? 1.15 : P.skill === 'espada' ? 0.9 : 1) / (P.buff.rayo > 0 ? 1.1 : 1);
   if (P.skill) { P.skillCd = sk.cd; spawnNum(tmp.copy(P.pos).setY(2.5), sk.name, '#f0d890'); }
   faceTarget(); return true;
 }
 function castSpell(s) {
   const sp = SPELL[s];
-  if (P.down || P.cast || P.act || P.cds[s] > 0 || P.mp < sp.cost) return false;
-  P.mp -= sp.cost; P.cds[s] = sp.cd; P.cast = s; P.castT = 0; P.castDone = false; P.castN++; if (s !== 'luz') faceTarget();
-  if (VFX) { if (P.castFX) VFX.castCancel(P.castFX); P.castFX = VFX.castStart(s); }
+  if (!sp || P.down || P.cast || P.act || P.cds[s] > 0 || P.mp < sp.cost) return false;
+  P.mp -= sp.cost; P.cds[s] = sp.cd; P.cast = s; P.castT = 0; P.castDone = false; P.castN++;
+  MG.alLanzar(s);
   return true;
 }
 function dodge(dir) {
@@ -2258,24 +2694,7 @@ function dodge(dir) {
   return true;
 }
 function handPos(h) { return h.getWorldPosition(new V3()); }
-function releaseCast() {
-  const s = P.cast, fwd = new V3(Math.sin(P.yaw), 0, Math.cos(P.yaw));
-  const from = GK ? castHandPos().addScaledVector(fwd, 0.2) : P.pos.clone().setY(1.35).addScaledVector(fwd, 0.6);
-  if (s === 'luz') {
-    if (VFX) { VFX.holyBurst(P.pos.clone(), 2.6); VFX.healSparkles(P.pos.clone()); }
-    else {
-      pillar(P.pos, 0xffd36a, 0.9); ring(P.pos, 0xffd36a, 0.5, 5.5, 0.6); flash(P.pos.clone().setY(2), 0xffd36a, 7, 0.8);
-      emit(tmp.copy(P.pos).setY(0.5), 100, 0xffe08a, { spd: 5, up: 1.4, life: 1, grav: 1, spread: 0.4 });
-    }
-    const heal = 30; P.hp = Math.min(P.hpMax, P.hp + heal);
-    spawnNum(tmp.copy(P.pos).setY(2.4), '+' + heal, '#b8e890');
-    for (const e of enemies) { if (e.dead || e.spawnT > 0) continue; if (e.m.g.position.distanceTo(P.pos) < 5.5) damageEnemy(e, e.def.undead ? 40 : 18, '#ffe08a', e.def.undead ? 'Sagrado' : null); }
-    return;
-  }
-  const t = aimTarget(18);
-  const dir = t ? tmp.copy(t.m.g.position).setY(t.def.h * t.sc * 0.55).sub(from).normalize().clone() : fwd;
-  spawnProj(s, from, dir, 'player', s === 'fuego' ? 13 : 20, 0);
-}
+function releaseCast() { MG.liberar(P.cast); }
 function meleeHit() {
   const w = WEAP[P.weapon];
   if (w.ranged) {
@@ -2291,7 +2710,7 @@ function meleeHit() {
       if (e.dead || e.spawnT > 0) continue;
       const d = tmp.subVectors(e.m.g.position, P.pos).setY(0), dist = d.length(), nx = d.x, nz = d.z;   // copiar YA: damageEnemy reutiliza tmp
       if (dist > 4.6 + e.def.radius) continue;
-      damageEnemy(e, 48 * (e.frozen > 0 ? 2 : 1), '#f0d890', 'Terremoto', true); if (e.frozen > 0) { e.frozen = 0; e.frost = 0; }
+      damageEnemy(e, 48 * (e.est.congelado > 0 ? 2 : 1), '#f0d890', 'Terremoto', true); if (e.est.congelado > 0) { e.est.congelado = 0; e.est.escStk = 0; e.est.escarcha = 0; }
       knock(e, hid, nx, nz, 6.5 * (1 - 0.45 * Math.min(1, dist / 4.6)), 2.4, 0.3); e.stun = Math.max(e.stun || 0, 0.8);
     }
     ring(P.pos, 0xd8c08a, 0.5, 5, 0.7); ring(P.pos, 0x8a7a5a, 0.3, 3.5, 0.5);
@@ -2312,9 +2731,9 @@ function meleeHit() {
     const nx = d.x, nz = d.z;   // d es tmp y damageEnemy lo pisa (posición + altura): ESA era la causa de los vuelos
     let dmg = (P.skill === 'espada' ? 34 : w.dmg) * (P.heavy ? 1.9 : 1) * rr(0.9, 1.1), tag = null, col = P.heavy || P.skill ? '#f0d890' : '#ece2cc';
     if (P.weapon === 'martillo') {
-      if (e.frozen > 0) { dmg *= 2.6; tag = 'Hecho añicos'; col = '#9feeff'; e.frozen = 0; e.frost = 0; emit(tmp2.copy(e.m.g.position).setY(1), 70, 0xbff4ff, { spd: 6, up: 1, life: 0.9, grav: -8 }); }
+      if (e.est.congelado > 0) { dmg *= 2.6; tag = 'Hecho añicos'; col = '#9feeff'; e.est.congelado = 0; e.est.escStk = 0; e.est.escarcha = 0; emit(tmp2.copy(e.m.g.position).setY(1), 70, 0xbff4ff, { spd: 6, up: 1, life: 0.9, grav: -8 }); }
       else if (e.def.undead) { dmg *= 1.5; tag = e.type === 'jefe' ? null : 'Contundente'; }
-    } else if (e.frozen > 0) dmg *= 1.3;
+    } else if (e.est.congelado > 0) dmg *= 1.3;
     damageEnemy(e, dmg, col, tag || (P.heavy ? 'Golpe fuerte' : P.skill ? SKILL.espada.name : null), P.heavy);
     // dirección: mezcla del radial y del frente del golpe (si el enemigo está encima del jugador, d≈0 → manda el frente)
     knock(e, hid, nx * 0.6 + fwd.x * 0.4, nz * 0.6 + fwd.z * 0.4, kPow, kLift, kStag);
@@ -2353,7 +2772,9 @@ function hurtPlayer(dmg, color = 0xff4040, src = null) {
       else { spawnNum(tmp.copy(P.pos).setY(2.4), 'Bloqueado', '#c9c2b0'); dmg = Math.round(dmg * (1 - absorb)); if (dmg <= 0) return; }
     }
   }
+  if (P.buff.tierra > 0) dmg = Math.max(1, Math.round(dmg * 0.8));
   P.hp -= dmg; hurtFlash = 1; shake(0.28); rumble(180, 0.35, 0.7);
+  MG.hurtHook(src);
   if (GK && !P.act && !P.cast) { GK.hurtT = clipDur('golpeado') * 0.9; GK.hurtN++; }
   spawnNum(tmp.copy(P.pos).setY(2.3), '-' + dmg, '#e0606a');
   emit(tmp.copy(P.pos).setY(1.2), 12, color, { spd: 3, life: 0.4, hdr: 1.4 });
@@ -2409,7 +2830,8 @@ function resetRun() {
   for (let i = projs.length - 1; i >= 0; i--) freeProj(projs[i], i);
   Object.assign(P, { hp: P.hpMax, st: P.stMax, mp: P.mpMax, down: false, act: null, cast: null, bonus: 1 });
   K.g.rotation.x = 0; K.g.position.y = 0;
-  P.cds.fuego = P.cds.escarcha = P.cds.luz = 0;
+  for (const k in P.cds) P.cds[k] = 0;
+  MG.reset();
   wave = -1; wState = 'pre'; wTimer = 1.5;
 }
 let bannerT = 0;
@@ -2435,21 +2857,13 @@ function updateEnemies(dt) {
       if (e.deathT > 2.6) removeEnemy(e);
       continue;
     }
-    if (e.frozen > 0) e.frozen -= dt;
     if (e.stun > 0) { e.stun -= dt; if (Math.random() < dt * 6) emit(tmp.copy(e.m.g.position).setY(e.def.h * e.sc + 0.15), 1, 0xffe08a, { spd: 0.6, up: 0.3, life: 0.5, grav: 0, hdr: 2.5 }); }
-    if (e.slow > 0) e.slow -= dt;
-    e.m.ice.visible = e.frozen > 0;
-    if (e.burn > 0) {
-      e.burn -= dt; e.burnTick -= dt;
-      emit(tmp.copy(g.position).setY(rr(0.3, d.h * e.sc)), 1, Math.random() < 0.5 ? 0xff5a10 : 0xffa030, { spd: 0.6, life: 0.5, grav: 2.5, spread: 0.2 });
-      if (Math.random() < 0.15) smoke(tmp, 1, 0x1a1614, { spd: 0.3, life: 1, grav: 0.8 });
-      if (e.burnTick <= 0) { e.burnTick = 0.5; damageEnemy(e, 4, '#ff9a4a'); if (e.dead) continue; }
-    }
+    if (!MG.tickEnemy(e, dt)) continue;
     stepKnock(e, d);
     if (e.stagger > 0) e.stagger -= dt;
     const toP =tmp.subVectors(P.pos, g.position).setY(0), dist = toP.length(), dirP = toP.clone().normalize();
-    const move = new V3(), spd = d.speed * (e.slow > 0 ? 0.45 : 1) * (e.phase === 2 ? 1.4 : 1);
-    if (e.frozen <= 0 && !(e.stun > 0) && !(e.stagger > 0)) {   // tambaleo breve tras un golpe: no anda ni ataca
+    const move = new V3(), spd = d.speed * FM.velMult(e.est) * (e.phase === 2 ? 1.4 : 1), blind = e.est.cegado > 0, lost = MG.pierde(dist);
+    if (e.est.congelado <= 0 && !(e.stun > 0) && !(e.stagger > 0)) {   // tambaleo breve tras un golpe: no anda ni ataca
       e.atkCd -= dt;
       if (e.atk > 0) {
         e.atk += dt; const wind = e.type === 'jefe' ? 0.65 : 0.45;
@@ -2460,14 +2874,15 @@ function updateEnemies(dt) {
             if (dist < 4.2) hurtPlayer(d.dmg + 6, 0xa060ff, { pos: g.position, enemy: e });
           } else if (dist < d.reach + 0.6) hurtPlayer(d.dmg, undefined, { pos: g.position, enemy: e });
         }
+      } else if (lost) { /* te ha perdido de vista (Niebla negra / Yo de Sombra) */
       } else if (!d.ranged) {
         e.apDodged = false;
-        if (dist > d.reach * 0.85) move.copy(dirP); else if (e.atkCd <= 0 && !P.down) e.atk = 0.001;
+        if (dist > d.reach * 0.85) move.copy(dirP); else if (e.atkCd <= 0 && !P.down && !blind) e.atk = 0.001;
       } else {
         const lo = e.type === 'goblin' ? 5 : 6.5, hi = e.type === 'goblin' ? 10 : 9.5;
         if (dist < lo) move.copy(dirP).negate(); else if (dist > hi) move.copy(dirP); else move.set(-dirP.z * e.strafe, 0, dirP.x * e.strafe).multiplyScalar(0.5);
         if (Math.random() < dt * 0.3) e.strafe *= -1;
-        if (e.atkCd <= 0 && dist < 13 && !P.down) {
+        if (e.atkCd <= 0 && dist < (e.est.penumbra > 0 ? 6.5 : 13) && !P.down && !blind) {
           e.atkCd = d.cd * rr(0.85, 1.2); e.castAnim = 0.35;
           const from = g.position.clone().setY(e.type === 'goblin' ? 0.95 : 1.5).addScaledVector(dirP, 0.5), aim = P.pos.clone().setY(1.1).sub(from).normalize();
           if (e.type === 'goblin') spawnProj('flecha', from, aim, 'enemy', 15, d.dmg); else spawnProj('orbe', from, aim, 'enemy', 8, d.dmg);
@@ -2492,7 +2907,7 @@ function updateEnemies(dt) {
       const sy = Math.sin(e.yaw), cy = Math.cos(e.yaw), fx = e.stagDirX || 0, fz = e.stagDirZ || 0;
       m.hip.rotation.x = (fx * sy + fz * cy) * e.lean; m.hip.rotation.z = -(fx * cy - fz * sy) * e.lean;
     }
-    if (e.frozen <= 0) {
+    if (e.est.congelado <= 0) {
       if (m.legs.length) { m.legs[0].rotation.x = sw; m.legs[1].rotation.x = -sw; } else m.hip.position.y = Math.abs(Math.sin(e.walk)) * 0.04;
       if (e.atk > 0) { const wind = e.type === 'jefe' ? 0.65 : 0.45, k = e.atk / wind; m.armR.rotation.x = k < 0.7 ? -2.6 * ease(k / 0.7) : -2.6 + 3 * ease((k - 0.7) / 0.3); }
       else if (e.castAnim > 0) { e.castAnim -= dt; m.armR.rotation.x = -1.4; m.armL.rotation.x = -1.3; }
@@ -2525,7 +2940,7 @@ function updatePlayer(dt, intent) {
   const canBlock = !P.mounted && !P.act && !P.cast && P.dodgeT <= 0 && P.st > 2;
   if (intent.block && canBlock) { if (!P.block) { P.block = true; P.blockT = 0; } else P.blockT += dt; } else P.block = false;
   if (intent.dodge && !P.mounted) dodge(intent.move);
-  const mv = P.mounted ? ZERO_MV.set(0, 0, 0) : intent.move; let speed = 4.3;
+  const mv = P.mounted ? ZERO_MV.set(0, 0, 0) : intent.move; let speed = 4.3 * (P.buff.aire > 0 ? 1.2 : 1);
   if (P.act) speed *= GK ? (P.act === 'espada' ? 0.6 : P.act === 'martillo' ? 0.35 : 0.4) : (P.act === 'arco' ? 0.15 : 0.3);
   if (P.cast) speed *= GK ? 0.55 : 0.5;
   if (P.block) { speed *= 0.45; P.stIdle = 0; const t = aimTarget(9); if (t) P.yaw = lerpAngle(P.yaw, Math.atan2(t.m.g.position.x - P.pos.x, t.m.g.position.z - P.pos.z), 1 - Math.exp(-dt * 10)); }
@@ -2579,7 +2994,7 @@ function updatePlayer(dt, intent) {
   if (P.cast) {
     const sp = SPELL[P.cast];
     P.castT += dt; const k = Math.min(1, P.castT / sp.cdur);
-    al.x = (P.cast === 'luz' ? -2.8 : -1.7) * ease(Math.min(1, k * 1.6));
+    al.x = (sp.forma === 'yo' ? -2.8 : -1.7) * ease(Math.min(1, k * 1.6));
     const hp = castHandPos();
     if (VFX && P.castFX) { if (!P.castDone) VFX.castUpdate(P.castFX, dt, Math.min(1, k / sp.crel), hp, new V3(Math.sin(P.yaw), 0, Math.cos(P.yaw)), P.pos.clone()); }
     else if (!P.castDone) emit(hp, 2, sp.color, { spd: 0.6, life: 0.35, grav: 1, spread: 0.06 });
@@ -2592,7 +3007,35 @@ function updatePlayer(dt, intent) {
 }
 
 /* ---------- piloto automático ---------- */
-const AP = { think: 0, prefHammer: false, prefT: 0 };
+const AP = { think: 0, prefHammer: false, prefT: 0, tgt: null, cnt: {}, chainT: -99 };
+const autoCd = (id) => !!SPELL['d' + id] && P.cds['d' + id] <= 0;   // lista (sin mirar el maná)
+const autoOk = (id) => autoCd(id) && P.mp >= SPELL['d' + id].cost;
+// La demo usa los hechizos precompuestos (DISENO.md §6): primero encadena reacciones a propósito (Pedrada→Ascua = Magma,
+// Lanza gélida→Ascua = Vapor ×2) y, si no hay cadena, rota entre los que vienen al caso eligiendo el menos usado (variedad).
+function autoMagia(t, dist, alive) {
+  const near = (pos, r) => alive.filter((e) => e.m.g.position.distanceTo(pos) < r), est = t.est, tp = t.m.g.position;
+  const pick = (id) => { AP.cnt[id] = (AP.cnt[id] || 0) + 1; return 'd' + id; };
+  const cerca = alive.some((e) => !e.def.ranged && e.m.g.position.distanceTo(P.pos) < 2.6);   // con un cuerpo a cuerpo encima, solo el cono (o curar)
+  if (est.lastrado > 0 && dist > 2.5 && !cerca && autoOk(1)) return pick(1);                      // Pedrada → Ascua (Magma)
+  if ((est.escStk > 0 || est.congelado > 0) && dist > 2.5 && !cerca && autoOk(1)) return pick(1); // Lanza gélida → Ascua (Vapor, ×2 si congelado)
+  if (t.def.undead && dist > 3 && !cerca && !est.lastrado && !est.escStk && T - AP.chainT > 9) {   // abre una cadena de reacción cada ~9 s
+    const st = (AP.cnt[10] || 0) <= (AP.cnt[2] || 0) ? 10 : 2;
+    if (autoOk(st)) { AP.chainT = T; return pick(st); }
+    if (autoCd(st)) return null;                                                          // espera el maná para la cadena
+  }
+  const el = [];
+  if (alive.some((e) => e.est.escarcha > 0 || e.est.congelado > 0) && alive.length >= 2) el.push(5);
+  if (near(tp, 3).length >= 2 && dist > 3) el.push(4);
+  if (near(P.pos, 4.8).length >= 1) el.push(8);
+  if (dist > 3 && dist < 12 && alive.some((e) => !e.def.ranged)) el.push(7);
+  if (alive.some((e) => e.def.ranged && e.m.g.position.distanceTo(P.pos) < 12)) el.push(9);
+  if (t.def.undead && dist > 3) el.push(6);
+  if (dist > 4 && !est.ardiendo) el.push(1);
+  const ready = el.filter((id) => autoCd(id) && (!cerca || id === 8));
+  if (!ready.length) return null;
+  ready.sort((a, b) => (AP.cnt[a] || 0) - (AP.cnt[b] || 0));
+  return autoOk(ready[0]) ? pick(ready[0]) : null;     // si no llega el maná, espera (deja que se acumule para el menos usado)
+}
 function autopilot(dt) {
   const it = { move: new V3(), attack: false, spell: null, weapon: null, dodge: false };
   if (P.down) return it;
@@ -2601,6 +3044,7 @@ function autopilot(dt) {
   AP.prefT -= dt; if (AP.prefT <= 0) { AP.prefT = rr(5, 9); AP.prefHammer = !AP.prefHammer; }
   let t = alive[0], bd = 1e9;
   for (const e of alive) { const d = e.m.g.position.distanceTo(P.pos) - (e.def.ranged ? 3 : 0); if (d < bd) { bd = d; t = e; } }
+  AP.tgt = t;
   const dist = t.m.g.position.distanceTo(P.pos), dir = tmp.subVectors(t.m.g.position, P.pos).setY(0).normalize().clone();
   for (const e of alive) {
     if (!e.def.ranged && e.atk > 0.18 && !e.apDodged && e.m.g.position.distanceTo(P.pos) < e.def.reach + 0.8) {
@@ -2609,18 +3053,14 @@ function autopilot(dt) {
     }
   }
   AP.think -= dt; const busy = P.act || P.cast;
-  if (P.hp < P.hpMax * 0.5 && P.cds.luz <= 0 && P.mp >= SPELL.luz.cost && !busy) { it.spell = 'luz'; return it; }
+  if (!busy && P.hp < P.hpMax * 0.5 && autoOk(3)) { it.spell = 'd3'; return it; }
   if (!busy && AP.think <= 0) {
     AP.think = rr(0.25, 0.5);
-    let cluster = 0; for (const e of alive) if (e.m.g.position.distanceTo(t.m.g.position) < 3) cluster++;
-    if (t.frozen > 0 && dist > 3.5 && P.cds.fuego <= 0 && P.mp >= 25 && Math.random() < 0.5) { it.spell = 'fuego'; return it; }
-    if (cluster >= 3 && P.cds.fuego <= 0 && P.mp >= 25 && dist > 3) { it.spell = 'fuego'; return it; }
-    if (t.def.undead && t.type !== 'jefe' && t.frozen <= 0 && P.cds.escarcha <= 0 && P.mp >= 30 && Math.random() < 0.35) { it.spell = 'escarcha'; return it; }
-    if (t.type === 'jefe' && P.cds.fuego <= 0 && P.mp >= 50 && Math.random() < 0.3) { it.spell = 'fuego'; return it; }
+    const k = autoMagia(t, dist, alive); if (k) { it.spell = k; return it; }
   }
   let want;
   if (t.def.ranged && dist > 6) want = 'arco';
-  else if (t.frozen > 0) want = 'martillo';
+  else if (t.est.congelado > 0) want = 'martillo';
   else if (t.def.undead && (AP.prefHammer || t.type === 'jefe')) want = 'martillo';
   else want = 'espada';
   if (want !== P.weapon && !busy) it.weapon = want;
@@ -2682,7 +3122,7 @@ const takeControl = () => { if (mode !== 'control') setMode('control'); };
 $('#mode').addEventListener('click', () => setMode(mode === 'demo' ? 'control' : 'demo'));
 $('#qual').addEventListener('click', () => setQual(qual === 'alta' ? 'baja' : qual === 'baja' ? 'media' : 'alta'));
 document.querySelectorAll('[data-w]').forEach((b) => b.addEventListener('click', () => { takeControl(); pending.weapon = b.dataset.w; }));
-document.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => { takeControl(); pending.spell = b.dataset.s; }));
+document.querySelectorAll('[data-s]').forEach((b) => b.addEventListener('click', () => { takeControl(); pending.spell = MG.slotKey(+b.dataset.s); }));
 $('#tAtk').addEventListener('pointerdown', (e) => { e.preventDefault(); atkPress(); });
 ['pointerup', 'pointercancel', 'pointerleave'].forEach((ev) => $('#tAtk').addEventListener(ev, () => atkRelease()));
 $('#tBlock').addEventListener('pointerdown', (e) => { e.preventDefault(); held.touchBlock = true; });
@@ -2691,10 +3131,13 @@ $('#tSkill').addEventListener('pointerdown', (e) => { e.preventDefault(); pendin
 $('#skillSlot').addEventListener('click', () => { takeControl(); pending.skill = true; });
 $('#tDodge').addEventListener('pointerdown', (e) => { e.preventDefault(); pending.dodge = true; });
 addEventListener('keydown', (e) => {
-  const c = e.code, map = { Digit1: 'espada', Digit2: 'martillo', Digit3: 'arco' }, sp = { KeyQ: 'fuego', KeyE: 'escarcha', KeyR: 'luz' };
+  const c = e.code, map = { Digit1: 'espada', Digit2: 'martillo', Digit3: 'arco' }, sp = { KeyQ: 0, KeyE: 1, KeyR: 2 };
   setDevice('kb');
+  if (GRIM.open) { grimKey(e); return; }
+  if (c === 'KeyB' && !e.repeat && !PAUSE.on) { e.preventDefault(); openGrim(false); return; }
   if (pauseKey(e)) return;
-  if (c === 'KeyF') { takeControl(); pending.spell = SPELLS[selSpell]; return; }
+  if (c === 'Tab') { e.preventDefault(); if (!e.repeat) MG.cambiarPagina(); return; }
+  if (c === 'KeyF') { takeControl(); pending.spell = MG.slotKey(selSpell); return; }
   if (c === 'KeyG') { takeControl(); pending.skill = true; return; }
   if (c === 'KeyV') { takeControl(); keys.add(c); return; }
   if ((c === 'KeyJ' || c === 'Enter') && !e.repeat) { atkPress(); return; }
@@ -2704,23 +3147,22 @@ addEventListener('keydown', (e) => {
   if (c === 'KeyE') { takeControl(); if (e.repeat) return; if (canToggleMount()) { mountHoldStart('kb'); return; } if (P.mounted) return; }
   if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(c)) { keys.add(c); takeControl(); e.preventDefault(); }
   else if (map[c]) { takeControl(); pending.weapon = map[c]; }
-  else if (sp[c]) { takeControl(); pending.spell = sp[c]; }
+  else if (sp[c] !== undefined) { takeControl(); pending.spell = MG.slotKey(sp[c]); }
   else if (c === 'Space' || c === 'ShiftLeft') { takeControl(); keys.add(c); pending.dodge = true; e.preventDefault(); }
   else if (c === 'KeyJ' || c === 'Enter') { takeControl(); pending.attack = true; }
 });
 addEventListener('keyup', (e) => {
   keys.delete(e.code); if (e.code === 'KeyJ' || e.code === 'Enter') atkRelease();
-  if (e.code === 'KeyE' && MOUNT.holding && MOUNT.src === 'kb') { if (mountHoldEnd() && !P.mounted) pending.spell = 'escarcha'; }
+  if (e.code === 'KeyE' && MOUNT.holding && MOUNT.src === 'kb') { if (mountHoldEnd() && !P.mounted) pending.spell = MG.slotKey(1); }
 });
 addEventListener('blur', () => { keys.clear(); held.mouseBlock = held.padBlock = held.touchBlock = false; atkRelease(true); });
 let drag = null, selSpell = 0;
-const SPELLS = ['fuego', 'escarcha', 'luz'];
 const locked = () => document.pointerLockElement === canvas;
 function refreshLabels() {
   document.querySelectorAll('.slot .k').forEach((k) => { k.textContent = device === 'pad' ? k.dataset.pad : k.dataset.kb; });
   if (device === 'pad') {
-    const face = { fuego: 'L2+□', escarcha: 'L2+△', luz: 'L2+○' };
-    document.querySelectorAll('[data-s]').forEach((b) => { const k = b.querySelector('.k'); if (k) k.textContent = face[b.dataset.s] || ''; });
+    const face = ['L2+□', 'L2+△', 'L2+○'];
+    document.querySelectorAll('[data-s]').forEach((b) => { const k = b.querySelector('.k'); if (k) k.textContent = face[+b.dataset.s] || ''; });
     const sk = document.querySelector('#skillSlot .k'); if (sk) sk.textContent = 'L2+✕';
   }
 }
@@ -2794,6 +3236,7 @@ function pollPad(dt) {
   const rx = dz(g.axes[2] || 0, 0.13), ry = dz(g.axes[3] || 0, 0.13);
   let pressed = false; for (let i = 0; i < Math.min(18, g.buttons.length); i++) if (btn(i)) { pressed = true; break; }
   if (pressed || lx || ly || rx || ry) setDevice('pad');
+  if (PAUSE.on && GRIM.open) { grimPad(down); PAD.prev = g.buttons.map((b, i) => btn(i)); return; }
   if (PAUSE.on) {                                                                   // navegación del menú de pausa
     const ny = ly < -0.6 ? -1 : ly > 0.6 ? 1 : 0;
     if (down(12) || (ny === -1 && PAD.navY !== -1)) pmMove(-1);                    // cruceta / stick ▲▼
@@ -2828,11 +3271,12 @@ function pollPad(dt) {
     if (down(6)) { PAD.l2T = 0; PAD.l2Used = false; }
     if (l2) {
       PAD.l2T = (PAD.l2T || 0) + dt;
-      const pick = down(2) ? 'fuego' : down(3) ? 'escarcha' : down(1) ? 'luz' : null;
-      if (pick) { pending.spell = pick; selSpell = SPELLS.indexOf(pick); markSel(); PAD.l2Used = true; }
+      const pickI = down(2) ? 0 : down(3) ? 1 : down(1) ? 2 : -1;
+      if (pickI >= 0) { pending.spell = MG.slotKey(pickI); selSpell = pickI; markSel(); PAD.l2Used = true; }
+      if (down(12) || down(13)) { MG.cambiarPagina(); PAD.l2Used = true; }
       if (down(0)) { pending.skill = true; PAD.l2Used = true; }
       held.padSprint = false;
-    } else if (up(6) && !PAD.l2Used && PAD.l2T < 0.35) pending.spell = SPELLS[selSpell];
+    } else if (up(6) && !PAD.l2Used && PAD.l2T < 0.35) pending.spell = MG.slotKey(selSpell);
     if (down(5) || (!l2 && down(2))) atkPress();                                     // R1 (□ también): pulsar = ataque, mantener = fuerte
     if (up(5) || up(2)) atkRelease();
     held.padBlock = btn(4);                                                          // L1 mantener = bloquear
@@ -2841,7 +3285,7 @@ function pollPad(dt) {
     if (down(14)) { selSpell = (selSpell + 2) % 3; markSel(); }                      // cruceta ◀ ▶ = elegir magia
     if (down(15)) { selSpell = (selSpell + 1) % 3; markSel(); }
     const cycleW = () => { const o = ['espada', 'martillo', 'arco']; pending.weapon = o[(o.indexOf(P.weapon) + 1) % 3]; };
-    if (down(12)) cycleW();                                                          // ▲ = cambiar arma
+    if (down(12) && !l2) cycleW();                                                   // ▲ = cambiar arma (con L2: página de ranuras)
     if (!l2 && down(3)) { if (canToggleMount()) mountHoldStart('pad'); else cycleW(); }   // △: pulsar = arma, mantener cerca del caballo = montar/desmontar
     if (up(3) && MOUNT.holding && MOUNT.src === 'pad') { if (mountHoldEnd() && !P.mounted) cycleW(); }
     if (!l2) held.padSprint = btn(0);                                                // ✕ mantenido = galopar
@@ -2874,10 +3318,10 @@ const PAUSE = { on: false, relock: false, at: 0, view: 'main' };
 const pmEl = $('#pause');
 const PM_KEYS = {
   kb: [['WASD', 'Moverse'], ['Ratón', 'Cámara (clic para capturarlo) · C centra'], ['Clic izq. / J', 'Atacar · mantener = ataque fuerte'], ['Clic der. / V', 'Bloquear (a tiempo: parada)'],
-    ['F · Rueda', 'Magia elegida · elegir magia'], ['Q E R', 'Bola de fuego · Escarcha · Destello'], ['G', 'Habilidad del arma'], ['Espacio', 'Esquivar · mantener a caballo = galopar'],
+    ['F · Rueda', 'Magia elegida · elegir ranura'], ['Q E R · Tab', 'Ranuras 1-3 · cambiar de página'], ['B', 'Grimorio (compón tus hechizos)'], ['G', 'Habilidad del arma'], ['Espacio', 'Esquivar · mantener a caballo = galopar'],
     ['1 2 3', 'Cambiar de arma'], ['E mantener', 'Montar / desmontar'], ['T · Z X', 'Fijar / soltar objetivo · cambiar de objetivo'], ['Esc / P', 'Pausa']],
   pad: [['Stick izq.', 'Moverse'], ['Stick der.', 'Cámara · fijado: ◀ ▶ cambia de objetivo'], ['R3', 'Fijar / soltar objetivo (sin enemigos: centrar)'], ['R1', 'Atacar · mantener = ataque fuerte'], ['L1', 'Bloquear (a tiempo: parada)'],
-    ['L2 + □ △ ○', 'Fuego · Escarcha · Curación'], ['L2 + ✕ · R2', 'Habilidad del arma'], ['L2 · ◀ ▶', 'Magia elegida · elegir magia'], ['✕ / ○', 'Esquivar · ✕ mantener = galopar'],
+    ['L2 + □ △ ○', 'Ranuras 1-3 de la página'], ['L2 + ▲▼', 'Cambiar de página de ranuras'], ['L2 + ✕ · R2', 'Habilidad del arma'], ['L2 · ◀ ▶', 'Magia elegida · elegir ranura'], ['✕ / ○', 'Esquivar · ✕ mantener = galopar'],
     ['△ / ▲', 'Cambiar de arma · △ mantener = montar'], ['OPTIONS', 'Pausa']],
   touch: [['Joystick', 'Moverse'], ['Arrastrar', 'Cámara'], ['Atacar', 'Mantener = ataque fuerte'], ['Bloquear', 'Mantener (a tiempo: parada)'],
     ['Ranuras', 'Armas y hechizos'], ['Habilidad · Esquivar', 'Habilidad del arma · rodar'], ['❚❚', 'Pausa']]
@@ -2902,7 +3346,7 @@ function pmShow(view) {
   pmFoot();
   const it = pmItems(); if (it[0]) it[0].focus({ preventScroll: true });
 }
-function pause() {
+function pause(silent) {
   if (PAUSE.on) return;
   PAUSE.on = true; PAUSE.at = performance.now();
   PAUSE.relock = locked() || PAUSE.relock;
@@ -2913,7 +3357,7 @@ function pause() {
   $('#pmWhere').textContent = $('#wave').firstChild ? $('#wave').firstChild.textContent + ' · Patio del castillo' : 'Patio del castillo en ruinas';
   $('#pmQualV').textContent = QUAL[qual].name;
   $('#pmDemo').hidden = mode !== 'control';
-  pmEl.hidden = false; pmShow('main');
+  pmEl.hidden = !!silent; if (!silent) pmShow('main');
 }
 function resume() {
   if (!PAUSE.on) return;
@@ -2931,6 +3375,7 @@ function pmMove(d) {
 }
 $('#pmResume').addEventListener('click', resume);
 $('#pmCtl').addEventListener('click', () => pmShow('keys'));
+$('#pmGrim').addEventListener('click', () => openGrim(true));
 $('#pmBack').addEventListener('click', () => pmShow('main'));
 $('#pmQual').addEventListener('click', () => { $('#qual').click(); $('#pmQualV').textContent = QUAL[qual].name; });
 $('#pmDemo').addEventListener('click', () => { PAUSE.relock = false; resume(); setMode('demo'); });
@@ -2956,6 +3401,161 @@ function pauseKey(e) {                                        // devuelve true s
 }
 document.addEventListener('visibilitychange', () => { if (document.hidden && mode === 'control') pause(); });
 
+/* ---------- Grimorio (DOM): B o entrada del menú de pausa; pausa el juego ---------- */
+const GRIM = { open: false, fromPause: false, armed: false, col: 0, row: 0, t: 0, built: false };
+const grEl = $('#grim');
+const gr = { forma: $('#grForma'), nucleo: $('#grNucleo'), mods: $('#grMods'), pre: $('#grPre'), slots: $('#grSlots'), cv: $('#grCv'), equip: $('#grEquip'), clear: $('#grClear') };
+const grBtns = { forma: [], nucleo: [], mods: [], slots: [], pre: [] };
+const grFormaTxt = { proyectil: 'Proyectil', area: 'Área', zona: 'Zona', cono: 'Cono', yo: 'Yo' };
+function grMk(parent, cls, html, data) {
+  const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.innerHTML = html;
+  for (const k in data) b.dataset[k] = data[k];
+  parent.appendChild(b); return b;
+}
+function grBuild() {
+  if (GRIM.built) return; GRIM.built = true;
+  for (const f of Object.keys(FM.FORMAS)) {
+    const F = FM.FORMAS[f];
+    grBtns.forma.push(grMk(gr.forma, 'gr-b', '<svg viewBox="0 0 24 24">' + FORMA_ICON[f] + '</svg><span>' + F.nombre + '<small>' + F.mana + ' · ' + F.lanz + ' s</small></span>', { k: 'forma', v: f }));
+  }
+  for (const e of Object.keys(FM.ELEMS)) grBtns.nucleo.push(grMk(gr.nucleo, 'gr-b el', '<i style="background:' + FM.ELEMS[e].css + '"></i><span>' + FM.ELEMS[e].nombre + '</span><em></em>', { k: 'nucleo', v: e }));
+  for (const m of Object.keys(FM.MODS)) grBtns.mods.push(grMk(gr.mods, 'gr-b', '<span>' + FM.MODS[m].nombre + '<small>' + (m === 'persistencia' ? '+6 maná' : '×' + FM.MODS[m].mult + ' maná') + '</small></span>', { k: 'mod', v: m }));
+  for (let i = 0; i < 6; i++) grBtns.slots.push(grMk(gr.slots, 'gr-b slot6', '', { k: 'slot', v: i }));
+  for (const p of FM.PRECOMPUESTOS) grBtns.pre.push(grMk(gr.pre, 'gr-b pre', '<span>' + p.nombre + '</span><small></small>', { k: 'pre', v: p.id }));
+  grEl.addEventListener('click', (ev) => { const b = ev.target.closest('button[data-k]'); if (b) grClick(b); });
+  gr.equip.addEventListener('click', () => { if (!grComp().ok) return; GRIM.armed = !GRIM.armed; grRender(); });
+  gr.clear.addEventListener('click', () => { MG.editor.forma = null; MG.editor.nucleo = []; MG.editor.mods = []; GRIM.armed = false; grRender(); });
+  $('#grClose').addEventListener('click', grClose);
+  const prev = $('#grPrev');
+  prev.addEventListener('dragstart', (ev) => { if (!grComp().ok) { ev.preventDefault(); return; } ev.dataTransfer.setData('text/plain', 'receta'); });
+  grBtns.slots.forEach((b) => { b.addEventListener('dragover', (ev) => ev.preventDefault()); b.addEventListener('drop', (ev) => { ev.preventDefault(); grEquipar(+b.dataset.v); }); });
+}
+const grComp = () => FM.compilar(MG.editor, MG.codice);
+function grEquipar(i) {
+  const c = grComp(); if (!c.ok) { toast(c.error, 1.6); return false; }
+  MG.equipar(i, MG.editor); GRIM.armed = false; toast('Equipado en la ranura ' + (i + 1) + ': ' + MG.ranuras[i].nombre, 1.8); grRender(); return true;
+}
+function grClick(b) {
+  const k = b.dataset.k, v = b.dataset.v, ed = MG.editor;
+  if (k === 'forma') { ed.forma = v; ed.mods = ed.mods.filter((m) => FM.MODS[m].validas.includes(v)); if (v === 'yo') ed.nucleo = ed.nucleo.slice(0, 1); }
+  else if (k === 'nucleo') {
+    const c = ed.nucleo.filter((x) => x === v).length;
+    if (ed.forma === 'yo') ed.nucleo = c ? [] : [v];
+    else if (c === 0) { ed.nucleo.push(v); if (ed.nucleo.length > 2) ed.nucleo.shift(); }
+    else if (c === 1 && ed.nucleo.length === 1) ed.nucleo.push(v);
+    else if (c === 1) ed.nucleo = ed.nucleo.filter((x) => x !== v);
+    else ed.nucleo = [];
+  } else if (k === 'mod') {
+    if (b.getAttribute('aria-disabled') === 'true') { toast(FM.motivoMod(ed, v), 1.6); return; }
+    ed.mods = ed.mods.includes(v) ? ed.mods.filter((m) => m !== v) : ed.mods.concat(v);
+  } else if (k === 'slot') {
+    const i = +v;
+    if (GRIM.armed) { grEquipar(i); return; }
+    const r = MG.ranuras[i]; if (r) { ed.forma = r.receta.forma; ed.nucleo = r.receta.nucleo.slice(); ed.mods = (r.receta.mods || []).slice(); }
+  } else if (k === 'pre') { const p = MG.prec(+v); ed.forma = p.receta.forma; ed.nucleo = p.receta.nucleo.slice(); ed.mods = (p.receta.mods || []).slice(); }
+  grRender();
+}
+function grRender() {
+  grBuild();
+  const ed = MG.editor, c = grComp();
+  grBtns.forma.forEach((b) => b.setAttribute('aria-pressed', ed.forma === b.dataset.v));
+  grBtns.nucleo.forEach((b) => { const n = ed.nucleo.filter((x) => x === b.dataset.v).length; b.setAttribute('aria-pressed', n > 0); b.querySelector('em').textContent = n === 2 ? '×2' : ''; });
+  grBtns.mods.forEach((b) => {
+    const m = b.dataset.v, bad = !!ed.forma && !FM.MODS[m].validas.includes(ed.forma) || !ed.forma;
+    b.setAttribute('aria-pressed', ed.mods.includes(m)); b.setAttribute('aria-disabled', bad); b.title = bad ? FM.motivoMod(ed, m) : '';
+  });
+  grBtns.slots.forEach((b, i) => {
+    const r = MG.ranuras[i], rc = r ? FM.compilar(r.receta, MG.codice) : null;
+    b.classList.toggle('arm', GRIM.armed); b.classList.toggle('cur', i >= MG.pagina * 3 && i < MG.pagina * 3 + 3);
+    b.innerHTML = '<b>' + (i + 1) + '</b>' + (r ? '<span style="color:' + FM.ELEMS[rc.elems[0]].css + '">' + r.nombre + '</span><small>' + rc.mana + ' maná · ' + rc.rec + ' s</small>' : '<span class="vac">vacía</span>');
+  });
+  grBtns.pre.forEach((b) => { const p = MG.prec(+b.dataset.v), pc = FM.compilar(p.receta, MG.codice); b.querySelector('small').textContent = pc.mana + ' maná'; b.style.color = FM.ELEMS[pc.elems[0]].css; });
+  gr.equip.classList.toggle('on', GRIM.armed); gr.equip.disabled = !c.ok; gr.equip.textContent = GRIM.armed ? 'Elige ranura (1–6)…' : 'Equipar';
+  $('#grName').textContent = c.ok ? c.nombre : 'Receta incompleta';
+  const info = $('#grInfo');
+  if (c.ok) {
+    const ts = c.danoTipo, dm = (k) => (c.forma === 'yo' ? '—' : ts[k]);
+    info.innerHTML = '<dt>Maná</dt><dd>' + c.mana + '</dd><dt>Lanzamiento</dt><dd>' + c.lanz + ' s</dd><dt>Recarga</dt><dd>' + c.rec + ' s</dd>' +
+      '<dt>' + (c.forma === 'zona' ? 'Daño/s' : c.forma === 'yo' ? 'Efecto' : 'Daño') + '</dt><dd>' + (c.forma === 'yo' ? (c.cura ? 'cura ' + c.cura : 'mejora 8 s') : (c.tiros > 1 ? c.tiros + '× ' : '') + 'esq. ' + dm('esqueleto') + ' · gob. ' + dm('goblin') + ' · cult. ' + dm('cultista') + ' · jefe ' + dm('jefe')) + '</dd>' +
+      '<dt>Estados</dt><dd>' + (c.estados.join(', ') || '—') + '</dd><dt>Inestabilidad</dt><dd class="i' + (c.I >= 50 ? 3 : c.I >= 20 ? 2 : 1) + '">' + c.I + ' % · ' + (c.I >= 50 ? 'inestable' : c.I >= 20 ? 'parpadea' : 'estable') + '</dd>';
+    $('#grErr').textContent = '';
+  } else { info.innerHTML = ''; $('#grErr').textContent = c.error; }
+  const cod = $('#grCod'); cod.textContent = 'Códice: ' + (MG.codice.length ? MG.codice.map((i) => FUS_TAG[i]).join(' · ') : 'ninguna fusión descubierta') + '  ·  Ranuras en la página ' + (MG.pagina + 1) + ' (Tab cambia)';
+  grFoot();
+}
+function grFoot() {
+  $('#grFoot').innerHTML = device === 'pad'
+    ? '<span><kbd>✛</kbd>Navegar</span><span><kbd>L1</kbd><kbd>R1</kbd>Columna</span><span><kbd>✕</kbd>Alternar</span><span><kbd>□</kbd>Vaciar</span><span><kbd>△</kbd>Equipar</span><span><kbd>○</kbd>Volver</span>'
+    : '<span><kbd>←</kbd><kbd>→</kbd>Columna</span><span><kbd>↑</kbd><kbd>↓</kbd>Runa</span><span><kbd>Intro</kbd>Alternar</span><span><kbd>1–6</kbd>Equipar en ranura</span><span><kbd>Supr</kbd>Vaciar</span><span><kbd>Tab</kbd>Página</span><span><kbd>B</kbd>/<kbd>Esc</kbd>Cerrar</span>';
+}
+const grCols = () => [grBtns.forma, grBtns.nucleo, grBtns.mods, [gr.equip, ...grBtns.slots, gr.clear], grBtns.pre];
+function grFocus(c, r) {
+  const cols = grCols(); GRIM.col = (c + cols.length) % cols.length; const list = cols[GRIM.col]; GRIM.row = Math.max(0, Math.min(list.length - 1, r));
+  const b = list[GRIM.row]; if (b) b.focus({ preventScroll: true });
+}
+function openGrim(fromPause) {
+  if (GRIM.open) return;
+  grBuild();
+  if (!PAUSE.on) pause(true);
+  GRIM.open = true; GRIM.fromPause = !!fromPause || PAUSE.on && !pmEl.hidden; GRIM.armed = false; pmEl.hidden = true; grEl.hidden = false;
+  if (!MG.editor.forma) { const r = MG.ranuras[MG.pagina * 3]; if (r) { MG.editor.forma = r.receta.forma; MG.editor.nucleo = r.receta.nucleo.slice(); MG.editor.mods = (r.receta.mods || []).slice(); } }
+  grRender(); grFocus(0, 0);
+}
+function grClose() {
+  if (!GRIM.open) return;
+  GRIM.open = false; grEl.hidden = true; GRIM.armed = false;
+  if (GRIM.fromPause) { pmEl.hidden = false; pmShow('main'); } else resume();
+}
+function grimKey(e) {
+  const c = e.code;
+  if (c === 'Escape' || c === 'KeyB') { if (!e.repeat) { if (GRIM.armed) { GRIM.armed = false; grRender(); } else grClose(); } e.preventDefault(); return; }
+  if (c === 'ArrowLeft') grFocus(GRIM.col - 1, GRIM.row);
+  else if (c === 'ArrowRight') grFocus(GRIM.col + 1, GRIM.row);
+  else if (c === 'ArrowUp') grFocus(GRIM.col, GRIM.row - 1);
+  else if (c === 'ArrowDown') grFocus(GRIM.col, GRIM.row + 1);
+  else if (/^Digit[1-6]$/.test(c)) { grEquipar(+c.slice(5) - 1); }
+  else if (c === 'Delete' || c === 'Backspace') gr.clear.click();
+  else if (c === 'Tab') { MG.cambiarPagina(); grRender(); }
+  else return;   // Intro/Espacio: los resuelve el botón enfocado
+  e.preventDefault();
+}
+function grimPad(down) {
+  if (down(1) || down(9)) { if (GRIM.armed) { GRIM.armed = false; grRender(); } else grClose(); return; }
+  if (down(12)) grFocus(GRIM.col, GRIM.row - 1); if (down(13)) grFocus(GRIM.col, GRIM.row + 1);
+  if (down(14)) grFocus(GRIM.col - 1, GRIM.row); if (down(15)) grFocus(GRIM.col + 1, GRIM.row);
+  if (down(4)) grFocus(GRIM.col - 1, GRIM.row); if (down(5)) grFocus(GRIM.col + 1, GRIM.row);
+  if (down(0)) { const a = document.activeElement; if (a && grEl.contains(a) && a.click) a.click(); }
+  if (down(2)) gr.clear.click();
+  if (down(3)) gr.equip.click();
+}
+function grAnim() {   // círculo de runas animado de la vista previa (2D, se redibuja mientras el grimorio está abierto)
+  const cv = gr.cv, x = cv.getContext('2d'), s = cv.width, c = s / 2, c0 = grComp(); GRIM.t += 1 / 60;
+  x.clearRect(0, 0, s, s);
+  const g = x.createRadialGradient(c, c, 4, c, c, c); g.addColorStop(0, 'rgba(12,12,16,.9)'); g.addColorStop(1, 'rgba(12,12,16,.25)'); x.fillStyle = g; x.fillRect(0, 0, s, s);
+  if (!c0.ok) { x.fillStyle = 'rgba(166,157,138,.6)'; x.font = '13px sans-serif'; x.textAlign = 'center'; x.fillText('forma + núcleo', c, c + 4); return; }
+  const col = (e) => FM.ELEMS[e].css, a = col(c0.elems[0]), b = col(c0.elems[c0.elems.length - 1]);
+  const flick = c0.I >= 20 ? (c0.I >= 50 ? 0.45 : 0.25) * Math.max(0, Math.sin(GRIM.t * 37) * Math.sin(GRIM.t * 53 + 1)) : 0, jit = c0.I >= 50 ? Math.sin(GRIM.t * 61) * 1.4 : 0;
+  x.globalAlpha = 0.9 - flick; x.lineCap = 'round';
+  const ring = (r, w, col2, dash) => { x.beginPath(); x.arc(c + jit, c, r, 0, Math.PI * 2); x.lineWidth = w; x.strokeStyle = col2; x.setLineDash(dash || []); x.stroke(); };
+  ring(s * 0.46, 1.6, a); ring(s * 0.42, 1, b);
+  x.save(); x.translate(c, c); x.rotate(GRIM.t * 0.12);
+  for (let i = 0; i < 48; i++) { x.rotate(Math.PI * 2 / 48); x.beginPath(); x.moveTo(s * 0.42, 0); x.lineTo(s * (i % 4 === 0 ? 0.39 : 0.405), 0); x.lineWidth = 1; x.strokeStyle = a; x.stroke(); }
+  x.restore();
+  x.save(); x.translate(c, c); x.rotate(-GRIM.t * 0.08);
+  const n = 8 + c0.piezas * 2; x.strokeStyle = b; x.lineWidth = 1.2;
+  for (let i = 0; i < n; i++) { x.rotate(Math.PI * 2 / n); x.beginPath(); x.moveTo(s * 0.34, -3); x.lineTo(s * 0.34, 4); x.moveTo(s * 0.34, 0); x.lineTo(s * 0.3, i % 2 ? 6 : -6); x.stroke(); }
+  x.restore();
+  // figura central según la forma
+  x.save(); x.translate(c, c); x.strokeStyle = a; x.lineWidth = 1.6;
+  const k = s * 0.19; x.beginPath();
+  if (c0.forma === 'proyectil') { x.moveTo(-k, 0); x.lineTo(k, 0); x.moveTo(k * 0.5, -k * 0.4); x.lineTo(k, 0); x.lineTo(k * 0.5, k * 0.4); }
+  else if (c0.forma === 'area') { x.arc(0, 0, k, 0, Math.PI * 2); x.moveTo(k * 0.45, 0); x.arc(0, 0, k * 0.45, 0, Math.PI * 2); }
+  else if (c0.forma === 'zona') { x.ellipse(0, k * 0.3, k, k * 0.5, 0, 0, Math.PI * 2); x.moveTo(-k * 0.4, -k * 0.1); x.lineTo(0, -k); x.lineTo(k * 0.4, -k * 0.1); }
+  else if (c0.forma === 'cono') { x.moveTo(-k, 0); x.lineTo(k, -k * 0.6); x.lineTo(k, k * 0.6); x.closePath(); }
+  else { x.arc(0, -k * 0.5, k * 0.28, 0, Math.PI * 2); x.moveTo(-k * 0.7, k * 0.8); x.quadraticCurveTo(0, -k * 0.3, k * 0.7, k * 0.8); }
+  x.stroke(); x.restore(); x.globalAlpha = 1;
+}
+
 /* ---------- HUD ---------- */
 const hud = { hpF: $('#hpF'), stF: $('#stF'), mpF: $('#mpF'), hpT: $('#hpT'), stT: $('#stT'), mpT: $('#mpT'), coins: $('#coins'), wave: $('#wave'), boss: $('#boss'), bossF: $('#bossF') };
 const spellBtns = [...document.querySelectorAll('[data-s]')];
@@ -2969,7 +3569,7 @@ function updateHud(dt) {
   const sk = SKILL[P.weapon], sb = $('#skillSlot');
   sb.style.setProperty('--cd', (P.skillCd / sk.cd).toFixed(3)); sb.classList.toggle('dim', P.st < sk.cost);
   if (sb.title !== sk.name) { sb.title = sk.name; sb.setAttribute('aria-label', 'Habilidad del arma: ' + sk.name + ' (G)'); }
-  for (const b of spellBtns) { const s = b.dataset.s; b.style.setProperty('--cd', (P.cds[s] / SPELL[s].cd).toFixed(3)); b.classList.toggle('dim', P.mp < SPELL[s].cost); }
+  for (const b of spellBtns) { const sp = SPELL[MG.slotKey(+b.dataset.s)]; b.style.setProperty('--cd', sp ? (P.cds[MG.slotKey(+b.dataset.s)] / sp.cd).toFixed(3) : 0); b.classList.toggle('dim', !sp || P.mp < sp.cost); }
   hudT -= dt; if (hudT > 0) return; hudT = 0.15;
   hud.coins.textContent = P.coins;
   const alive = enemies.filter((e) => !e.dead).length + queue.length, last = wave === WAVES.length - 1;
@@ -2999,17 +3599,12 @@ function updateWorld(dt) {
   }
   skyMat.uniforms.time.value = T;
 }
-function frame(now) {
-  requestAnimationFrame(frame);
-  const rdt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now; if (!PAUSE.on) T += rdt;  // el sello de rAF puede ser anterior a performance.now(): nunca dt negativo
-  let dt = rdt; if (hitStop > 0) { hitStop -= rdt; dt = rdt * 0.06; }
-  pollPad(rdt);
-  if (toastT > 0) { toastT -= rdt; if (toastT <= 0) $('#toast').classList.remove('on'); }
-  if (PAUSE.on) { composer.render(0); return; }   // simulación, VFX y temporizadores congelados; T no avanza
+const TEST = /[?&]test=1/.test(location.search);   // ?test=1: la simulación solo avanza con __GAME__.step(n) (determinista)
+function simStep(dt, rdt) {
   const intent = mode === 'demo' ? autopilot(dt) : manualIntent();
   updateHorse(dt, intent);
   updateMountUI(rdt);
-  updatePlayer(dt, intent); updateEnemies(dt); resolveCollisions(dt); updateLock(dt, rdt); updateProjs(dt); updateCoins(dt); updateWaves(dt);
+  updatePlayer(dt, intent); updateEnemies(dt); MG.update(dt); resolveCollisions(dt); updateLock(dt, rdt); updateProjs(dt); updateCoins(dt); updateWaves(dt);
   updateFx(dt); updateFlashes(dt); updateWorld(rdt);
   FX.update(dt); SMOKE.update(dt, true); ASH.update(rdt, true);
   if (VFX) VFX.update(dt);
@@ -3017,11 +3612,48 @@ function frame(now) {
   updateCamera(rdt); dbgCamera(); updateNums(rdt); updateHud(rdt);
   if (bannerT > 0) { bannerT -= rdt; if (bannerT <= 0) $('#banner').classList.remove('on'); }
   grade.uniforms.time.value = T;
+}
+function frame(now) {
+  requestAnimationFrame(frame);
+  const rdt = Math.max(0, Math.min(0.05, (now - last) / 1000)); last = now; if (!PAUSE.on && !TEST) T += rdt;  // el sello de rAF puede ser anterior a performance.now(): nunca dt negativo
+  let dt = rdt; if (hitStop > 0 && !TEST) { hitStop -= rdt; dt = rdt * 0.06; }
+  if (!TEST) pollPad(rdt);
+  if (toastT > 0) { toastT -= rdt; if (toastT <= 0) $('#toast').classList.remove('on'); }
+  if (GRIM.open) grAnim();
+  if (PAUSE.on) { composer.render(0); return; }   // simulación, VFX y temporizadores congelados; T no avanza
+  if (!TEST) simStep(dt, rdt);
   composer.render(rdt);
 }
-window.__GAME__ = { P, SPELL, WEAP, get GK() { return GK; }, get VFX() { return VFX; }, castSpell, attack, setMode, get device() { return device; }, PAD, SKILL, get HZ() { return HZ; }, MOUNT, toggleMount, get RAYOS() { return RAYOS; }, get paused() { return PAUSE.on; }, pause, resume, enemies, get target() { return lockable(LOCK.t) ? LOCK.t : null; }, lockOn, cycleTarget, unlock, LOCK, lockMark, get T() { return T; }, get mode() { return mode; },
+function stepN(n, dt = 1 / 60) {                   // avanza la simulación a paso fijo (para pruebas, con o sin ?test=1)
+  for (let i = 0; i < n; i++) {
+    pollPad(dt);
+    if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('#toast').classList.remove('on'); }
+    if (GRIM.open) grAnim();
+    if (PAUSE.on) continue;
+    T += dt; let d = dt; if (hitStop > 0) { hitStop -= dt; d = dt * 0.06; }
+    simStep(d, dt);
+  }
+  return T;
+}
+window.__GAME__ = { P, SPELL, WEAP, TEST, step: stepN, get GK() { return GK; }, get VFX() { return VFX; }, castSpell, attack, setMode, get device() { return device; }, PAD, SKILL, get HZ() { return HZ; }, MOUNT, toggleMount, get RAYOS() { return RAYOS; }, get paused() { return PAUSE.on; }, pause, resume, enemies, get target() { return lockable(LOCK.t) ? LOCK.t : null; }, lockOn, cycleTarget, unlock, LOCK, lockMark, get T() { return T; }, get mode() { return mode; },
   KB, kbStats: () => ({ vMax1s: Math.max(KBS.cur, KBS.prev), yMax1s: Math.max(KBS.curY, KBS.prevY), vMaxAll: KBS.all, yMaxAll: KBS.allY, impulses: KBS.n }) };   // estado legible para pruebas
-Object.defineProperties(window.__GAME__, { colliders: { get: () => COLL.segs.length + COLL.boxes.length + 1 + (HZ ? 1 : 0) + 1 + enemies.filter(solidEnemy).length, enumerable: true }, COLL: { value: COLL }, DBG: { value: DBG }, showColliders: { value: showColliders }, collCheck: { value: collCheck }, camera: { value: camera } });   // colisiones y depuración
+Object.defineProperties(window.__GAME__, { colliders: { get: () => COLL.segs.length + COLL.boxes.length + 1 + (HZ ? 1 : 0) + 1 + enemies.filter(solidEnemy).length, enumerable: true }, COLL: { value: COLL }, DBG: { value: DBG }, showColliders: { value: showColliders }, collCheck: { value: collCheck }, camera: { value: camera }, renderer: { value: renderer } });   // colisiones y depuración
+window.__GAME__.MAGIA = {
+  get ranuras() { return MG.ranuras; }, get pagina() { return MG.pagina; }, set pagina(v) { MG.pagina = v ? 1 : 0; MG.hudSlots(); },
+  get codice() { return MG.codice; }, get semilla() { return MG.semilla; }, set semilla(v) { MG.semilla = v >>> 0; },
+  get precompuestos() { return FM.PRECOMPUESTOS; }, get abierto() { return GRIM.open; }, get suelos() { return MG.suelos.filter((z) => z.activo); },
+  get stats() { return MG.stats; }, get grimNav() { return { col: GRIM.col, row: GRIM.row, armed: GRIM.armed }; }, get editor() { return MG.editor; }, get oculto() { return MG.oculto; },
+  compilar: (r) => MG.compilar(r), validar: (r) => FM.validar(r), equipar: (i, r) => MG.equipar(i, r), lanzar: (i) => MG.lanzar(i),
+  estados: (e) => e.est, tirada: (I, sem, n) => FM.tirada(I, sem, n), strHash: FM.strHash, golpear: (e, r, o) => MG.golpear(e, r, o),
+  suelo: (estilo, x, z, r, dur) => MG.suelo(estilo, new V3(x, 0, z), r, dur), zona: (r, x, z) => { const c = MG.compilar(r); return MG.crearZona(c, new V3(x, 0, z), c.potencia); },
+  impacto: (r, x, z) => { const c = MG.compilar(r), el = uniqEl(c.elems); MG.convertirSuelos(new V3(x, 0, z), el); },
+  abrir: () => openGrim(false), cerrar: () => grClose(), cargar: (r) => { MG.editor.forma = r.forma; MG.editor.nucleo = r.nucleo.slice(); MG.editor.mods = (r.mods || []).slice(); if (GRIM.open) grRender(); },
+  explosion: (r, x, z) => { const c = MG.compilar(r); MG.explosion(c, new V3(x, 0, z), 3, c.potencia); },
+  limpiar() { for (const e of [...enemies]) removeEnemy(e); for (let i = projs.length - 1; i >= 0; i--) freeProj(projs[i], i); MG.reset(); wState = 'idle'; queue = []; Object.assign(P, { hp: P.hpMax, mp: P.mpMax, st: P.stMax, bonus: 1 }); for (const k in P.cds) P.cds[k] = 0; },
+  spawn(type, x, z) { const e = spawnEnemy(type, new V3(x, 0, z)); e.spawnT = 0; e.m.g.position.y = 0; return e; },
+  oleadas() { wave = -1; wState = 'pre'; wTimer = 1; queue = []; },
+  get lights() { return flashes.length; }
+};
 markSel();
 setMode('demo');
 setQual(qual);

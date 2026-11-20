@@ -24,11 +24,12 @@ Si cambias `maqueta.src.html`, vuelve a generar `maqueta.html` con el comando de
 | Ruta | Qué es |
 |---|---|
 | `maqueta.src.html` | Código fuente de la maqueta (three.js r147 por CDN, HUD en DOM, postproceso HDR + bloom + ACES) |
-| `vfx/vfx.js` | Módulo de efectos de hechizos: partículas con tamaño/alfa por partícula, círculos de runas originales, cargas, proyectiles, explosiones, escarcha, columna de luz |
+| `vfx/vfx.js` | Módulo de efectos de hechizos: partículas con tamaño/alfa por partícula, humo fBm con erosión, círculos de runas, cargas, proyectiles y estela de los 7 elementos, impactos, arcos eléctricos, rocas/pinchos, suelos persistentes, cono, aura, reacciones y estados |
+| `magia/magia.js` | Reglas puras de la magia rúnica (recetas, `compilar`, inestabilidad con semilla, estados y reacciones); sin three.js. Especificación en `magia/DISENO.md` y `magia/VFX.md` |
 | `vfx/test.html`, `vfx/shoot.js`, `vfx/sheet.py` | Banco de pruebas del módulo de efectos y capturas (`vfx/capturas/`) |
 | `texturas/*.webp` | Texturas CC0 de Poly Haven (ver `juego/public/assets/CREDITOS.md`) |
-| `build.py` | Genera el HTML final incrustando texturas, el caballero GLB y `vfx.js` |
-| `pruebas/*.js` | Pruebas con Playwright: carga sin errores, vista de frente, combate (fuego, luz, martillo, correr atacando), hechizo de luz |
+| `build.py` | Genera el HTML final incrustando texturas, el caballero GLB, `vfx.js` y `magia/magia.js` |
+| `pruebas/*.js` | Pruebas con Playwright: carga sin errores, vista de frente, combate (fuego, luz, martillo, correr atacando), hechizo de luz; `magia.js` verifica los criterios MQ-01..MQ-14 y saca las capturas `vfx/capturas/magia_*.png` (`node prototipo/pruebas/magia.js prototipo/dist prototipo/.three/package [dirCapturas] [mq\|cap]`) |
 | `capturas/` | Capturas de referencia (render en Blender, poses, combate) |
 
 Modelos que incrusta la maqueta (detalle y licencias en `juego/public/assets/CREDITOS.md`):
@@ -69,9 +70,11 @@ En modo de prueba la página expone `window.__GAME__` (estado del jugador, hechi
 | Cambiar de objetivo fijado (al enemigo más cercano en pantalla hacia ese lado) | Stick der. ◀ ▶ (inclinar a fondo y volver al centro para el siguiente) | Z (izquierda) / X (derecha) | — |
 | Atacar · mantener = ataque fuerte | R1 (□ también) | Clic izq. o J | Atacar |
 | Bloquear · a tiempo = parada (aturde) | L1 mantener | Clic der. o V mantener | Bloquear |
-| Hechizo directo | Mantener L2 + □ fuego · △ escarcha · ○ curación (Destello sagrado) · ✕ habilidad del arma | Q / E / R · G | Ranuras de hechizo |
+| Hechizo de la ranura 1 / 2 / 3 de la página activa | Mantener L2 + □ / △ / ○ (✕ = habilidad del arma) | Q / E / R · G | Ranuras de hechizo |
+| Cambiar de página de ranuras (1-3 ↔ 4-6) | L2 + ▲ / ▼ | Tab | Indicador 1/2 del HUD |
 | Magia elegida | L2 (pulsar y soltar) | F | — |
-| Elegir magia | Cruceta ◀ ▶ | Rueda | — |
+| Elegir ranura | Cruceta ◀ ▶ | Rueda | — |
+| Grimorio (compón hechizos; pausa el juego) | Menú de pausa › Grimorio · dentro: cruceta navega, L1/R1 columna, ✕ alterna, □ vacía, △ equipar (luego ranura + ✕), ○ volver | B (o Pausa › Grimorio) · dentro: ←→ columna, ↑↓ runa, Intro alterna, 1-6 equipa en esa ranura, Supr vacía, Tab página, B/Esc cierra · ratón: clic alterna, arrastrar la vista previa a una ranura | Pausa › Grimorio |
 | Habilidad del arma (Embestida / Terremoto / Andanada) | R2 | G o clic central | Habilidad |
 | Esquivar | ✕ / ○ | Espacio | Esquivar |
 | Cambiar arma | △ (pulsar) / cruceta ▲ | 1 2 3 | Ranuras de arma |
@@ -80,6 +83,13 @@ En modo de prueba la página expone `window.__GAME__` (estado del jugador, hechi
 | Pausa (jugando) | OPTIONS | Esc o P (Esc también suelta el ratón) · botón ❚❚ | Botón ❚❚ del HUD |
 | Menú de pausa: elegir · aceptar · volver | Cruceta/stick ▲▼ · ✕ · ○ (OPTIONS reanuda) | ↑↓ (o W/S) · Intro · Esc (P reanuda) | Tocar la opción |
 | Jugar yo (en la demo) · calidad | OPTIONS · CREATE/panel táctil | Botones del HUD | Botones del HUD |
+
+**Magia rúnica.** Los hechizos ya no son tres fijos: se componen en el **grimorio** con 1 forma (Proyectil, Área, Zona, Cono, Yo),
+1-2 elementos (Fuego, Hielo, Luz, Rayo, Tierra, Sombra, Aire; dos distintos = fusión) y hasta 3 modificadores, y se equipan en
+6 ranuras (2 páginas de 3). Hay 6 reacciones (Vapor, Magma, Incendio, Escarcha eléctrica, Juicio, Niebla negra) sobre enemigos y suelos,
+9 estados sobre enemigos y una tirada de inestabilidad con semilla. La demo usa los 10 hechizos precompuestos. Reglas y números en
+`magia/DISENO.md`; `window.__GAME__.MAGIA` expone `compilar`, `equipar`, `lanzar`, `ranuras`, `pagina`, `codice`, `estados`, etc.
+Con `?test=1` la simulación solo avanza con `__GAME__.step(n)`.
 
 El menú de pausa congela la simulación (jugador, enemigos, proyectiles, oleadas, efectos y temporizadores) y
 muestra la escena detenida y desenfocada detrás. Opciones: **Volver a la batalla**, **Controles** (lista del

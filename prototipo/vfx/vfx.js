@@ -68,17 +68,17 @@
         g.fillStyle = lg; g.beginPath(); g.moveTo(0, -3.2); g.lineTo(L, 0); g.lineTo(0, 3.2); g.closePath(); g.fill();
       }
       g.restore();
-      // 2: lengua de llama: varias manchas suaves irregulares
-      var R = rng(77);
-      g.save(); g.beginPath(); g.rect(0, S, S, S); g.clip();
-      for (i = 0; i < 22; i++) {
-        var a = R() * TAU, d = Math.pow(R(), 1.5) * 30, x = 64 + Math.cos(a) * d, y = S + 70 + Math.sin(a) * d * 1.2 - R() * 18;
-        var r = 14 + R() * 22;
-        gr = g.createRadialGradient(x, y, 0, x, y, r);
-        gr.addColorStop(0, 'rgba(255,255,255,0.32)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-        g.fillStyle = gr; g.fillRect(0, S, S, S);
-      }
-      g.restore();
+      // 2: lengua de llama: fBm con perfil de gota (ancha abajo, afilada arriba)
+      (function () {
+        var im = g.createImageData(S, S), dd = im.data;
+        for (var py = 0; py < S; py++) for (var px = 0; px < S; px++) {
+          var u = (px / S - 0.5) * 2, y = py / S, prof = Math.max(0, 1 - Math.abs(u + (fbm2(y * 3, 9, 7, 2) - 0.5) * 0.5) / (0.12 + 0.62 * Math.pow(y, 0.8)));
+          var n = fbm2(u * 2.4 + 3, y * 3.6, 11, 4), vf = sstep(0.0, 0.22, y) * sstep(1.0, 0.72, y);
+          var a = Math.max(0, Math.min(1, prof * vf * (n * 1.7 - 0.18))), idx = (py * S + px) * 4;
+          dd[idx] = dd[idx + 1] = dd[idx + 2] = 255; dd[idx + 3] = a * 255;
+        }
+        g.putImageData(im, 0, S);
+      })();
       // 3: ascua (núcleo duro + halo corto)
       gr = g.createRadialGradient(S + 64, S + 64, 0, S + 64, S + 64, 60);
       gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.1, 'rgba(255,255,255,1)');
@@ -87,27 +87,31 @@
       return ctex(cv);
     })();
 
-    // Atlas 2x2 de humo algodonoso
+    // ruido de valor 2D con semilla (para generar atlas al arrancar)
+    function hash21(x, y, s) { var h = Math.imul((x * 374761393 + y * 668265263 + s * 1442695041) | 0, 1274126177); h = (h ^ (h >>> 13)) >>> 0; h = Math.imul(h, 1103515245) >>> 0; return ((h ^ (h >>> 16)) >>> 0) / 4294967296; }
+    function vn2(x, y, s) {
+      var ix = Math.floor(x), iy = Math.floor(y), fx = x - ix, fy = y - iy; fx = fx * fx * (3 - 2 * fx); fy = fy * fy * (3 - 2 * fy);
+      var a = hash21(ix, iy, s), b = hash21(ix + 1, iy, s), c = hash21(ix, iy + 1, s), d = hash21(ix + 1, iy + 1, s);
+      return (a + (b - a) * fx) * (1 - fy) + (c + (d - c) * fx) * fy;
+    }
+    function fbm2(x, y, s, oct) { var a = 0.5, sum = 0, n = 0; for (var i = 0; i < oct; i++) { sum += a * vn2(x, y, s + i); n += a; x = x * 2.03 + 1.7; y = y * 2.03 - 3.1; a *= 0.5; } return sum / n; }
+    function sstep(a, b, x) { var t = (x - a) / (b - a); t = t < 0 ? 0 : t > 1 ? 1 : t; return t * t * (3 - 2 * t); }
+
+    // Atlas 2x2 de humo: ruido fBm de 5 octavas con dominio deformado (silueta irregular, sin círculos radiales). El alfa guarda la densidad.
     var smokeAtlas = (function () {
-      var S = 128, cv = canvas(S * 2), g = cv.getContext('2d'), R = rng(1234);
+      var S = 256, cv = canvas(S * 2), g = cv.getContext('2d'), img = g.createImageData(S * 2, S * 2), d = img.data;
       for (var cell = 0; cell < 4; cell++) {
-        var ox = (cell % 2) * S, oy = (cell >> 1) * S;
-        g.save(); g.beginPath(); g.rect(ox, oy, S, S); g.clip();
-        for (var i = 0; i < 70; i++) {
-          var a = R() * TAU, d = Math.pow(R(), 0.8) * 34, x = ox + 64 + Math.cos(a) * d, y = oy + 64 + Math.sin(a) * d;
-          var r = 6 + R() * 20 * (1 - d / 50);
-          var gr = g.createRadialGradient(x, y, 0, x, y, r);
-          var al = 0.10 + R() * 0.16;
-          gr.addColorStop(0, 'rgba(255,255,255,' + al + ')'); gr.addColorStop(0.6, 'rgba(255,255,255,' + al * 0.5 + ')'); gr.addColorStop(1, 'rgba(255,255,255,0)');
-          g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, TAU); g.fill();
+        var ox = (cell % 2) * S, oy = (cell >> 1) * S, sd = cell * 17 + 3;
+        for (var py = 0; py < S; py++) for (var px = 0; px < S; px++) {
+          var u = (px / S - 0.5) * 2, v = (py / S - 0.5) * 2, r = Math.sqrt(u * u + v * v);
+          var wx = fbm2(u * 1.3 + sd, v * 1.3, sd + 1, 3) - 0.5, wy = fbm2(u * 1.3 - sd, v * 1.3 + 4, sd + 2, 3) - 0.5;
+          var n = fbm2(u * 2.1 + wx * 1.7 + sd * 0.37, v * 2.1 + wy * 1.7, sd + 3, 5);
+          var m = Math.pow(Math.max(0, Math.min(1, (1 - r) / 0.8)), 1.2);
+          var val = Math.max(0, Math.min(1, (n - 0.3) * 2.1)) * m, idx = ((oy + py) * S * 2 + ox + px) * 4;
+          d[idx] = d[idx + 1] = d[idx + 2] = 255; d[idx + 3] = val * 255;
         }
-        // atenuación radial para bordes suaves
-        g.globalCompositeOperation = 'destination-in';
-        var m = g.createRadialGradient(ox + 64, oy + 64, 10, ox + 64, oy + 64, 63);
-        m.addColorStop(0, 'rgba(0,0,0,1)'); m.addColorStop(0.6, 'rgba(0,0,0,0.8)'); m.addColorStop(1, 'rgba(0,0,0,0)');
-        g.fillStyle = m; g.fillRect(ox, oy, S, S);
-        g.restore();
       }
+      g.putImageData(img, 0, 0);
       return ctex(cv);
     })();
 
@@ -189,6 +193,26 @@
       return ctex(cv);
     }
     var fireCrackTex = crackTexture(31, false);
+    // Lava: celdas de Voronoi; las grietas (F2-F1 pequeño) brillan, las placas forman la costra oscura
+    function voronoiTex(seed, crust) {
+      var S = 256, cv = canvas(S), g = cv.getContext('2d'), img = g.createImageData(S, S), d = img.data, N = 6, px, py, i, j;
+      for (py = 0; py < S; py++) for (px = 0; px < S; px++) {
+        var wu = (fbm2(px / S * 3, py / S * 3, seed + 20, 3) - 0.5) * 2.2, wv = (fbm2(px / S * 3 + 7, py / S * 3, seed + 21, 3) - 0.5) * 2.2;
+        var u = px / S * N + wu, v = py / S * N + wv, cx = Math.floor(u), cy = Math.floor(v), f1 = 9, f2 = 9;
+        for (j = -1; j <= 1; j++) for (i = -1; i <= 1; i++) {
+          var gx = cx + i, gy = cy + j, ox = gx + hash21(gx, gy, seed) * 0.85 + 0.07, oy = gy + hash21(gx, gy, seed + 5) * 0.85 + 0.07;
+          var dd = Math.sqrt((u - ox) * (u - ox) + (v - oy) * (v - oy));
+          if (dd < f1) { f2 = f1; f1 = dd; } else if (dd < f2) f2 = dd;
+        }
+        var e = f2 - f1, r = Math.sqrt(Math.pow(px / S - 0.5, 2) + Math.pow(py / S - 0.5, 2)) * 2, m = sstep(1.0, 0.45, r);
+        var n = fbm2(px / S * 5, py / S * 5, seed + 9, 3), a;
+        if (crust) a = m * sstep(0.03, 0.16, e + (n - 0.5) * 0.08) * 0.96;
+        else a = m * (1 - sstep(0.0, 0.1 + n * 0.05, e)) * (0.55 + 0.9 * n);
+        var k = (py * S + px) * 4; d[k] = d[k + 1] = d[k + 2] = 255; d[k + 3] = Math.max(0, Math.min(1, a)) * 255;
+      }
+      g.putImageData(img, 0, 0); return ctex(cv);
+    }
+    var lavaGlowTex = voronoiTex(7, false), lavaCrustTex = voronoiTex(7, true);
     var frostTex = crackTexture(57, true);
 
     // Vetas verticales para la columna de luz (repetible)
@@ -209,10 +233,15 @@
 
     // ---------------------------------------------------------------- círculos de runas
     var KINDS = {
-      fuego: { seed: 1101, glyphs: 22, hex: 0xff6a1a, hdr: [4.2, 1.35, 0.32], sub: [3.2, 0.7, 0.12] },
-      escarcha: { seed: 2203, glyphs: 26, hex: 0x8fdcff, hdr: [0.9, 2.6, 4.6], sub: [0.5, 1.6, 3.6] },
-      luz: { seed: 3307, glyphs: 30, hex: 0xffd27a, hdr: [4.4, 3.3, 1.5], sub: [3.2, 2.2, 0.8] }
+      fuego: { seed: 1101, glyphs: 22, hex: 0xff6a1a, hdr: [2.4, 0.9, 0.2], sub: [1.9, 0.5, 0.1] },
+      escarcha: { seed: 2203, glyphs: 26, hex: 0x8fdcff, hdr: [0.6, 1.5, 2.5], sub: [0.35, 1.0, 2.0] },
+      luz: { seed: 3307, glyphs: 30, hex: 0xffd27a, hdr: [2.5, 1.9, 0.9], sub: [1.9, 1.3, 0.5] },
+      rayo: { seed: 4409, glyphs: 24, hex: 0xb9a8ff, hdr: [0.7, 1.0, 2.0], sub: [0.5, 0.7, 1.6] },
+      tierra: { seed: 5501, glyphs: 20, hex: 0xb0884e, hdr: [1.0, 0.7, 0.3], sub: [0.7, 0.5, 0.2] },
+      sombra: { seed: 6607, glyphs: 28, hex: 0x8a4fd0, hdr: [0.5, 0.2, 0.9], sub: [0.35, 0.14, 0.7] },
+      aire: { seed: 7703, glyphs: 24, hex: 0xcfeee2, hdr: [0.9, 1.1, 1.0], sub: [0.6, 0.8, 0.75] }
     };
+    KINDS.hielo = KINDS.escarcha;
     function kindOf(k) { return KINDS[k] || KINDS.fuego; }
 
     // Glifo original: trazo vertical + 1-3 ramas/diagonales en rejilla 3x4 (+ marca opcional)
@@ -268,7 +297,27 @@
       g.stroke();
     }
 
+    function drawRuneCircle2(g, kind) {   // rayo, tierra, sombra, aire: trazo fino, serifa de inscripción
+      var K = kindOf(kind), R = rng(K.seed), c = 512, i, a;
+      g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineCap = 'round'; g.lineJoin = 'round';
+      ring(g, c, 500, 4); ring(g, c, 480, 2); ticks(g, c, 484, 496, 72, 2);
+      glyphBand(g, R, c, c, 432, K.glyphs, 30, 48, 3.2);
+      ring(g, c, 388, 3); ring(g, c, 376, 1.5);
+      g.lineWidth = 3;
+      if (kind === 'rayo') { starPoly(g, c, 8, 3, 366, -Math.PI / 2); g.lineWidth = 2; starPoly(g, c, 8, 2, 296, -Math.PI / 2 + Math.PI / 8); }
+      else if (kind === 'tierra') { for (i = 0; i < 2; i++) starPoly(g, c, 4, 1, 366, i * Math.PI / 4 + Math.PI / 4); g.lineWidth = 2; starPoly(g, c, 4, 1, 262, Math.PI / 4); for (i = 0; i < 4; i++) { a = i / 4 * TAU; g.beginPath(); g.arc(c + Math.cos(a) * 366, c + Math.sin(a) * 366, 12, 0, TAU); g.stroke(); } }
+      else if (kind === 'sombra') { for (i = 0; i < 3; i++) { a = i / 3 * TAU - Math.PI / 2; g.beginPath(); g.arc(c + Math.cos(a) * 130, c + Math.sin(a) * 130, 230, 0, TAU); g.stroke(); } ring(g, c, 350, 2); }
+      else { g.lineWidth = 2.4; for (var arm = 0; arm < 3; arm++) { g.beginPath(); for (var t = 0; t < 5.5 * Math.PI; t += 0.12) { var rr0 = 30 + t * 17, an = t + arm * TAU / 3; if (t === 0) g.moveTo(c + Math.cos(an) * rr0, c + Math.sin(an) * rr0); else g.lineTo(c + Math.cos(an) * rr0, c + Math.sin(an) * rr0); } g.stroke(); } }
+      ring(g, c, 222, 2.5); glyphBand(g, R, c, c, 196, Math.round(K.glyphs * 0.6), 16, 24, 2.6); ring(g, c, 168, 2.5);
+      g.save(); g.translate(c, c); g.lineWidth = 4;
+      if (kind === 'rayo') { g.beginPath(); g.moveTo(24, -120); g.lineTo(-30, -10); g.lineTo(14, -10); g.lineTo(-22, 120); g.lineTo(46, -22); g.lineTo(0, -22); g.closePath(); g.stroke(); }
+      else if (kind === 'tierra') { g.beginPath(); g.moveTo(-110, 70); g.lineTo(-40, -70); g.lineTo(0, -10); g.lineTo(46, -96); g.lineTo(118, 70); g.closePath(); g.stroke(); g.beginPath(); g.moveTo(-60, 70); g.lineTo(-20, 20); g.lineTo(20, 70); g.stroke(); }
+      else if (kind === 'sombra') { g.beginPath(); g.arc(0, 0, 100, Math.PI * 0.2, Math.PI * 1.8); g.arc(36, 0, 76, Math.PI * 1.75, Math.PI * 0.25, true); g.stroke(); g.beginPath(); g.arc(-56, -8, 8, 0, TAU); g.fill(); }
+      else { g.lineWidth = 3.4; for (i = 0; i < 3; i++) { g.save(); g.rotate(i * TAU / 3); g.beginPath(); g.moveTo(-60, -40); g.bezierCurveTo(-20, -90, 60, -80, 70, -30); g.bezierCurveTo(78, 6, 40, 20, 24, -2); g.stroke(); g.restore(); } }
+      g.restore();
+    }
     function drawRuneCircle(g, kind) {
+      if (kind === 'rayo' || kind === 'tierra' || kind === 'sombra' || kind === 'aire') return drawRuneCircle2(g, kind);
       var K = kindOf(kind), R = rng(K.seed), c = 512, i, a;
       g.strokeStyle = '#fff'; g.fillStyle = '#fff'; g.lineCap = 'round'; g.lineJoin = 'round';
       // anillo exterior doble con muescas
@@ -338,6 +387,7 @@
 
     var runeCache = {}, runeRingCache = {};
     function runeTexture(kind) {
+      if (kind === 'hielo') kind = 'escarcha';
       if (!KINDS[kind]) kind = 'fuego';
       if (runeCache[kind]) return runeCache[kind];
       var cv = canvas(1024), g = cv.getContext('2d');
@@ -397,7 +447,8 @@
       '}'
     ].join('\n');
     var PS_FRAG_ADD = PS_FRAG_COMMON + '\nvoid main(){ vec4 t = sampleCell(); float a = t.a * vA * (1.0 - vFog); if (a < 0.002) discard; gl_FragColor = vec4(vC * a, a); }';
-    var PS_FRAG_SMOKE = PS_FRAG_COMMON + '\nvoid main(){ vec4 t = sampleCell(); float a = t.a * vA; if (a < 0.004) discard; gl_FragColor = vec4(mix(vC, uFogColor, vFog), a); }';
+    var PS_FRAG_SMOKE = PS_FRAG_COMMON + '\nvoid main(){ vec4 t = sampleCell(); float n = t.a; float k = clamp(vA / 0.35, 0.0, 1.0); float thr = 0.34 * (1.0 - k);' +
+      ' float a = smoothstep(thr, thr + 0.5, n) * vA * (0.6 + 0.8 * n); if (a < 0.004) discard; vec3 c = vC * (0.6 + 0.4 * n); gl_FragColor = vec4(mix(c, uFogColor, vFog), min(a, 1.0)); }';
 
     function ParticleSystem(max, additive) {
       this.max = max; this.cursor = 0; this.additive = additive;
@@ -549,7 +600,7 @@
       this.active = false; this.managed = false;
       scene.add(this.mesh);
     }
-    for (var qi = 0; qi < 28; qi++) quads.push(new Quad());
+    for (var qi = 0; qi < 44; qi++) quads.push(new Quad());
     // cfg: { tex, color:[r,g,b] o hex, hdr, additive, pos, y, s0, s1, life, fadeIn, hold, alpha, spin, rot, order }
     function quad(cfg) {
       var q = null, oldest = null, i;
@@ -615,7 +666,7 @@
       '  vec3 q = position * 1.6 + vec3(uSeed, -uTime * 1.8, uSeed * 0.7);',
       '  float n = fbm(q);',
       '  vec3 p = position + normal * (n - 0.45) * uDisp;',
-      '  vP = position * 2.6 + vec3(uSeed, -uTime * 2.4, -uSeed);',
+      '  vP = position * 3.8 + vec3(uSeed, -uTime * 2.6, -uSeed);',
       '  vec4 mv = modelViewMatrix * vec4(p, 1.0);',
       '  vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz);',
       '  gl_Position = projectionMatrix * mv;',
@@ -627,15 +678,15 @@
       'void main(){',
       '  float fr = clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0);',
       '  float n = fbm(vP);',
-      '  float heat = clamp(n * 1.3 + fr * 0.45 - 0.7 + uHeat * 0.55, 0.0, 1.1);',
+      '  float heat = clamp(n * 1.6 + fr * 0.3 - 0.82 + uHeat * 0.62, 0.0, 1.1);',
       '  vec3 col = heat < 0.5 ? mix(uC1, uC2, heat * 2.0) : mix(uC2, uC3, min((heat - 0.5) * 2.0, 1.4));',
-      '  float a = smoothstep(0.0, 0.55, fr) * smoothstep(0.08, 0.45, heat) * uFade;',
+      '  float a = smoothstep(0.0, 0.6, fr) * smoothstep(0.14, 0.6, heat) * uFade;',
       '  gl_FragColor = vec4(col * a, a);',
       '}'
     ].join('\n');
     var fireMatBase = track(new THREE.ShaderMaterial({
       uniforms: { uTime: U_TIME, uSeed: { value: 0 }, uDisp: { value: 0.35 }, uFade: { value: 1 }, uHeat: { value: 1 },
-        uC1: { value: new THREE.Color(0.35, 0.03, 0.0) }, uC2: { value: new THREE.Color(2.2, 0.42, 0.04) }, uC3: { value: new THREE.Color(3.6, 1.45, 0.28) } },
+        uC1: { value: new THREE.Color(0.25, 0.02, 0.0) }, uC2: { value: new THREE.Color(1.5, 0.27, 0.03) }, uC3: { value: new THREE.Color(2.3, 0.78, 0.1) } },
       vertexShader: FIRE_VERT, fragmentShader: FIRE_FRAG, transparent: true, depthWrite: false,
       blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor
     }));
@@ -699,6 +750,17 @@
         uRim: { value: new THREE.Color(1.2, 3.2, 5.0) }, uCore: { value: new THREE.Color(0.4, 1.4, 2.4) } },
       vertexShader: ICE_VERT, fragmentShader: ICE_FRAG, transparent: true, depthWrite: true
     }));
+    // Cuerpo helado de un enemigo congelado: elipsoide irregular (ruido) con el shader translúcido de hielo (Fresnel, núcleo frío)
+    var iceBodyGeo = (function () {
+      var g = new THREE.IcosahedronGeometry(1, 3), p = g.attributes.position, nrm = g.attributes.normal, i;
+      for (i = 0; i < p.count; i++) {
+        var x = p.getX(i), y = p.getY(i), z = p.getZ(i), dd = 1 + (fbm2(x * 2.2 + y * 1.1, z * 2.2 - y, 21, 3) - 0.5) * 0.45;
+        p.setXYZ(i, x * dd, y * dd, z * dd);
+      }
+      g.computeVertexNormals();
+      for (i = 0; i < p.count; i++) { _v1.set(p.getX(i), p.getY(i), p.getZ(i)).normalize(); nrm.setXYZ(i, _v1.x, _v1.y, _v1.z); }
+      return track(g);
+    })();
     function crystalGeo(len, rad, seg) {
       var pts = [new THREE.Vector2(0, -len * 0.42), new THREE.Vector2(rad * 0.8, -len * 0.3), new THREE.Vector2(rad, -len * 0.05),
         new THREE.Vector2(rad * 0.85, len * 0.22), new THREE.Vector2(0, len * 0.58)];
@@ -713,6 +775,7 @@
         blending: THREE.AdditiveBlending, fog: false }));
     };
     var iceCoreMat = addBasic(1.6, 3.6, 5.5);
+    var iceBodyMat = track(iceMat.clone()); iceBodyMat.uniforms.uAlpha.value = 0.5; iceBodyMat.uniforms.uGlow.value = 0.6; iceBodyMat.depthWrite = false;
 
     // Esquirlas de hielo (pool, material propio para el desvanecido)
     var shards = [];
@@ -783,8 +846,8 @@
         var rr0 = c.r * (0.25 + 0.75 * open) * (1 - 0.35 * Math.max(0, t - 0.45));
         c.outer.scale.set(rr0, 26, rr0);
         c.inner.scale.set(rr0 * 0.42, 26, rr0 * 0.42);
-        c.outer.material.uniforms.uAlpha.value = a * 0.6;
-        c.inner.material.uniforms.uAlpha.value = a * 1.1;
+        c.outer.material.uniforms.uAlpha.value = a * 0.32;
+        c.inner.material.uniforms.uAlpha.value = a * 0.6;
       }
     }
 
@@ -825,6 +888,7 @@
     var tinySphere = track(new THREE.IcosahedronGeometry(1, 2));
 
     function projectileMesh(kind) {
+      if (kind === 'luz' || kind === 'rayo' || kind === 'tierra' || kind === 'sombra' || kind === 'aire') return elementBody(kind);
       var g = new THREE.Group(), t = rand() * 10;
       if (kind === 'escarcha') {
         var body = new THREE.Group(); g.add(body);
@@ -865,19 +929,23 @@
     // la estela se reparte a lo largo del segmento recorrido desde la llamada anterior
     // (se recuerda la última posición por objeto Vector3; solo asigna la primera vez)
     var lastPos = new WeakMap(), _seg = new THREE.Vector3(), _tq = new THREE.Vector3();
-    function trail(kind, pos, dt) {
+    function trail(kind, pos, dt, kind2) {
+      if (kind === 'hielo') kind = 'escarcha'; if (kind2 === 'hielo') kind2 = 'escarcha';
       var lp = lastPos.get(pos);
       if (!lp) { lp = new THREE.Vector3().copy(pos); lastPos.set(pos, lp); }
       _seg.subVectors(pos, lp);
       if (_seg.lengthSq() > 4) _seg.set(0, 0, 0);
+      if (_seg.lengthSq() > 1e-8) _dir.copy(_seg).normalize();
       lp.copy(pos);
       var steps = Math.max(1, Math.min(8, Math.ceil(_seg.length() / 0.06)));
       for (var k = 0; k < steps; k++) {
         _tq.copy(pos).addScaledVector(_seg, -k / steps);
         trailAt(kind, _tq, dt / steps);
+        if (kind2 && kind2 !== kind) trailAt(kind2, _tq, dt / steps);
       }
     }
     function trailAt(kind, pos, dt) {
+      if (kind === 'luz' || kind === 'rayo' || kind === 'tierra' || kind === 'sombra' || kind === 'aire') { elTrail(kind, pos, dt); return; }
       if (kind === 'escarcha') {
         emit(pos, cnt(90, dt), 0xbfefff, { spd: 0.5, up: 0.1, life: 0.6, grav: -0.8, spread: 0.12, size: 0.15, tex: 1, hdr: 3, rot: 2 });
         emit(pos, cnt(60, dt), 0x4aa8ff, { spd: 0.2, up: 0, life: 0.3, grav: 0, spread: 0.04, size: 0.3, grow: 0.3, tex: 0, hdr: 1.2 });
@@ -897,20 +965,21 @@
     function shock(pos, hex, hdr, r, life) {
       quad({ tex: ringTex, color: hex, hdr: hdr, pos: pos, y: 0.04, s0: 0.3, s1: r * 2, life: life, alpha: 1, order: 6 });
     }
-    function fireExplosion(pos) {
-      _tp.set(pos.x, Math.max(pos.y, 0.6), pos.z);
-      flash(_tp, 0xff7a2a, 6, 0.7);
-      fireball(_tp, 0.2, 0.9, 0.4, 1.0, 0.2, 0.3, 0);
-      fireball(_tp, 0.35, 1.6, 0.8, 0.75, -0.5, 1.0, 0.03);
-      fireball(_tp, 0.3, 1.25, 1.0, 0.6, -0.6, 1.8, 0.1);
-      emit(_tp, 90, 0xffb050, { c2: 0xff3000, spd: 9, up: 3, life: 1.4, grav: -9, drag: 1.2, spread: 0.3, size: 0.07, tex: 3, hdr: 4 });
-      emit(_tp, 60, 0xffd080, { c2: 0xff2a00, spd: 6, up: 1.5, life: 0.55, grav: 1.5, drag: 4, spread: 0.4, size: 0.9, grow: 1.8, tex: 2, hdr: 2.4, rot: 3 });
-      emit(_tp, 40, 0x16120f, { blend: 'smoke', spd: 2.4, up: 1.8, life: 3.2, grav: 0.5, drag: 1.5, spread: 0.6, size: 1.1, grow: 3, alpha: 0.6 });
-      emit(pos, 30, 0x2c241e, { blend: 'smoke', spd: 5, up: 0.2, life: 1.6, grav: 0, drag: 3, spread: 0.3, size: 0.6, grow: 2.6, alpha: 0.4, flat: true });
-      shock(pos, 0xffa060, 1.6, 4.2, 0.45);
-      quad({ tex: glowTex, color: 0xff6018, hdr: 0.7, pos: pos, y: 0.03, s0: 2.5, s1: 4.5, life: 0.6, alpha: 1, order: 4 });
-      quad({ tex: scorchTex, color: 0x050302, hdr: 1, additive: false, pos: pos, y: 0.012, s0: 3.6, s1: 3.8, life: 8, hold: 0.55, alpha: 0.95, order: 2, ease: 'lin' });
-      quad({ tex: fireCrackTex, color: 0xff5a10, hdr: 3, pos: pos, y: 0.016, s0: 2.6, s1: 2.7, life: 3.5, hold: 0.15, alpha: 1, order: 3, ease: 'lin' });
+    function fireExplosion(pos, s) {
+      s = s || 1;
+      _tp.set(pos.x, Math.max(pos.y, 0.6 * s), pos.z);
+      flash(_tp, 0xff7a2a, 4.2 * Math.min(1, 0.5 + s * 0.5), 0.7);
+      fireball(_tp, 0.2 * s, 0.9 * s, 0.4, 0.8, 0.15, 0.3 * s, 0);
+      fireball(_tp, 0.35 * s, 1.6 * s, 0.8, 0.6, -0.5, 1.0 * s, 0.03);
+      fireball(_tp, 0.3 * s, 1.25 * s, 1.0, 0.45, -0.6, 1.8 * s, 0.1);
+      emit(_tp, 90 * s | 0, 0xffb050, { c2: 0xff3000, spd: 9 * s, up: 3, life: 1.4, grav: -9, drag: 1.2, spread: 0.3, size: 0.07, tex: 3, hdr: 4 });
+      emit(_tp, 60 * s | 0, 0xffd080, { c2: 0xff2a00, spd: 6 * s, up: 1.5, life: 0.55, grav: 1.5, drag: 4, spread: 0.4, size: 0.9 * s, grow: 1.8, tex: 2, hdr: 1.5, rot: 3 });
+      emit(_tp, 40 * s | 0, 0x16120f, { blend: 'smoke', spd: 2.4 * s, up: 1.8, life: 3.2, grav: 0.5, drag: 1.5, spread: 0.6, size: 1.1 * s, grow: 3, alpha: 0.6 });
+      emit(pos, 30 * s | 0, 0x2c241e, { blend: 'smoke', spd: 5 * s, up: 0.2, life: 1.6, grav: 0, drag: 3, spread: 0.3, size: 0.6 * s, grow: 2.6, alpha: 0.4, flat: true });
+      shock(pos, 0xffa060, 1.6, 4.2 * s, 0.45);
+      quad({ tex: glowTex, color: 0xff6018, hdr: 0.7, pos: pos, y: 0.03, s0: 2.5 * s, s1: 4.5 * s, life: 0.6, alpha: 1, order: 4 });
+      quad({ tex: scorchTex, color: 0x050302, hdr: 1, additive: false, pos: pos, y: 0.012, s0: 3.6 * s, s1: 3.8 * s, life: 8, hold: 0.55, alpha: 0.95, order: 2, ease: 'lin' });
+      quad({ tex: lavaGlowTex, color: 0xff5a10, hdr: 2.4, pos: pos, y: 0.016, s0: 3.0 * s, s1: 3.1 * s, life: 4.5, hold: 0.15, alpha: 1, order: 3, ease: 'lin' });
     }
     function frostImpact(pos) {
       _tp.set(pos.x, Math.max(pos.y, 0.5), pos.z);
@@ -995,12 +1064,14 @@
 
     // ---------------------------------------------------------------- carga de hechizos
     var _right = new THREE.Vector3(), _upv = new THREE.Vector3(), _hc = new THREE.Vector3();
-    function castStart(kind) {
+    function castStart(kind, o) {
+      o = o || {};
+      if (kind === 'hielo') kind = 'escarcha';
       if (!KINDS[kind]) kind = 'fuego';
-      var K = KINDS[kind];
-      var h = { kind: kind, K: K, t: 0, charge: 0, state: 'charging', ang: 0 };
+      var K = KINDS[kind], k2 = o.kind2 ? KINDS[o.kind2 === 'hielo' ? 'escarcha' : o.kind2] : null;
+      var h = { kind: kind, K: K, K2: k2, I: o.I || 0, t: 0, charge: 0, state: 'charging', ang: 0 };
       h.ground = quad({ tex: runeTexture(kind), color: K.hdr, managed: true, order: 7 });
-      h.ring = quad({ tex: runeRingTexture(kind), color: K.sub, managed: true, order: 7 });
+      h.ring = quad({ tex: runeRingTexture(kind), color: k2 ? k2.sub : K.sub, managed: true, order: 7 });
       h.glow = quad({ tex: glowTex, color: K.hex, managed: true, order: 4 });
       h.hand = quad({ tex: runeTexture(kind), color: K.hdr, managed: true, order: 8 });
       h.handPos = new THREE.Vector3(); h.fwd = new THREE.Vector3(0, 0, 1); h.feet = new THREE.Vector3();
@@ -1009,7 +1080,7 @@
       if (h.core) { h.core.mat.color.setRGB(K.hdr[0], K.hdr[1], K.hdr[2]); h.core.sprite.visible = true; }
       return h;
     }
-    function circleSize(ch) { return 0.9 + 1.9 * easeOut(Math.min(1, ch * 1.25)); }
+    function circleSize(ch) { return 0.7 + 0.9 * easeOut(Math.min(1, ch * 1.25)); }
     function castUpdate(h, dt, charge, handPos, fwd, feetPos) {
       if (!h || h.state !== 'charging') return;
       var K = h.K, kind = h.kind;
@@ -1017,7 +1088,8 @@
       h.handPos.copy(handPos); h.fwd.copy(fwd); h.feet.copy(feetPos);
       var appear = Math.min(1, h.t / 0.25);
       var pulse = 1 + Math.sin(h.t * (5 + charge * 6)) * (0.08 + 0.17 * charge);
-      var inten = (0.35 + 0.85 * charge) * pulse * appear;
+      var inten = (0.35 + 0.85 * charge) * pulse * appear * 0.5;
+      if (h.I >= 20) inten *= 1 - (h.I < 50 ? 0.3 : 0.55) * Math.max(0, Math.sin(h.t * 37) * Math.sin(h.t * 53 + 1));   // el círculo parpadea si es inestable
       var D = circleSize(charge);
       // círculo de suelo
       var g = h.ground.mesh;
@@ -1028,12 +1100,12 @@
       var r = h.ring.mesh;
       r.position.set(feetPos.x, feetPos.y + 0.028, feetPos.z);
       r.rotation.set(-Math.PI / 2, 0, -h.t * (0.6 + charge * 1.4));
-      r.scale.setScalar(D * 1.32);
+      r.scale.setScalar(D * 1.2);
       h.ring.mat.color.copy(h.ring.base).multiplyScalar(inten * (0.4 + 0.6 * charge)); h.ring.mat.opacity = 1;
       var gl = h.glow.mesh;
       gl.position.set(feetPos.x, feetPos.y + 0.02, feetPos.z); gl.rotation.set(-Math.PI / 2, 0, 0);
-      gl.scale.setScalar(D * 2.0);
-      h.glow.mat.color.copy(h.glow.base).multiplyScalar(0.55 * inten); h.glow.mat.opacity = 1;
+      gl.scale.setScalar(D * 1.4);
+      h.glow.mat.color.copy(h.glow.base).multiplyScalar(0.3 * inten); h.glow.mat.opacity = 1;
       // círculo de mano
       _hc.copy(fwd).multiplyScalar(0.32 + 0.1 * charge).add(handPos);
       var hm = h.hand.mesh;
@@ -1067,6 +1139,10 @@
         for (i = 0; i < n; i++) { a = rand() * TAU; _v2.set(feetPos.x + Math.cos(a) * pr * 0.6, feetPos.y + 0.1, feetPos.z + Math.sin(a) * pr * 0.6);
           emit(_v2, 1, 0xc8e4ff, { blend: 'smoke', spd: 0.9, up: 0.05, life: 2.2, grav: 0, drag: 1.2, spread: 0.1, size: 0.6, grow: 2.6, alpha: 0.2, flat: true }); }
         emit(handPos, cnt(10 + 20 * charge, dt), 0xe0f6ff, { blend: 'smoke', spd: 0.15, up: -0.2, life: 0.9, grav: -0.3, spread: 0.08, size: 0.2, grow: 2.2, alpha: 0.25 });
+      } else if (kind !== 'luz') {
+        n = cnt(8 + 30 * charge, dt);
+        for (i = 0; i < n; i++) { a = rand() * TAU; elemPuff(kind, null, feetPos.x + Math.cos(a) * pr * rr(0.85, 1), feetPos.y + 0.06, feetPos.z + Math.sin(a) * pr * rr(0.85, 1), 0, rr(0.6, 1.6), 0, 0.5); }
+        if (kind === 'rayo' && rand() < dt * (6 + 20 * charge)) { _v2.set(feetPos.x + Math.cos(a) * pr, feetPos.y + 0.05, feetPos.z + Math.sin(a) * pr); _v3.set(handPos.x, handPos.y, handPos.z); arc(_v2, _v3, { life: 0.1, amp: 0.3, w: 0.6 }); }
       } else {
         n = cnt(14 + 50 * charge, dt);
         for (i = 0; i < n; i++) { a = rand() * TAU; _v2.set(feetPos.x + Math.cos(a) * pr * Math.sqrt(rand()), feetPos.y + 0.05, feetPos.z + Math.sin(a) * pr * Math.sqrt(rand()));
@@ -1088,7 +1164,7 @@
       var inten = 0.35 + 0.85 * ch;
       toFade(h.ground, gs, released ? gs * 1.35 : gs * 0.9, inten * boost, released ? 2.5 : 0.5);
       toFade(h.ring, rs, released ? rs * 1.6 : rs * 0.9, inten * boost * 0.8, released ? -4 : -0.5);
-      toFade(h.glow, gls, released ? gls * 1.5 : gls, 0.55 * inten * boost * 1.4, 0);
+      toFade(h.glow, gls, released ? gls * 1.25 : gls, 0.55 * inten * boost * 0.8, 0);
       if (released) {
         flash(h.handPos, K.hex, 4 + 6 * ch, 0.35);
         // estallido del círculo de mano en partículas
@@ -1112,6 +1188,648 @@
     function castRelease(h) { endCast(h, true); }
     function castCancel(h) { endCast(h, false); }
 
+    // ================================================================ MAGIA RÚNICA: 7 elementos, reacciones, zonas, estados
+    // Todo con pools fijos; sin asignaciones por frame (solo en eventos puntuales: later()).
+    var EL_ALIAS = { hielo: 'escarcha', escarcha: 'escarcha' };
+    function elk(el) { return EL_ALIAS[el] || el; }
+
+    // ---------------------------------------------------------------- arcos eléctricos (cintas, 2 draw calls)
+    var ARC_N = 28, ARC_P = 17, ARC_V = 3;     // 17 puntos x 3 vértices (borde, centro, borde): bordes a 0 => caída suave
+    function ArcLayer(order, wmul, imul) {
+      this.wmul = wmul; this.imul = imul;
+      var nv = ARC_N * ARC_P * ARC_V, ni = ARC_N * (ARC_P - 1) * 12, i, s, j;
+      this.pos = new Float32Array(nv * 3); this.col = new Float32Array(nv * 3);
+      var idx = new Uint16Array(ni), k = 0;
+      for (s = 0; s < ARC_N; s++) for (j = 0; j < ARC_P - 1; j++) {
+        var a = (s * ARC_P + j) * ARC_V, b = a + ARC_V;
+        idx[k++] = a; idx[k++] = a + 1; idx[k++] = b; idx[k++] = a + 1; idx[k++] = b + 1; idx[k++] = b;
+        idx[k++] = a + 1; idx[k++] = a + 2; idx[k++] = b + 1; idx[k++] = a + 2; idx[k++] = b + 2; idx[k++] = b + 1;
+      }
+      var g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.BufferAttribute(this.pos, 3).setUsage(THREE.DynamicDrawUsage));
+      g.setAttribute('color', new THREE.BufferAttribute(this.col, 3).setUsage(THREE.DynamicDrawUsage));
+      g.setIndex(new THREE.BufferAttribute(idx, 1));
+      g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
+      this.geo = track(g);
+      this.mat = track(new THREE.MeshBasicMaterial({ vertexColors: true, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending, fog: false }));
+      this.mesh = new THREE.Mesh(g, this.mat); this.mesh.frustumCulled = false; this.mesh.renderOrder = order; scene.add(this.mesh);
+    }
+    var arcCore = new ArcLayer(24, 0.04, 1), arcHalo = new ArcLayer(23, 0.15, 1);
+    var arcs = [], offU = new Float32Array(ARC_P), offW = new Float32Array(ARC_P), ARC_REGEN = 0.04;
+    for (var ai = 0; ai < ARC_N; ai++) arcs.push({ active: false, age: 0, life: 0.2, regen: 0, ax: 0, ay: 0, az: 0, bx: 0, by: 0, bz: 0, amp: 0.2, r: 1, g: 1, b: 1, w: 1, bright: 1,
+      px: new Float32Array(ARC_P), py: new Float32Array(ARC_P), pz: new Float32Array(ARC_P) });
+    var arcCursor = 0;
+    // arco entre a y b (Vector3-like). o: { life, amp (0..1 de la longitud), col:[r,g,b] HDR, w (ancho relativo) }
+    function arc(a, b, o) {
+      o = o || {};
+      var s = arcs[arcCursor]; arcCursor = (arcCursor + 1) % ARC_N;
+      s.active = true; s.age = 0; s.life = o.life || 0.2; s.regen = 0; s.amp = o.amp !== undefined ? o.amp : 0.22; s.w = o.w || 1;
+      s.ax = a.x; s.ay = a.y; s.az = a.z; s.bx = b.x; s.by = b.y; s.bz = b.z;
+      var c = o.col || ARC_COL.rayo; s.r = c[0]; s.g = c[1]; s.b = c[2]; s.bright = 1;
+      var hc = o.halo || (c === ARC_COL.rayo ? ARC_COL.rayoHalo : null); s.hr = hc ? hc[0] : c[0] * 0.2; s.hg = hc ? hc[1] : c[1] * 0.2; s.hb = hc ? hc[2] : c[2] * 0.2;
+      return s;
+    }
+    var ARC_COL = { rayo: [5.2, 5.6, 8], rayoHalo: [0.9, 1.4, 3], hielo: [2.2, 5, 8], luz: [6, 4.6, 2.2], fuego: [7, 3, 0.8] };
+    function genArc(s) {
+      var dx = s.bx - s.ax, dy = s.by - s.ay, dz = s.bz - s.az, len = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.001, i, L, step, lo, hi;
+      var nx = dx / len, ny = dy / len, nz = dz / len;
+      // base perpendicular
+      var ux, uy, uz;
+      if (Math.abs(ny) < 0.9) { ux = -nz; uy = 0; uz = nx; } else { ux = 1; uy = 0; uz = 0; }
+      var ul = Math.sqrt(ux * ux + uy * uy + uz * uz) || 1; ux /= ul; uy /= ul; uz /= ul;
+      var wx = ny * uz - nz * uy, wy = nz * ux - nx * uz, wz = nx * uy - ny * ux;
+      offU[0] = offW[0] = offU[ARC_P - 1] = offW[ARC_P - 1] = 0;
+      for (L = 1; L <= 4; L++) {
+        step = 16 >> L;
+        for (i = step; i < 16; i += 2 * step) {
+          lo = i - step; hi = i + step;
+          var k = s.amp * len * 0.5 / (1 << (L - 1));
+          offU[i] = (offU[lo] + offU[hi]) * 0.5 + (rand() * 2 - 1) * k;
+          offW[i] = (offW[lo] + offW[hi]) * 0.5 + (rand() * 2 - 1) * k;
+        }
+      }
+      for (i = 0; i < ARC_P; i++) {
+        var t = i / (ARC_P - 1);
+        s.px[i] = s.ax + dx * t + ux * offU[i] + wx * offW[i];
+        s.py[i] = s.ay + dy * t + uy * offU[i] + wy * offW[i];
+        s.pz[i] = s.az + dz * t + uz * offU[i] + wz * offW[i];
+      }
+    }
+    function writeArcLayer(Ly, s, slot, inten) {
+      var cp = camera.position, base = slot * ARC_P * ARC_V, i, o, tx, ty, tz, vx, vy, vz, sx, sy, sz, l, w, f;
+      for (i = 0; i < ARC_P; i++) {
+        var i0 = i > 0 ? i - 1 : 0, i1 = i < ARC_P - 1 ? i + 1 : i;
+        tx = s.px[i1] - s.px[i0]; ty = s.py[i1] - s.py[i0]; tz = s.pz[i1] - s.pz[i0];
+        vx = cp.x - s.px[i]; vy = cp.y - s.py[i]; vz = cp.z - s.pz[i];
+        sx = ty * vz - tz * vy; sy = tz * vx - tx * vz; sz = tx * vy - ty * vx;
+        l = Math.sqrt(sx * sx + sy * sy + sz * sz) || 1;
+        var dist = Math.sqrt(vx * vx + vy * vy + vz * vz);
+        w = Ly.wmul * s.w * (0.4 + 0.6 * Math.sin(Math.PI * i / (ARC_P - 1))) * (0.7 + 0.04 * dist);
+        sx = sx / l * w; sy = sy / l * w; sz = sz / l * w;
+        f = Ly.imul * inten * (0.55 + 0.45 * Math.sin(Math.PI * i / (ARC_P - 1)));
+        o = (base + i * ARC_V) * 3;
+        Ly.pos[o] = s.px[i] - sx; Ly.pos[o + 1] = s.py[i] - sy; Ly.pos[o + 2] = s.pz[i] - sz;
+        Ly.pos[o + 3] = s.px[i]; Ly.pos[o + 4] = s.py[i]; Ly.pos[o + 5] = s.pz[i];
+        Ly.pos[o + 6] = s.px[i] + sx; Ly.pos[o + 7] = s.py[i] + sy; Ly.pos[o + 8] = s.pz[i] + sz;
+        var cr = Ly === arcCore ? s.r : s.hr, cg = Ly === arcCore ? s.g : s.hg, cb = Ly === arcCore ? s.b : s.hb;
+        Ly.col[o] = 0; Ly.col[o + 1] = 0; Ly.col[o + 2] = 0;
+        Ly.col[o + 3] = cr * f; Ly.col[o + 4] = cg * f; Ly.col[o + 5] = cb * f;
+        Ly.col[o + 6] = 0; Ly.col[o + 7] = 0; Ly.col[o + 8] = 0;
+      }
+    }
+    function clearArcSlot(Ly, slot) {
+      var o0 = slot * ARC_P * ARC_V * 3, n = ARC_P * ARC_V * 3;
+      for (var i = 0; i < n; i++) { Ly.pos[o0 + i] = 0; Ly.col[o0 + i] = 0; }
+    }
+    function updateArcs(dt) {
+      for (var i = 0; i < ARC_N; i++) {
+        var s = arcs[i];
+        if (!s.active) continue;
+        s.age += dt;
+        if (s.age >= s.life) { s.active = false; clearArcSlot(arcCore, i); clearArcSlot(arcHalo, i); continue; }
+        s.regen -= dt;
+        if (s.regen <= 0) { s.regen = ARC_REGEN; genArc(s); s.bright = rand() < 0.33 ? 1 : rand() < 0.5 ? 0.45 : 0.2; }    // 1 frame fuerte, el resto débil
+        var t = s.age / s.life, fade = t < 0.1 ? t / 0.1 : (t > 0.6 ? 1 - (t - 0.6) / 0.4 : 1);
+        writeArcLayer(arcCore, s, i, s.bright * fade);
+        writeArcLayer(arcHalo, s, i, s.bright * fade);
+      }
+      arcCore.geo.attributes.position.needsUpdate = arcCore.geo.attributes.color.needsUpdate = true;
+      arcHalo.geo.attributes.position.needsUpdate = arcHalo.geo.attributes.color.needsUpdate = true;
+    }
+    function arcsLive() { var n = 0; for (var i = 0; i < ARC_N; i++) if (arcs[i].active) n++; return n; }
+
+    // ---------------------------------------------------------------- rocas y pinchos (InstancedMesh: 1 draw call cada uno)
+    function nz3(x, y, z) { return vn2(x * 2.1 + z * 1.3, y * 2.1 - z * 0.7, 5) - 0.5; }
+    var rockGeo = (function () {
+      var g = new THREE.IcosahedronGeometry(1, 2), p = g.attributes.position, nrm = g.attributes.normal, i;
+      for (i = 0; i < p.count; i++) {
+        var x = p.getX(i), y = p.getY(i), z = p.getZ(i), d = 1 + nz3(x, y, z) * 0.7 + nz3(x * 2.3, y * 2.3, z * 2.3) * 0.28;
+        p.setXYZ(i, x * d * 1.1, y * d * 0.78, z * d);
+      }
+      for (i = 0; i < p.count; i++) { _v1.set(p.getX(i), p.getY(i) * 1.25, p.getZ(i)).normalize(); nrm.setXYZ(i, _v1.x, _v1.y, _v1.z); }   // normales suaves (roca erosionada, no poliedro)
+      return track(g);
+    })();
+    var spikeGeo = (function () {
+      var g = new THREE.ConeGeometry(0.5, 1, 6, 3), p = g.attributes.position, i;
+      g.translate(0, 0.5, 0);
+      for (i = 0; i < p.count; i++) { var x = p.getX(i), y = p.getY(i), z = p.getZ(i); p.setXYZ(i, x + nz3(x, y, z) * 0.35, y, z + nz3(z, x, y) * 0.35); }
+      g = g.toNonIndexed(); g.computeVertexNormals(); return track(g);
+    })();
+    var rockMat = track(new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 1, metalness: 0 }));
+    var ROCK_N = 24, SPIKE_N = 24;
+    var rockIM = new THREE.InstancedMesh(rockGeo, rockMat, ROCK_N), spikeIM = new THREE.InstancedMesh(spikeGeo, rockMat, SPIKE_N);
+    [rockIM, spikeIM].forEach(function (im) { im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; scene.add(im); });
+    var rocks = [], spikes = [], _m4 = new THREE.Matrix4(), _q = new THREE.Quaternion(), _e = new THREE.Euler(), _s3 = new THREE.Vector3(), _zero = new THREE.Matrix4().makeScale(0, 0, 0);
+    for (var ri = 0; ri < ROCK_N; ri++) { rocks.push({ active: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, rx: 0, ry: 0, rz: 0, wx: 0, wy: 0, wz: 0, s: 0.2, age: 0, life: 2 }); rockIM.setMatrixAt(ri, _zero); }
+    for (var si2 = 0; si2 < SPIKE_N; si2++) { spikes.push({ active: false, x: 0, z: 0, tx: 0, tz: 0, ry: 0, h: 1, w: 0.3, age: 0, life: 2, delay: 0 }); spikeIM.setMatrixAt(si2, _zero); }
+    var rockCur = 0, spikeCur = 0;
+    function rock(x, y, z, vx, vy, vz, size, life) {
+      var r = rocks[rockCur]; rockCur = (rockCur + 1) % ROCK_N;
+      r.active = true; r.x = x; r.y = y; r.z = z; r.vx = vx; r.vy = vy; r.vz = vz; r.s = size; r.age = 0; r.life = life || 2.4;
+      r.rx = rand() * 6; r.ry = rand() * 6; r.rz = rand() * 6; r.wx = rr(-7, 7); r.wy = rr(-7, 7); r.wz = rr(-7, 7);
+    }
+    function spike(x, z, h, w, life, delay) {
+      var s = spikes[spikeCur]; spikeCur = (spikeCur + 1) % SPIKE_N;
+      s.active = true; s.x = x; s.z = z; s.h = h; s.w = w; s.age = 0; s.life = life; s.delay = delay || 0; s.ry = rand() * 6; s.tx = rr(-0.35, 0.35); s.tz = rr(-0.35, 0.35);
+    }
+    function updateRocks(dt) {
+      var i, r, any = false;
+      for (i = 0; i < ROCK_N; i++) {
+        r = rocks[i]; if (!r.active) continue;
+        r.age += dt;
+        if (r.age >= r.life) { r.active = false; rockIM.setMatrixAt(i, _zero); any = true; continue; }
+        r.vy -= 16 * dt; r.x += r.vx * dt; r.y += r.vy * dt; r.z += r.vz * dt;
+        var fl = r.s * 0.45;
+        if (r.y < fl) { r.y = fl; r.vy *= -0.32; r.vx *= 0.55; r.vz *= 0.55; r.wx *= 0.5; r.wy *= 0.5; r.wz *= 0.5; if (Math.abs(r.vy) < 0.6) r.vy = 0; }
+        r.rx += r.wx * dt; r.ry += r.wy * dt; r.rz += r.wz * dt;
+        var sink = r.age > r.life - 0.7 ? (r.life - r.age) / 0.7 : 1;    // se hunden, no se desvanecen
+        _e.set(r.rx, r.ry, r.rz); _q.setFromEuler(_e); _s3.set(r.s * sink, r.s * sink, r.s * sink);
+        _m4.compose(_v1.set(r.x, r.y - (1 - sink) * r.s * 0.6, r.z), _q, _s3); rockIM.setMatrixAt(i, _m4); any = true;
+      }
+      if (any) rockIM.instanceMatrix.needsUpdate = true;
+      any = false;
+      for (i = 0; i < SPIKE_N; i++) {
+        var s = spikes[i]; if (!s.active) continue;
+        s.age += dt; var a = s.age - s.delay;
+        if (a >= s.life) { s.active = false; spikeIM.setMatrixAt(i, _zero); any = true; continue; }
+        if (a < 0) { spikeIM.setMatrixAt(i, _zero); any = true; continue; }
+        var u = a < 0.18 ? easeOut(a / 0.18) : (a > s.life - 0.6 ? Math.max(0, (s.life - a) / 0.6) : 1);   // brotan rápido, se hunden
+        _e.set(s.tx, s.ry, s.tz); _q.setFromEuler(_e); _s3.set(s.w, s.h * u, s.w);
+        _m4.compose(_v1.set(s.x, -0.05, s.z), _q, _s3); spikeIM.setMatrixAt(i, _m4); any = true;
+      }
+      if (any) spikeIM.instanceMatrix.needsUpdate = true;
+    }
+
+    // ---------------------------------------------------------------- cuerpos de proyectil por elemento
+    var flareTex = (function () {
+      var cv = canvas(128), g = cv.getContext('2d'), i;
+      g.fillStyle = '#000'; g.fillRect(0, 0, 128, 128);
+      g.globalCompositeOperation = 'lighter';
+      for (i = 0; i < 2; i++) {
+        var lg = g.createLinearGradient(0, 64, 128, 64);
+        lg.addColorStop(0, 'rgba(255,255,255,0)'); lg.addColorStop(0.5, 'rgba(255,255,255,0.9)'); lg.addColorStop(1, 'rgba(255,255,255,0)');
+        g.save(); g.translate(64, 64); g.rotate(i * Math.PI / 2); g.translate(-64, -64);
+        g.fillStyle = lg; g.fillRect(0, 62, 128, 4); g.fillStyle = lg; g.fillRect(8, 63, 112, 2); g.restore();
+      }
+      var gr = g.createRadialGradient(64, 64, 0, 64, 64, 24); gr.addColorStop(0, 'rgba(255,255,255,0.9)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+      var t = ctex(cv); return t;
+    })();
+    var SHADOW_FRAG = NOISE + [
+      '\nuniform float uTime; varying vec3 vN; varying vec3 vV; varying vec3 vP;',
+      'void main(){',
+      '  float fr = 1.0 - clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0);',
+      '  float n = fbm(vP * 1.7 + vec3(0.0, -uTime * 0.9, uTime * 0.4));',
+      '  float a = smoothstep(0.18, 0.62, n + fr * 0.35) * 0.92;',
+      '  vec3 col = vec3(0.012, 0.006, 0.02) + vec3(0.7, 0.22, 1.1) * pow(fr, 3.2) * (0.3 + n);',
+      '  gl_FragColor = vec4(col * a, a);',
+      '}'
+    ].join('\n');
+    var shadowMat = track(new THREE.ShaderMaterial({ uniforms: { uTime: U_TIME, uSeed: { value: 3 }, uDisp: { value: 0.55 } },
+      vertexShader: FIRE_VERT, fragmentShader: SHADOW_FRAG, transparent: true, depthWrite: false,
+      blending: THREE.CustomBlending, blendEquation: THREE.AddEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor }));
+    var PLASMA_FRAG = NOISE + [
+      '\nuniform float uTime; varying vec3 vN; varying vec3 vV; varying vec3 vL;',
+      'void main(){',
+      '  float fr = 1.0 - clamp(dot(normalize(vN), normalize(vV)), 0.0, 1.0);',
+      '  float n = fbm(vL * 7.0 + vec3(uTime * 6.0, uTime * 3.1, -uTime * 4.0));',
+      '  float vein = smoothstep(0.1, 0.0, abs(n - 0.5));',
+      '  vec3 col = vec3(0.7, 0.9, 2.4) * pow(fr, 1.6) * 0.9 + vec3(7.0, 7.0, 9.0) * vein * (0.5 + fr) + vec3(2.2, 2.4, 4.0) * (1.0 - fr) * 0.35;',
+      '  gl_FragColor = vec4(col, 1.0);',
+      '}'
+    ].join('\n');
+    var plasmaMat = track(new THREE.ShaderMaterial({ uniforms: { uTime: U_TIME }, vertexShader: ICE_VERT, fragmentShader: PLASMA_FRAG }));
+    var lightMats = { core: addBasic(7, 5.8, 3.6), halo: haloMat(1.9, 1.35, 0.6), flare: track(new THREE.SpriteMaterial({ map: flareTex, color: new THREE.Color(1.8, 1.5, 0.9), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false })),
+      airHalo: haloMat(0.18, 0.22, 0.2) };
+    var _pw = new THREE.Vector3(), _pa = new THREE.Vector3();
+    function elementBody(el) {
+      var g = new THREE.Group(), t = rand() * 10, tick;
+      if (el === 'luz') {
+        var c = new THREE.Mesh(tinySphere, lightMats.core); c.scale.setScalar(0.07); g.add(c);
+        var h = new THREE.Sprite(lightMats.halo); h.scale.setScalar(0.75); g.add(h);
+        var fl = new THREE.Sprite(lightMats.flare); fl.scale.set(1.5, 1.5, 1); g.add(fl);
+        tick = function (dt) { t += dt; h.scale.setScalar(0.7 + Math.sin(t * 17) * 0.05); fl.material.rotation = t * 0.6; };
+      } else if (el === 'rayo') {
+        var pl = new THREE.Mesh(tinySphere, plasmaMat); pl.scale.setScalar(0.17); g.add(pl);
+        var hh = new THREE.Sprite(projMats.orbHalo); hh.scale.setScalar(0.9); g.add(hh);
+        var acc = 0;
+        tick = function (dt) {
+          t += dt; acc -= dt; pl.rotation.y += dt * 9; hh.scale.setScalar(0.85 + Math.sin(t * 41) * 0.12 * rand());
+          if (acc <= 0) {   // arcos cortos que saltan alrededor de la esfera
+            acc = rr(0.04, 0.1); g.getWorldPosition(_pw);
+            var a = rand() * TAU, u = rand() * 2 - 1, s = Math.sqrt(1 - u * u), L = rr(0.22, 0.38);
+            _pa.set(_pw.x + s * Math.cos(a) * L, _pw.y + u * L, _pw.z + s * Math.sin(a) * L);
+            arc(_pw, _pa, { life: 0.1, amp: 0.4, w: 0.7 });
+          }
+        };
+      } else if (el === 'tierra') {
+        var rk = new THREE.Mesh(rockGeo, rockMat); rk.scale.setScalar(0.2); g.add(rk);
+        tick = function (dt) { rk.rotation.x += dt * 5; rk.rotation.z += dt * 3.2; };
+      } else if (el === 'sombra') {
+        var sh = new THREE.Mesh(sphereGeo, shadowMat); sh.scale.setScalar(0.24); sh.renderOrder = 14; g.add(sh);
+        tick = function (dt) { sh.rotation.y += dt * 2; sh.rotation.x += dt * 1.3; };
+      } else if (el === 'aire') {
+        var ah = new THREE.Sprite(lightMats.airHalo); ah.scale.setScalar(0.9); g.add(ah);
+        tick = function (dt) { t += dt; ah.scale.setScalar(0.8 + Math.sin(t * 13) * 0.1); };
+      } else { var inner = projectileMesh(el); g.add(inner); tick = inner.userData.tick; }
+      g.userData.tick = tick; g.userData.el = el;
+      return g;
+    }
+    // Proyectil de hechizo: 1 elemento = su cuerpo; 2 = dos cuerpos orbitando (color mezclado)
+    function spellProjectile(elems) {
+      var g = new THREE.Group();
+      if (elems.length === 1 || elems[0] === elems[1]) {
+        var b = elementBody(elk(elems[0])); g.add(b);
+        if (elems.length === 2) b.scale.setScalar(1.25);
+        g.userData.tick = b.userData.tick;
+      } else {
+        var b1 = elementBody(elk(elems[0])), b2 = elementBody(elk(elems[1])), t = 0;
+        b1.scale.setScalar(0.8); b2.scale.setScalar(0.8); g.add(b1); g.add(b2);
+        g.userData.tick = function (dt) {
+          t += dt * 9; b1.userData.tick(dt); b2.userData.tick(dt);
+          b1.position.set(Math.cos(t) * 0.09, Math.sin(t) * 0.09, 0); b2.position.set(-Math.cos(t) * 0.09, -Math.sin(t) * 0.09, 0);
+        };
+      }
+      return g;
+    }
+
+    // ---------------------------------------------------------------- estela y partículas por elemento
+    var _dir = new THREE.Vector3(0, 0, 1), _p1 = new THREE.Vector3(), _p2 = new THREE.Vector3(), _helix = 0;
+    function elTrail(kind, pos, dt) {
+      var n, a;
+      if (kind === 'luz') {
+        emit(pos, cnt(60, dt), 0xfff0c0, { spd: 0.5, up: 0.1, life: 0.5, grav: 0, spread: 0.06, size: 0.1, tex: 1, hdr: 3.2, rot: 3 });
+        emit(pos, cnt(26, dt), 0xffd27a, { spd: 0.15, up: 0.1, life: 1.6, grav: 0.2, spread: 0.12, size: 0.07, tex: 3, hdr: 3 });      // motas que quedan flotando
+      } else if (kind === 'rayo') {
+        emit(pos, cnt(46, dt), 0xdfe6ff, { spd: 2.2, up: 0.4, life: 0.3, grav: -6, drag: 2, spread: 0.06, size: 0.05, tex: 3, hdr: 5 });
+        emit(pos, cnt(8, dt), 0x9a88ff, { blend: 'smoke', spd: 0.1, up: 0.2, life: 0.9, grav: 0.1, spread: 0.1, size: 0.3, grow: 2.2, alpha: 0.1, hdr: 1.2 });  // ozono
+      } else if (kind === 'tierra') {
+        emit(pos, cnt(40, dt), 0x4a3a2a, { spd: 0.8, up: 0.2, life: 0.8, grav: -9, drag: 1, spread: 0.1, size: 0.05, tex: 3, hdr: 0.6 });
+        emit(pos, cnt(34, dt), 0x8a735a, { blend: 'smoke', spd: 0.4, up: 0.3, life: 1.3, grav: -0.2, spread: 0.12, size: 0.4, grow: 3, alpha: 0.4, hdr: 0.9 });
+      } else if (kind === 'sombra') {
+        emit(pos, cnt(60, dt), 0x0c0612, { blend: 'smoke', spd: 0.5, up: 0.3, life: 1.3, grav: 0.2, spread: 0.12, size: 0.5, grow: 3, alpha: 0.7, hdr: 0.9 });
+        emit(pos, cnt(14, dt), 0x9a4cff, { spd: 0.6, up: 0.3, life: 0.5, grav: -0.6, spread: 0.1, size: 0.05, tex: 3, hdr: 2.6 });
+      } else if (kind === 'aire') {
+        // hélice de polvo y finas estelas alrededor del eje de avance
+        _p1.crossVectors(_dir, UP); if (_p1.lengthSq() < 1e-4) _p1.set(1, 0, 0); _p1.normalize(); _p2.crossVectors(_dir, _p1);
+        n = cnt(70, dt);
+        for (a = 0; a < n; a++) {
+          _helix += 0.9; var ca = Math.cos(_helix) * 0.16, sa = Math.sin(_helix) * 0.16;
+          _v3.set(pos.x + _p1.x * ca + _p2.x * sa, pos.y + _p1.y * ca + _p2.y * sa, pos.z + _p1.z * ca + _p2.z * sa);
+          emit(_v3, 1, 0xe8f2ea, { spd: 0.1, up: 0, life: 0.45, grav: 0, spread: 0.01, size: 0.05, tex: 0, hdr: 1.1, alpha: 0.4 });
+        }
+        emit(pos, cnt(20, dt), 0xd9dccf, { blend: 'smoke', spd: 0.5, up: 0.2, life: 0.8, grav: -0.3, spread: 0.2, size: 0.22, grow: 2, alpha: 0.12, hdr: 1 });
+        emit(pos, cnt(6, dt), 0x7c8a3c, { blend: 'smoke', spd: 1.4, up: 0.4, life: 1, grav: -1.5, spread: 0.2, size: 0.07, grow: 1, alpha: 0.9, hdr: 0.6 });   // briznas
+      }
+    }
+
+    // ---------------------------------------------------------------- tareas temporales (cono, parpadeo de luz, aura, retardos)
+    var later_ = [];
+    for (var li = 0; li < 14; li++) later_.push({ active: false, t: 0, fn: null });
+    function later(delay, fn) { for (var i = 0; i < later_.length; i++) if (!later_[i].active) { var l = later_[i]; l.active = true; l.t = delay; l.fn = fn; return; } fn(); }
+    var fx2 = [];   // tareas con duración: { active, kind, age, life, ... }
+    for (var fi2 = 0; fi2 < 12; fi2++) fx2.push({ active: false, kind: 0, age: 0, life: 1, x: 0, y: 0, z: 0, dx: 0, dy: 0, dz: 0, el: '', el2: '', hex: 0, peak: 1, range: 5, ref: null, stop: false });
+    function task() { for (var i = 0; i < fx2.length; i++) if (!fx2[i].active) { fx2[i].stop = false; fx2[i].ref = null; return fx2[i]; } return null; }
+    function lightFlicker(pos, hex, peak, dur) {
+      var t = task(); if (!t) return; t.active = true; t.kind = 2; t.age = 0; t.life = dur; t.x = pos.x; t.y = pos.y; t.z = pos.z; t.hex = hex; t.peak = peak; t.dx = 0;
+    }
+    function elemPuff(el, o, x, y, z, vx, vy, vz, scale) {   // una partícula de "chorro" de un elemento
+      _v4.set(x, y, z); scale = scale || 1;
+      if (el === 'fuego') emit(_v4, 1, 0xffb050, { c2: 0xff3000, vx: vx, vy: vy, vz: vz, spd: 0.2, up: 0, life: 0.5, grav: 1.2, drag: 1.8, spread: 0.05, size: 0.42 * scale, grow: 2.8, tex: 2, hdr: 1.7, alpha: 0.9, rot: 3 });
+      else if (el === 'hielo') emit(_v4, 1, rand() < 0.4 ? 0xe6f6ff : 0x9cc8ff, { blend: rand() < 0.6 ? 'smoke' : undefined, vx: vx, vy: vy, vz: vz, spd: 0.2, up: 0, life: 0.8, grav: -1, drag: 1.4, spread: 0.05, size: 0.2 * scale, grow: 2.6, tex: 1, hdr: 2.4, alpha: 0.3 });
+      else if (el === 'luz') emit(_v4, 1, 0xffe39a, { vx: vx, vy: vy, vz: vz, spd: 0.2, up: 0, life: 0.7, grav: 0.2, drag: 1.2, spread: 0.05, size: 0.12 * scale, tex: rand() < 0.5 ? 1 : 3, hdr: 3.4, rot: 3 });
+      else if (el === 'sombra') emit(_v4, 1, 0x0c0612, { blend: 'smoke', vx: vx, vy: vy, vz: vz, spd: 0.2, up: 0, life: 1.1, grav: 0.2, drag: 1.5, spread: 0.06, size: 0.5 * scale, grow: 2.6, alpha: 0.7, hdr: 0.9 });
+      else if (el === 'tierra') emit(_v4, 1, rand() < 0.5 ? 0x5a4630 : 0x8a735a, { vx: vx, vy: vy, vz: vz, spd: 0.4, up: 0.1, life: 0.9, grav: -9, drag: 0.8, spread: 0.05, size: 0.06 * scale, tex: 3, hdr: 0.7 });
+      else if (el === 'aire') emit(_v4, 1, 0xe2eee6, { blend: 'smoke', vx: vx, vy: vy, vz: vz, spd: 0.2, up: 0, life: 0.8, grav: 0, drag: 1.2, spread: 0.06, size: 0.3 * scale, grow: 2.6, alpha: 0.14, hdr: 1 });
+      else emit(_v4, 1, 0xdfe6ff, { vx: vx, vy: vy, vz: vz, spd: 0.3, up: 0, life: 0.3, grav: -4, size: 0.05, tex: 3, hdr: 5 });
+    }
+    function updateFx2(dt) {
+      var i, t, n, k, a;
+      for (i = 0; i < later_.length; i++) {
+        var l = later_[i]; if (!l.active) continue;
+        l.t -= dt; if (l.t <= 0) { l.active = false; var f = l.fn; l.fn = null; f(); }
+      }
+      for (i = 0; i < fx2.length; i++) {
+        t = fx2[i]; if (!t.active) continue;
+        t.age += dt;
+        var u = t.age / t.life;
+        if (u >= 1 || (t.kind === 3 && t.stop)) { t.active = false; continue; }
+        if (t.kind === 1) {      // cono: chorro de partículas del elemento
+          var rate = 340 * (1 - u * 0.5);
+          n = cnt(rate, dt);
+          for (k = 0; k < n; k++) {
+            a = rr(-1, 1) * t.peak;      // ángulo lateral (rad)
+            var ca = Math.cos(a), sa = Math.sin(a), sp = t.range / 0.55 * rr(0.6, 1.1);
+            // dirección base (dx,dz) girada 'a' en horizontal
+            var vx = (t.dx * ca - t.dz * sa) * sp, vz = (t.dx * sa + t.dz * ca) * sp;
+            elemPuff(t.el, null, t.x, t.y, t.z, vx, rr(-0.4, 0.8), vz, 1);
+            if (t.el2 && rand() < 0.5) elemPuff(t.el2, null, t.x, t.y, t.z, vx, rr(-0.4, 0.8), vz, 1);
+          }
+          if (t.el === 'rayo' && rand() < dt * 30) { _v4.set(t.x + t.dx * t.range * rr(0.5, 1), t.y + rr(-0.4, 0.4), t.z + t.dz * t.range * rr(0.5, 1)); _v3.set(t.x, t.y, t.z); arc(_v3, _v4, { life: 0.1, amp: 0.3 }); }
+        } else if (t.kind === 2) {  // parpadeo de luz: ráfagas irregulares
+          t.dx -= dt;
+          if (t.dx <= 0) { t.dx = rr(0.03, 0.07); _v4.set(t.x, t.y, t.z); flash(_v4, t.hex, t.peak * rand() * (1 - u), 0.06); }
+        } else if (t.kind === 3) {  // aura sobre el jugador
+          var p = t.ref; if (!p) { t.active = false; continue; }
+          auraStep(t, p, dt, u);
+        }
+      }
+    }
+    function auraStep(t, p, dt, u) {
+      var el = t.el, n, k, a, r;
+      var fade = Math.min(1, t.age / 0.6) * (u > 0.88 ? (1 - u) / 0.12 : 1);
+      n = cnt(40 * fade, dt);
+      for (k = 0; k < n; k++) {
+        a = rand() * TAU; r = rr(0.35, 0.65);
+        _v4.set(p.x + Math.cos(a) * r, p.y + rr(0.1, 1.9), p.z + Math.sin(a) * r);
+        if (el === 'fuego') emit(_v4, 1, 0xffb050, { c2: 0xff2200, spd: 0.1, up: rr(0.5, 1.3), life: 0.8, grav: 0.8, spread: 0.03, size: 0.16, grow: 0.5, tex: rand() < 0.5 ? 2 : 3, hdr: 1.7, rot: 2 });
+        else if (el === 'hielo') emit(_v4, 1, 0xdaf3ff, { spd: 0.1, up: -0.1, life: 0.9, grav: -0.2, spread: 0.02, size: 0.07, tex: 1, hdr: 3, rot: 3 });
+        else if (el === 'luz') emit(_v4, 1, 0xffd88a, { spd: 0.08, up: rr(0.4, 1.0), life: 1.2, grav: 0.2, spread: 0.02, size: 0.07, tex: rand() < 0.5 ? 1 : 3, hdr: 3, rot: 2 });
+        else if (el === 'rayo') { if (rand() < 0.12) { _v3.set(p.x + rr(-0.3, 0.3), p.y + rr(0.2, 1.7), p.z + rr(-0.3, 0.3)); arc(_v4, _v3, { life: 0.09, amp: 0.35, w: 0.6 }); } }
+        else if (el === 'tierra') { if (rand() < 0.3) emit(_v4, 1, 0x8a735a, { blend: 'smoke', spd: 0.05, up: 0.1, life: 1, grav: 0, spread: 0.02, size: 0.12, grow: 1.3, alpha: 0.5, hdr: 0.9 }); }
+        else if (el === 'sombra') emit(_v4.setY(p.y + rr(0, 0.5)), 1, 0x0c0612, { blend: 'smoke', spd: 0.1, up: 0.2, life: 1.4, grav: 0.1, spread: 0.04, size: 0.4, grow: 2, alpha: 0.5, hdr: 0.9 });
+        else if (el === 'aire') emit(_v4, 1, 0xe2eee6, { spd: 0.2, up: 0.1, life: 0.7, grav: 0, spread: 0.02, size: 0.05, tex: 0, hdr: 1.2, alpha: 0.4, vx: -Math.sin(a) * 1.2, vz: Math.cos(a) * 1.2 });
+      }
+    }
+    // Yo: aura durante 'dur' s siguiendo a 'pos' (Vector3 vivo). Devuelve el handle.
+    function aura(el, pos, dur) {
+      var t = task(); if (!t) return null;
+      t.active = true; t.kind = 3; t.age = 0; t.life = dur || 8; t.el = el === 'escarcha' ? 'hielo' : el; t.ref = pos;
+      return t;
+    }
+    function auraStop(h) { if (h) h.stop = true; }
+
+    // Cono instantáneo (0,35 s de chorro) en dirección (dx,dz)
+    function cono(el, el2, pos, dx, dz, range, ang) {
+      var t = task(); if (!t) return;
+      t.active = true; t.kind = 1; t.age = 0; t.life = 0.4; t.x = pos.x; t.y = pos.y; t.z = pos.z; t.dx = dx; t.dz = dz; t.el = el; t.el2 = el2 || ''; t.range = range; t.peak = ang * 0.5;
+      if (el === 'fuego' || el2 === 'fuego') flash(_v4.set(pos.x + dx * range * 0.5, pos.y, pos.z + dz * range * 0.5), 0xff7a2e, 3.5, 0.5);
+      else if (el === 'rayo' || el2 === 'rayo') lightFlicker(_v4.set(pos.x + dx * range * 0.5, pos.y, pos.z + dz * range * 0.5), 0xb9a8ff, 7, 0.3);
+    }
+
+    // ---------------------------------------------------------------- zonas persistentes (suelos): pool fijo de 8
+    var ZN = 8, zonas = [];
+    var ZSTYLE = {
+      fuego: { rate: 70, decal: [[scorchTex, 0x050302, 1, false, 0.9, 1.05], [lavaGlowTex, 0xff5a10, 1.5, true, 1, 1.0]] },
+      hielo: { rate: 40, decal: [[frostTex, [0.55, 0.85, 1.2], 1, true, 0.9, 1.05]] },
+      luz: { rate: 40, decal: [['rune:luz', [2.0, 1.55, 0.8], 1, true, 0.7, 1.0]] },
+      rayo: { rate: 24, decal: [[scorchTex, 0x070510, 1, false, 0.7, 0.9]] },
+      tierra: { rate: 40, decal: [['crack:11', 0x0b0805, 1, false, 0.85, 1.05]] },
+      sombra: { rate: 80, decal: [[scorchTex, 0x07030c, 1, false, 0.9, 1.1]] },
+      aire: { rate: 60, decal: [] },
+      vapor: { rate: 150, decal: [] },
+      magma: { rate: 60, decal: [[lavaCrustTex, 0x0d0705, 1, false, 1, 1.0], [lavaGlowTex, [3.6, 1.0, 0.16], 1, true, 1, 1.0]] },
+      incendio: { rate: 110, decal: [[scorchTex, 0x050302, 1, false, 0.9, 1.05], [lavaGlowTex, 0xff5a10, 1.5, true, 1, 1.0]] },
+      escarcha_electrica: { rate: 40, decal: [[frostTex, [0.5, 0.8, 1.2], 1, true, 0.9, 1.05]] },
+      juicio: { rate: 40, decal: [['rune:luz', [2.0, 1.55, 0.8], 1, true, 0.7, 1.0]] },
+      niebla_negra: { rate: 240, decal: [[scorchTex, 0x07030c, 1, false, 0.9, 1.1]] }
+    };
+    var crackCache = {};
+    function decalTex(t) {
+      if (typeof t !== 'string') return t;
+      if (t.indexOf('rune:') === 0) return runeTexture(t.slice(5));
+      if (!crackCache[t]) crackCache[t] = crackTexture(+t.slice(6), false);
+      return crackCache[t];
+    }
+    for (var zi = 0; zi < ZN; zi++) zonas.push({ active: false, style: 'fuego', x: 0, z: 0, r: 2, r1: 2, age: 0, life: 4, q: [null, null], qn: 0, spin: 0, fade: 1 });
+    function zonaDecals(h) {
+      var i, d = ZSTYLE[h.style].decal;
+      for (i = 0; i < h.qn; i++) if (h.q[i]) { freeQuad(h.q[i]); h.q[i] = null; }
+      h.qn = 0;
+      for (i = 0; i < d.length && i < 2; i++) {
+        var c = d[i], q = quad({ tex: decalTex(c[0]), color: c[1], hdr: c[2], additive: c[3], managed: true, order: c[3] ? 4 : 2 });
+        if (q) { q.a0 = c[4]; q.sc = c[5]; q.mesh.rotation.z = rand() * TAU; h.q[h.qn++] = q; }
+      }
+    }
+    // Crea un suelo. Devuelve el handle (reutilizado: comprobar .active por si se recicla).
+    function zona(style, pos, r, dur, r1) {
+      var h = null, i, old = null;
+      for (i = 0; i < ZN; i++) { if (!zonas[i].active) { h = zonas[i]; break; } if (!old || zonas[i].age / zonas[i].life > old.age / old.life) old = zonas[i]; }
+      h = h || old;
+      for (i = 0; i < h.qn; i++) if (h.q[i]) { freeQuad(h.q[i]); h.q[i] = null; }
+      h.active = true; h.style = ZSTYLE[style] ? style : 'fuego'; h.x = pos.x; h.z = pos.z; h.r = r; h.r1 = r1 || r; h.age = 0; h.life = dur; h.qn = 0; h.fade = 0;
+      zonaDecals(h);
+      return h;
+    }
+    function zonaStyle(h, style, r1) {
+      if (!h || !h.active || !ZSTYLE[style]) return;
+      h.style = style; if (r1) h.r1 = r1; zonaDecals(h);
+      _v4.set(h.x, 0.5, h.z); flash(_v4, style === 'vapor' ? 0xffc080 : 0xff8a3a, 3, 0.2);
+      emit(_v4.set(h.x, 0.4, h.z), 20, 0xffe0b0, { spd: 3, up: 1, life: 0.4, grav: -2, spread: h.r * 0.5, size: 0.1, tex: 3, hdr: 3 });
+    }
+    function zonaStop(h) { if (h && h.active) { h.life = Math.min(h.life, h.age + 0.9); } }
+    function updateZonas(dt) {
+      for (var i = 0; i < ZN; i++) {
+        var h = zonas[i]; if (!h.active) continue;
+        h.age += dt;
+        if (h.age >= h.life) { h.active = false; for (var j = 0; j < h.qn; j++) if (h.q[j]) { freeQuad(h.q[j]); h.q[j] = null; } h.qn = 0; continue; }
+        var left = h.life - h.age, f = Math.min(1, h.age / 0.5) * Math.min(1, left / 1.2);
+        h.fade = f;
+        var r = h.r + (h.r1 - h.r) * Math.min(1, h.age / (h.life * 0.5));
+        var pulse = 0.85 + 0.15 * Math.sin(h.age * 3.1) + 0.06 * Math.sin(h.age * 11.3);
+        for (j = 0; j < h.qn; j++) {
+          var q = h.q[j]; if (!q) continue;
+          q.mesh.position.set(h.x, 0.012 + j * 0.003, h.z); q.mesh.rotation.x = -Math.PI / 2; q.mesh.scale.setScalar(r * 2 * q.sc);
+          q.mat.color.copy(q.base).multiplyScalar(q.additive ? f * pulse : 1); q.mat.opacity = q.additive ? 1 : q.a0 * f;
+        }
+        zonaEmit(h, r, f, dt);
+      }
+    }
+    function zonaEmit(h, r, f, dt) {
+      var st = h.style, S = ZSTYLE[st], n = cnt(S.rate * f * Math.min(2.5, (r * r) / 9), dt), k, a, d, x, z;
+      for (k = 0; k < n; k++) {
+        a = rand() * TAU; d = Math.sqrt(rand()) * r; x = h.x + Math.cos(a) * d; z = h.z + Math.sin(a) * d;
+        if (st === 'fuego' || st === 'incendio') {
+          var inc = st === 'incendio';
+          _v4.set(x, 0.05, z);
+          emit(_v4, 1, 0xffc070, { c2: 0xff3000, spd: 0.1, up: rr(0.7, 1.5) * (inc ? 1.8 : 1), vx: inc ? 1.2 : 0, life: 0.55, grav: 1, drag: 1, spread: 0.03, size: 0.45 * (inc ? 1.3 : 1), grow: 0.7, tex: 2, hdr: 1.7, rot: 2 });
+          if (rand() < 0.12) emit(_v4, 1, 0xffa040, { spd: 0.5, up: rr(1.2, 2.6) * (inc ? 2 : 1), vx: inc ? 1.8 : 0, life: 1.4, grav: 0.4, size: 0.05, tex: 3, hdr: 3.5 });
+          if (rand() < 0.08) emit(_v4.setY(0.5), 1, 0x2a221c, { blend: 'smoke', spd: 0.2, up: 0.8, life: 1.8, grav: 0.2, spread: 0.1, size: 0.5, grow: 3, alpha: 0.4 });
+        } else if (st === 'hielo' || st === 'escarcha_electrica') {
+          if (rand() < 0.6) emit(_v4.set(x, 0.12, z), 1, 0xcfe8ff, { blend: 'smoke', spd: 0.4, up: 0.04, life: 2.2, grav: 0, drag: 1.2, spread: 0.02, size: 0.7, grow: 2.2, alpha: 0.22, flat: true });
+          if (rand() < 0.5) emit(_v4.set(x, rr(0.05, 0.5), z), 1, 0xe6f6ff, { spd: 0.05, up: 0.1, life: 0.6, grav: 0, size: 0.07, tex: 1, hdr: 3.6, rot: 3 });
+          if (st === 'escarcha_electrica' && rand() < 0.06) { _v3.set(x + rr(-0.6, 0.6), 0.05, z + rr(-0.6, 0.6)); arc(_v4.set(x, 0.05, z), _v3, { life: 0.1, amp: 0.4, col: ARC_COL.hielo, w: 0.8 }); }
+        } else if (st === 'luz' || st === 'juicio') {
+          emit(_v4.set(x, 0.05, z), 1, rand() < 0.3 ? 0xfff4d8 : 0xffd27a, { spd: 0.08, up: rr(0.5, 1.6), life: rr(1.4, 2.4), grav: 0.3, drag: 0.5, spread: 0.02, size: 0.07, tex: rand() < 0.5 ? 3 : 1, hdr: 3.2, rot: 2 });
+        } else if (st === 'rayo') {
+          if (rand() < 0.1) { _v3.set(x + rr(-0.7, 0.7), 0.04, z + rr(-0.7, 0.7)); arc(_v4.set(x, 0.04, z), _v3, { life: 0.12, amp: 0.4, w: 0.8 }); }
+          if (rand() < 0.5) emit(_v4.set(x, 0.1, z), 1, 0xcdd2ff, { spd: 1, up: rr(0.3, 1), life: 0.25, grav: -4, size: 0.04, tex: 3, hdr: 4.5 });
+        } else if (st === 'tierra') {
+          if (rand() < 0.05) spike(x, z, rr(0.5, 1.0), rr(0.14, 0.24), 1.6, 0);
+          if (rand() < 0.5) emit(_v4.set(x, 0.1, z), 1, 0x8a735a, { blend: 'smoke', spd: 0.3, up: 0.3, life: 1.6, grav: -0.1, spread: 0.05, size: 0.4, grow: 2.2, alpha: 0.28, hdr: 0.9 });
+        } else if (st === 'sombra' || st === 'niebla_negra') {
+          emit(_v4.set(x, rr(0.1, 0.9), z), 1, st === 'niebla_negra' ? 0x1c1624 : 0x0b0510, { blend: 'smoke', spd: 0.4, up: 0.1, life: 2.6, grav: 0, drag: 1, spread: 0.1, size: st === 'niebla_negra' ? 1.5 : 0.9, grow: 2.0, alpha: st === 'niebla_negra' ? 0.8 : 0.5, hdr: 1.0 });
+          if (rand() < 0.2) emit(_v4.set(x, rr(0.4, 1.6), z), 1, 0x9a4cff, { spd: 0.05, up: -0.3, life: 1.2, grav: -0.2, size: 0.04, tex: 3, hdr: 2.2 });
+        } else if (st === 'aire') {
+          var ang = Math.atan2(z - h.z, x - h.x);
+          emit(_v4.set(x, rr(0.1, 1.2), z), 1, 0xe8f2ea, { spd: 0.05, up: 0.2, life: 0.9, grav: 0, size: 0.05, tex: 0, hdr: 1.2, alpha: 0.45, vx: -Math.sin(ang) * 3, vz: Math.cos(ang) * 3 });
+          if (rand() < 0.1) emit(_v4.set(x, 0.1, z), 1, 0xcfc4a0, { blend: 'smoke', spd: 0.2, up: 0.4, life: 1.5, grav: 0, size: 0.35, grow: 2.2, alpha: 0.2, vx: -Math.sin(ang) * 2, vz: Math.cos(ang) * 2 });
+        } else if (st === 'vapor') {
+          emit(_v4.set(x, rr(0.1, 1.6), z), 1, 0xd8dde2, { blend: 'smoke', spd: 0.3, up: 0.6, life: 3, grav: 0.15, drag: 1, spread: 0.1, size: 1.7, grow: 2.2, alpha: 0.6, hdr: 1.0 });
+        } else if (st === 'magma') {
+          if (rand() < 0.25) emit(_v4.set(x, 0.05, z), 1, 0xffa040, { c2: 0xff2000, spd: 1.2, up: rr(1.5, 3.5), life: 0.9, grav: -9, size: 0.05, tex: 3, hdr: 4 });
+          if (rand() < 0.3) emit(_v4.set(x, 0.1, z), 1, 0xff7020, { c2: 0x501000, spd: 0.1, up: 0.6, life: 0.6, grav: 0.8, size: 0.3, grow: 0.6, tex: 2, hdr: 1.4 });
+          if (rand() < 0.15) emit(_v4.set(x, 0.3, z), 1, 0x1c1612, { blend: 'smoke', spd: 0.2, up: 0.7, life: 2, grav: 0.2, size: 0.55, grow: 2.6, alpha: 0.4 });
+        }
+      }
+    }
+    function zonasActivas() { var n = 0; for (var i = 0; i < ZN; i++) if (zonas[i].active) n++; return n; }
+
+    // ---------------------------------------------------------------- impactos por elemento
+    function senal(pos, r, dur, el) {   // círculo de aviso en el suelo (Área, rayo de Juicio)
+      var K = kindOf(elk(el || 'fuego'));
+      quad({ tex: ringTex, color: K.hdr, hdr: 0.3, pos: pos, y: 0.03, s0: r * 2, s1: r * 2, life: dur, alpha: 1, ease: 'lin', fadeIn: 0.12, hold: 0.7, order: 6 });
+      quad({ tex: runeTexture(elk(el || 'fuego')), color: K.hdr, hdr: 0.22, pos: pos, y: 0.028, s0: r * 1.9, s1: r * 1.9, life: dur, alpha: 1, ease: 'lin', fadeIn: 0.15, hold: 0.7, spin: 0.5, order: 6 });
+    }
+    function skyBolt(pos, big) {
+      _v1.set(pos.x + rr(-0.6, 0.6), 17, pos.z + rr(-0.6, 0.6)); _v2.set(pos.x, 0.05, pos.z);
+      arc(_v1, _v2, { life: 0.28, amp: 0.14, w: big ? 1.4 : 1.0, col: ARC_COL.rayo });
+      for (var i = 0; i < 3; i++) { _v3.set(pos.x + rr(-0.6, 0.6), rr(2, 9), pos.z + rr(-0.6, 0.6)); _v4.set(_v3.x + rr(-2.4, 2.4), _v3.y - rr(1.5, 4), _v3.z + rr(-2.4, 2.4)); arc(_v3, _v4, { life: 0.2, amp: 0.3, w: 0.8 }); }
+      _v4.set(pos.x, 1.5, pos.z); lightFlicker(_v4, 0xd8ccff, 4.5, 0.3);
+      flash(_v4, 0xe6e0ff, 4, 0.12);
+      emit(_v2, 40, 0xdfe6ff, { spd: 5, up: 3, life: 0.5, grav: -9, drag: 1.5, spread: 0.2, size: 0.05, tex: 3, hdr: 5 });
+      emit(_v2, 8, 0x9a88ff, { blend: 'smoke', spd: 1, up: 1, life: 1.4, grav: 0.2, size: 0.5, grow: 2.4, alpha: 0.12, hdr: 1.3 });
+      quad({ tex: scorchTex, color: 0x060410, hdr: 1, additive: false, pos: pos, y: 0.013, s0: 1.2, s1: 1.25, life: 9, hold: 0.4, alpha: 0.8, order: 2, ease: 'lin' });
+      quad({ tex: glowTex, color: [0.9, 0.9, 1.6], hdr: 1, pos: pos, y: 0.03, s0: 1.2, s1: 2.4, life: 0.25, alpha: 1, order: 4 });
+    }
+    function lightningImpact(pos, R) {
+      skyBolt(pos, R > 2);
+      for (var i = 0; i < 5; i++) {
+        var a = i / 5 * TAU + rr(-0.3, 0.3), L = R * rr(0.55, 1);
+        _v3.set(pos.x, 0.12, pos.z); _v4.set(pos.x + Math.cos(a) * L, 0.1, pos.z + Math.sin(a) * L);
+        arc(_v3, _v4, { life: 0.18, amp: 0.3, w: 0.9 });
+      }
+    }
+    function earthImpact(pos, R) {
+      var n = 7 + (R * 2 | 0), i;
+      for (i = 0; i < n; i++) { var a = rand() * TAU, sp = rr(2.5, 5.5); rock(pos.x + Math.cos(a) * 0.3, 0.3, pos.z + Math.sin(a) * 0.3, Math.cos(a) * sp, rr(4, 7.5), Math.sin(a) * sp, rr(0.1, 0.34), rr(2, 3)); }
+      for (i = 0; i < 6; i++) { var b = i / 6 * TAU + rr(-0.3, 0.3), d = rr(0.4, R * 0.6); spike(pos.x + Math.cos(b) * d, pos.z + Math.sin(b) * d, rr(0.5, 1.1), rr(0.16, 0.28), 2.2, rr(0, 0.12)); }
+      _v1.set(pos.x, 0.3, pos.z);
+      emit(_v1, 34, 0x8a735a, { blend: 'smoke', spd: 3.2, up: 1.2, life: 3, grav: -0.3, drag: 2, spread: 0.4, size: 0.9, grow: 3, alpha: 0.5, hdr: 1 });
+      emit(_v1, 14, 0x8a735a, { blend: 'smoke', spd: 4, up: 0.1, life: 2, grav: 0, drag: 2.6, spread: 0.2, size: 0.8, grow: 3.4, alpha: 0.35, hdr: 1, flat: true });
+      emit(_v1, 40, 0x4a3a2a, { spd: 6, up: 3, life: 0.9, grav: -12, drag: 1, spread: 0.3, size: 0.05, tex: 3, hdr: 0.7 });
+      flash(_v1, 0xc89a60, 2.2, 0.3);
+      quad({ tex: decalTex('crack:44'), color: 0x0a0705, hdr: 1, additive: false, pos: pos, y: 0.013, s0: R * 2.2, s1: R * 2.3, life: 14, hold: 0.7, alpha: 0.9, order: 2, ease: 'lin' });
+    }
+    function shadowImpact(pos, R) {
+      _v1.set(pos.x, 0.9, pos.z);
+      var i, a;
+      for (i = 0; i < 26; i++) {   // succión: parte del borde hacia dentro (0,15 s)
+        a = rand() * TAU; _v2.set(pos.x + Math.cos(a) * R * 0.9, rr(0.1, 1.2), pos.z + Math.sin(a) * R * 0.9);
+        emit(_v2, 1, 0x0b0510, { blend: 'smoke', vx: -Math.cos(a) * R * 5, vz: -Math.sin(a) * R * 5, spd: 0.1, up: 0, life: 0.3, grav: 0, drag: 2, size: 0.5, grow: 0.7, alpha: 0.7 });
+      }
+      later(0.15, function () {
+        _v1.set(pos.x, 0.7, pos.z);
+        emit(_v1, 80, 0x0a0610, { blend: 'smoke', spd: 3.6, up: 0.8, life: 2.6, grav: 0, drag: 2, spread: 0.4, size: 1.5, grow: 2.8, alpha: 0.9, hdr: 0.9 });
+        emit(_v1, 28, 0x9a4cff, { spd: 4, up: 1, life: 0.7, grav: -1, drag: 2, spread: 0.2, size: 0.06, tex: 3, hdr: 2.6 });
+        emit(_v1, 10, 0x2b2230, { blend: 'smoke', spd: 2, up: 0.2, life: 2.6, grav: -0.2, spread: 0.3, size: 0.12, grow: 1, alpha: 0.9, hdr: 0.7 });   // ceniza
+      });
+      quad({ tex: scorchTex, color: 0x0a0414, hdr: 1, additive: false, pos: pos, y: 0.013, s0: R * 1.8, s1: R * 2.0, life: 12, hold: 0.6, alpha: 0.85, order: 2, ease: 'lin' });
+    }
+    function airImpact(pos, R) {
+      _v1.set(pos.x, 0.5, pos.z);
+      quad({ tex: ringTex, color: [0.5, 0.54, 0.5], hdr: 1, pos: pos, y: 0.04, s0: 0.4, s1: R * 3.0, life: 0.5, alpha: 0.16, order: 6 });
+      emit(_v1, 26, 0xcdbf9a, { blend: 'smoke', spd: 5, up: 0.5, life: 1.6, grav: 0, drag: 2.4, spread: 0.2, size: 0.8, grow: 3, alpha: 0.26, hdr: 1, flat: true });
+      emit(_v1, 24, 0xe8f2ea, { spd: 6, up: 0.4, life: 0.7, grav: 0, drag: 2, spread: 0.2, size: 0.07, tex: 0, hdr: 1.4, alpha: 0.5 });
+      for (var i = 0; i < 10; i++) { var a = rand() * TAU, sp = rr(3, 6); emit(_v1, 1, rand() < 0.5 ? 0x7c8a3c : 0x8a7236, { blend: 'smoke', vx: Math.cos(a) * sp, vz: Math.sin(a) * sp, spd: 0.1, up: rr(1, 3), life: 1.6, grav: -2, drag: 1.2, size: 0.08, alpha: 0.95, hdr: 0.7 }); }   // hojas y briznas
+    }
+    function lightPop(pos) {   // impacto pequeño de Luz (proyectil)
+      _v1.set(pos.x, Math.max(pos.y, 0.6), pos.z);
+      flash(_v1, 0xffe2a0, 3.5, 0.5);
+      emit(_v1, 34, 0xffe7b0, { spd: 5, up: 1, life: 0.8, grav: 0.3, drag: 2, spread: 0.15, size: 0.09, tex: 1, hdr: 3.6, rot: 3 });
+      emit(_v1, 20, 0xffd27a, { spd: 0.8, up: 1.5, life: 1.6, grav: 0.5, spread: 0.3, size: 0.07, tex: 3, hdr: 3 });
+      quad({ tex: flareTex, color: [2.4, 1.9, 1.0], hdr: 1, pos: pos, y: _v1.y, s0: 0.3, s1: 2.0, life: 0.3, alpha: 1, order: 6 });
+      quad({ tex: ringTex, color: [2.2, 1.7, 0.8], hdr: 1, pos: pos, y: 0.04, s0: 0.3, s1: 3.2, life: 0.5, alpha: 1, order: 6 });
+    }
+    // Impacto de un elemento: R = radio; o.pequeno = impacto de proyectil sin área propia
+    function impacto(el, pos, R, o) {
+      o = o || {}; el = el === 'escarcha' ? 'hielo' : el; R = R || 2;
+      if (el === 'fuego') fireExplosion(pos, Math.max(0.5, Math.min(1.3, R / 2.5)));
+      else if (el === 'hielo') frostImpact(pos);
+      else if (el === 'luz') { if (o.pequeno) lightPop(pos); else holyBurst(pos, R); }
+      else if (el === 'rayo') lightningImpact(pos, R);
+      else if (el === 'tierra') earthImpact(pos, R);
+      else if (el === 'sombra') shadowImpact(pos, R);
+      else if (el === 'aire') airImpact(pos, R);
+    }
+
+    // ---------------------------------------------------------------- reacciones de fusión (más brillantes y breves que cada elemento)
+    function reaccion(id, pos, grande) {
+      var i, a;
+      _v1.set(pos.x, Math.max(pos.y, 1.0), pos.z);
+      if (id === 'vapor') {
+        flash(_v1, 0xffc890, 3.2, 0.25);
+        emit(_v1, 90, 0xd8dde2, { blend: 'smoke', spd: 3.6, up: 1.4, life: 3.6, grav: 0.2, drag: 1.4, spread: 0.5, size: 2.0, grow: 3, alpha: 0.6, hdr: 1.0 });
+        emit(_v1, 22, 0xffffff, { blend: 'smoke', spd: 1, up: 4.5, life: 1.2, grav: 0.4, drag: 1, spread: 0.1, size: 0.5, grow: 2.4, alpha: 0.5, hdr: 1.1 });   // chorro de vapor
+        emit(_v1, 26, 0xffd8a0, { spd: 5, up: 1.5, life: 0.5, grav: -3, drag: 2, spread: 0.2, size: 0.06, tex: 3, hdr: 4 });
+        shock(pos, 0xffd0a0, 1.4, 2.4, 0.4);
+        if (grande) {
+          for (i = 0; i < 12; i++) { var s = getShard(); s.active = true; s.spike = false; s.age = 0; s.life = rr(0.6, 1.0); a = rand() * TAU; var sp = rr(2, 5); s.vx = Math.cos(a) * sp; s.vz = Math.sin(a) * sp; s.vy = rr(3, 6); s.wx = rr(-12, 12); s.wy = rr(-12, 12); s.s = rr(0.1, 0.22); s.mesh.scale.setScalar(s.s); s.mesh.position.copy(_v1); s.mesh.rotation.set(rand() * 6, rand() * 6, 0); s.mesh.visible = true; }
+          emit(_v1, 40, 0xf4f8fa, { blend: 'smoke', spd: 4, up: 2, life: 3.4, grav: 0.3, spread: 0.5, size: 1.4, grow: 3, alpha: 0.4, hdr: 1.1 });
+        }
+      } else if (id === 'magma') {
+        flash(_v1, 0xff7a2a, 2.6, 0.3);
+        emit(_v1, 44, 0xffa040, { c2: 0xff2000, spd: 5, up: 4, life: 1.1, grav: -10, drag: 0.8, spread: 0.3, size: 0.06, tex: 3, hdr: 4.5 });
+        emit(_v1, 14, 0xff7020, { c2: 0x501000, spd: 2.5, up: 1, life: 0.6, grav: 0.5, spread: 0.3, size: 0.5, grow: 1.6, tex: 2, hdr: 1.8 });
+        emit(_v1.set(pos.x, 0.4, pos.z), 34, 0x0b0907, { blend: 'smoke', spd: 1.8, up: 1.0, life: 2.8, grav: 0.1, spread: 0.5, size: 1.0, grow: 2.6, alpha: 0.75, hdr: 0.8 });
+        shock(pos, 0xff8a30, 1.4, 2.2, 0.4);
+      } else if (id === 'incendio') {
+        flash(_v1, 0xff7a2e, 3, 0.5);
+        emit(_v1, 50, 0xffc070, { c2: 0xff2a00, vx: 2.2, spd: 3, up: 3.5, life: 0.8, grav: 1.2, drag: 1.2, spread: 0.3, size: 0.75, grow: 1.4, tex: 2, hdr: 2.2, rot: 3 });
+        emit(_v1, 46, 0xffa040, { c2: 0xff2000, vx: 3, spd: 2.5, up: 2.5, life: 2.4, grav: 0.6, drag: 0.5, spread: 0.3, size: 0.05, tex: 3, hdr: 4 });
+        emit(_v1, 16, 0x2a221c, { blend: 'smoke', vx: 1.6, spd: 1.5, up: 2.5, life: 2.4, grav: 0.2, spread: 0.3, size: 0.8, grow: 2.6, alpha: 0.4 });
+      } else if (id === 'escarcha_electrica') {
+        lightFlicker(_v1, 0xa8d8ff, 4, 0.3);
+        for (i = 0; i < 4; i++) { a = rand() * TAU; _v2.set(pos.x + Math.cos(a) * 1.4, 0.8 + rand(), pos.z + Math.sin(a) * 1.4); arc(_v1, _v2, { life: 0.2, amp: 0.3, col: ARC_COL.hielo, w: 1.1 }); }
+        emit(_v1, 40, 0xd6f4ff, { spd: 4, up: 1.5, life: 0.8, grav: -3, drag: 2, spread: 0.3, size: 0.09, tex: 1, hdr: 4, rot: 3 });
+      } else if (id === 'juicio') {
+        skyBolt(pos, true);
+        flash(_v1, 0xfff0c0, 3.5, 0.4);
+        emit(_v1, 40, 0xffe7b0, { spd: 5, up: 3, life: 1.2, grav: 0.2, drag: 1.5, spread: 0.3, size: 0.09, tex: 1, hdr: 3.6, rot: 3 });
+        shock(pos, 0xffd890, 1.6, 2.6, 0.5);
+      } else if (id === 'niebla_negra') {
+        emit(_v1, 50, 0x14101a, { blend: 'smoke', spd: 2.4, up: 0.8, life: 3, grav: 0, drag: 1.6, spread: 0.4, size: 1.2, grow: 2.6, alpha: 0.6, hdr: 0.9 });
+        emit(_v1, 20, 0x9a4cff, { spd: 3, up: 0.5, life: 0.8, grav: -1, spread: 0.3, size: 0.05, tex: 3, hdr: 2.4 });
+      }
+    }
+
+    // ---------------------------------------------------------------- estados sobre enemigos (una emisión por llamada; el juego limita la frecuencia)
+    function estadoFX(nombre, x, y, z, h, tx, tz) {
+      _v4.set(x, y, z);
+      switch (nombre) {
+        case 'ardiendo':
+          emit(_v4.set(x + rr(-0.2, 0.2), y + rr(0.1, h * 0.8), z + rr(-0.2, 0.2)), 1, 0xffb050, { c2: 0xff2200, spd: 0.1, up: rr(0.6, 1.4), life: 0.6, grav: 1, spread: 0.03, size: 0.28, grow: 0.7, tex: 2, hdr: 1.7, rot: 2 });
+          if (rand() < 0.2) emit(_v4.set(x, y + h * 0.9, z), 1, 0x14100c, { blend: 'smoke', spd: 0.2, up: 0.9, life: 1.5, grav: 0.2, spread: 0.1, size: 0.4, grow: 2.4, alpha: 0.4 });
+          if (rand() < 0.15) emit(_v4.set(x, y + h * 0.5, z), 1, 0xffa040, { spd: 0.5, up: 1.4, life: 1, grav: -1, size: 0.04, tex: 3, hdr: 4 });
+          break;
+        case 'escarcha': case 'congelado':
+          emit(_v4.set(x + rr(-0.25, 0.25), y + rr(0.1, h * 0.9), z + rr(-0.25, 0.25)), 1, 0xe6f6ff, { spd: 0.05, up: 0, life: 0.7, grav: 0, size: 0.07, tex: 1, hdr: 3.4, rot: 3 });
+          if (nombre === 'congelado' && rand() < 0.3) emit(_v4.set(x, y + 0.1, z), 1, 0xcfe8ff, { blend: 'smoke', spd: 0.3, up: 0.05, life: 1.6, grav: 0, size: 0.5, grow: 2, alpha: 0.2, flat: true });
+          break;
+        case 'iluminado':
+          emit(_v4.set(x + rr(-0.3, 0.3), y + rr(0.1, h), z + rr(-0.3, 0.3)), 1, 0xffd88a, { spd: 0.05, up: 0.5, life: 1.2, grav: 0.2, size: 0.06, tex: rand() < 0.5 ? 1 : 3, hdr: 3, rot: 2 });
+          break;
+        case 'cargado': case 'aturdido':
+          if (rand() < 0.5) { _v3.set(x + rr(-0.3, 0.3), y + rr(0.1, h), z + rr(-0.3, 0.3)); _v4.set(x + rr(-0.3, 0.3), y + rr(0.1, h), z + rr(-0.3, 0.3)); arc(_v3, _v4, { life: 0.08, amp: 0.4, w: 0.6 }); }
+          break;
+        case 'lastrado': case 'derribado': case 'costra':
+          emit(_v4.set(x + rr(-0.3, 0.3), y + 0.05, z + rr(-0.3, 0.3)), 1, 0x8a735a, { blend: 'smoke', spd: 0.2, up: 0.3, life: 1.1, grav: -0.1, size: 0.25, grow: 2, alpha: 0.35, hdr: 0.9 });
+          if (nombre === 'costra' && rand() < 0.4) emit(_v4.set(x, y + 0.3, z), 1, 0xff6a20, { spd: 0.2, up: 0.5, life: 0.7, grav: 0.2, size: 0.05, tex: 3, hdr: 3 });
+          break;
+        case 'maldito':   // hilos oscuros que derivan hacia el lanzador
+          emit(_v4.set(x + rr(-0.2, 0.2), y + rr(0.2, h), z + rr(-0.2, 0.2)), 1, 0x0b0510, { blend: 'smoke', vx: (tx - x) * 0.5, vz: (tz - z) * 0.5, spd: 0.05, up: 0.3, life: 1.6, grav: 0, drag: 0.4, size: 0.22, grow: 1.6, alpha: 0.6, hdr: 0.9 });
+          if (rand() < 0.3) emit(_v4.set(x, y + h * 0.6, z), 1, 0x9a4cff, { vx: (tx - x) * 0.4, vz: (tz - z) * 0.4, spd: 0.05, up: 0.2, life: 1, grav: 0, drag: 0.4, size: 0.04, tex: 3, hdr: 2.4 });
+          break;
+        case 'desequilibrado':
+          emit(_v4.set(x + rr(-0.3, 0.3), y + rr(0.1, 0.9), z + rr(-0.3, 0.3)), 1, 0xe2eee6, { spd: 0.2, up: 0.1, life: 0.6, grav: 0, size: 0.05, tex: 0, hdr: 1.2, alpha: 0.5, vx: rr(-1.5, 1.5), vz: rr(-1.5, 1.5) });
+          break;
+        case 'cegado':
+          emit(_v4.set(x, y + h + 0.1, z), 1, 0xb0b4b8, { blend: 'smoke', spd: 0.15, up: 0.3, life: 1, grav: 0, size: 0.2, grow: 2, alpha: 0.3, hdr: 1 });
+          break;
+      }
+    }
+
     // ---------------------------------------------------------------- bucle
     var time = 0;
     function update(dt) {
@@ -1123,6 +1841,7 @@
       updateFireballs(dt);
       updateShards(dt);
       updateColumns(dt);
+      updateFx2(dt); updateArcs(dt); updateRocks(dt); updateZonas(dt);
       psAdd.update(dt); psSmoke.update(dt);
     }
     function resize(pixelHeight) {
@@ -1134,18 +1853,22 @@
       quads.forEach(function (q) { scene.remove(q.mesh); });
       fireballs.forEach(function (f) { scene.remove(f.mesh); });
       shards.forEach(function (s) { scene.remove(s.mesh); });
+      scene.remove(arcCore.mesh); scene.remove(arcHalo.mesh); scene.remove(rockIM); scene.remove(spikeIM);
       columns.forEach(function (c) { scene.remove(c.outer); scene.remove(c.inner); });
       coreSprites.forEach(function (c) { scene.remove(c.sprite); });
       disposables.forEach(function (d) { d.dispose(); });
       disposables.length = 0;
     }
-    function stats() { return { additive: psAdd.alive, smoke: psSmoke.alive }; }
+    function stats() { var q = 0; for (var i = 0; i < quads.length; i++) if (quads[i].active) q++; return { additive: psAdd.alive, smoke: psSmoke.alive, particulas: psAdd.alive + psSmoke.alive, arcos: arcsLive(), zonas: zonasActivas(), quads: q }; }
 
     return {
       emit: emit, emitTo: emitTo, runeTexture: runeTexture, runeRingTexture: runeRingTexture,
       castStart: castStart, castUpdate: castUpdate, castRelease: castRelease, castCancel: castCancel,
       projectileMesh: projectileMesh, trail: trail,
       fireExplosion: fireExplosion, frostImpact: frostImpact, holyBurst: holyBurst, healSparkles: healSparkles,
+      iceGeometry: iceBodyGeo, iceMaterial: iceBodyMat,
+      spellProjectile: spellProjectile, impacto: impacto, reaccion: reaccion, estadoFX: estadoFX, senal: senal, skyBolt: skyBolt, arc: arc,
+      zona: zona, zonaStyle: zonaStyle, zonaStop: zonaStop, cono: cono, aura: aura, auraStop: auraStop, lightFlicker: lightFlicker, later: later, elemPuff: elemPuff,
       update: update, resize: resize, dispose: dispose, stats: stats
     };
   };

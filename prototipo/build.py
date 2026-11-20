@@ -3,6 +3,7 @@
 Uso:
   python3 prototipo/build.py <maqueta.src.html> <dir_texturas> <salida.html> <caballero.glb> [vfx] [katana=<glb>] [caballo=<glb>]
 `vfx` incrusta prototipo/vfx/vfx.js y prototipo/vfx/rayos.js (si existen); sin él se usan los efectos básicos.
+Siempre incrusta prototipo/magia/magia.js (reglas puras de la magia rúnica).
 """
 import base64, json, os, sys
 
@@ -45,6 +46,17 @@ def embed_js(marker, name):
 
 embed_js('/*__VFX__*/', 'vfx.js')
 embed_js('/*__RAYOS__*/', 'rayos.js')
+
+
+def embed_magia(marker, path):
+    global s
+    if marker not in s:
+        return
+    code = open(path).read().replace('</script', '<\\/script') if os.path.exists(path) else ''
+    s = s.replace(marker, code)
+
+
+embed_magia('/*__MAGIA__*/', os.path.join(here, 'magia', 'magia.js'))   # reglas puras de la magia rúnica (siempre, no depende de `vfx`)
 os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
 open(out, 'w').write(s)
 print('built', len(s) // 1024, 'KB')
