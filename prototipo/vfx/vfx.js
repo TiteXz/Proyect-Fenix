@@ -1302,12 +1302,12 @@
     // ---------------------------------------------------------------- rocas y pinchos (InstancedMesh: 1 draw call cada uno)
     function nz3(x, y, z) { return vn2(x * 2.1 + z * 1.3, y * 2.1 - z * 0.7, 5) - 0.5; }
     var rockGeo = (function () {
-      var g = new THREE.IcosahedronGeometry(1, 2), p = g.attributes.position, nrm = g.attributes.normal, i;
+      var g = new THREE.IcosahedronGeometry(1, 2), p = g.attributes.position, i;
       for (i = 0; i < p.count; i++) {
-        var x = p.getX(i), y = p.getY(i), z = p.getZ(i), d = 1 + nz3(x, y, z) * 0.7 + nz3(x * 2.3, y * 2.3, z * 2.3) * 0.28;
-        p.setXYZ(i, x * d * 1.1, y * d * 0.78, z * d);
+        var x = p.getX(i), y = p.getY(i), z = p.getZ(i), d = 1 + nz3(x, y, z) * 1.0 + nz3(x * 2.3, y * 2.3, z * 2.3) * 0.5;
+        p.setXYZ(i, x * d * 1.15, y * d * 0.7, z * d * 0.9);
       }
-      for (i = 0; i < p.count; i++) { _v1.set(p.getX(i), p.getY(i) * 1.25, p.getZ(i)).normalize(); nrm.setXYZ(i, _v1.x, _v1.y, _v1.z); }   // normales suaves (roca erosionada, no poliedro)
+      g.computeVertexNormals();   // caras pequeñas con normales propias: roca fracturada, no esfera
       return track(g);
     })();
     var spikeGeo = (function () {
@@ -1316,7 +1316,7 @@
       for (i = 0; i < p.count; i++) { var x = p.getX(i), y = p.getY(i), z = p.getZ(i); p.setXYZ(i, x + nz3(x, y, z) * 0.35, y, z + nz3(z, x, y) * 0.35); }
       g = g.toNonIndexed(); g.computeVertexNormals(); return track(g);
     })();
-    var rockMat = track(new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: 1, metalness: 0 }));
+    var rockMat = track(new THREE.MeshStandardMaterial({ color: 0x5b4a38, roughness: 1, metalness: 0, flatShading: true }));
     var ROCK_N = 24, SPIKE_N = 24;
     var rockIM = new THREE.InstancedMesh(rockGeo, rockMat, ROCK_N), spikeIM = new THREE.InstancedMesh(spikeGeo, rockMat, SPIKE_N);
     [rockIM, spikeIM].forEach(function (im) { im.instanceMatrix.setUsage(THREE.DynamicDrawUsage); im.frustumCulled = false; scene.add(im); });
@@ -1401,15 +1401,15 @@
     ].join('\n');
     var plasmaMat = track(new THREE.ShaderMaterial({ uniforms: { uTime: U_TIME }, vertexShader: ICE_VERT, fragmentShader: PLASMA_FRAG }));
     var lightMats = { core: addBasic(7, 5.8, 3.6), halo: haloMat(1.9, 1.35, 0.6), flare: track(new THREE.SpriteMaterial({ map: flareTex, color: new THREE.Color(1.8, 1.5, 0.9), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, fog: false })),
-      airHalo: haloMat(0.18, 0.22, 0.2) };
+      airHalo: haloMat(0.5, 0.6, 0.55) };
     var _pw = new THREE.Vector3(), _pa = new THREE.Vector3();
     function elementBody(el) {
       var g = new THREE.Group(), t = rand() * 10, tick;
       if (el === 'luz') {
         var c = new THREE.Mesh(tinySphere, lightMats.core); c.scale.setScalar(0.07); g.add(c);
-        var h = new THREE.Sprite(lightMats.halo); h.scale.setScalar(0.75); g.add(h);
-        var fl = new THREE.Sprite(lightMats.flare); fl.scale.set(1.5, 1.5, 1); g.add(fl);
-        tick = function (dt) { t += dt; h.scale.setScalar(0.7 + Math.sin(t * 17) * 0.05); fl.material.rotation = t * 0.6; };
+        var h = new THREE.Sprite(lightMats.halo); h.scale.setScalar(1.2); g.add(h);
+        var fl = new THREE.Sprite(lightMats.flare); fl.scale.set(2.4, 2.4, 1); g.add(fl);
+        tick = function (dt) { t += dt; h.scale.setScalar(1.15 + Math.sin(t * 17) * 0.08); fl.material.rotation = t * 0.6; };
       } else if (el === 'rayo') {
         var pl = new THREE.Mesh(tinySphere, plasmaMat); pl.scale.setScalar(0.17); g.add(pl);
         var hh = new THREE.Sprite(projMats.orbHalo); hh.scale.setScalar(0.9); g.add(hh);
@@ -1477,7 +1477,7 @@
         for (a = 0; a < n; a++) {
           _helix += 0.9; var ca = Math.cos(_helix) * 0.16, sa = Math.sin(_helix) * 0.16;
           _v3.set(pos.x + _p1.x * ca + _p2.x * sa, pos.y + _p1.y * ca + _p2.y * sa, pos.z + _p1.z * ca + _p2.z * sa);
-          emit(_v3, 1, 0xe8f2ea, { spd: 0.1, up: 0, life: 0.45, grav: 0, spread: 0.01, size: 0.05, tex: 0, hdr: 1.1, alpha: 0.4 });
+          emit(_v3, 1, 0xe8f2ea, { spd: 0.1, up: 0, life: 0.6, grav: 0, spread: 0.01, size: 0.09, tex: 0, hdr: 1.6, alpha: 0.7 });
         }
         emit(pos, cnt(20, dt), 0xd9dccf, { blend: 'smoke', spd: 0.5, up: 0.2, life: 0.8, grav: -0.3, spread: 0.2, size: 0.22, grow: 2, alpha: 0.12, hdr: 1 });
         emit(pos, cnt(6, dt), 0x7c8a3c, { blend: 'smoke', spd: 1.4, up: 0.4, life: 1, grav: -1.5, spread: 0.2, size: 0.07, grow: 1, alpha: 0.9, hdr: 0.6 });   // briznas
@@ -1781,7 +1781,7 @@
         emit(_v1, 16, 0x2a221c, { blend: 'smoke', vx: 1.6, spd: 1.5, up: 2.5, life: 2.4, grav: 0.2, spread: 0.3, size: 0.8, grow: 2.6, alpha: 0.4 });
       } else if (id === 'escarcha_electrica') {
         lightFlicker(_v1, 0xa8d8ff, 4, 0.3);
-        for (i = 0; i < 4; i++) { a = rand() * TAU; _v2.set(pos.x + Math.cos(a) * 1.4, 0.8 + rand(), pos.z + Math.sin(a) * 1.4); arc(_v1, _v2, { life: 0.2, amp: 0.3, col: ARC_COL.hielo, w: 1.1 }); }
+        for (i = 0; i < 8; i++) { a = rand() * TAU; _v2.set(pos.x + Math.cos(a) * 2.2, 0.4 + rand() * 1.4, pos.z + Math.sin(a) * 2.2); arc(_v1, _v2, { life: 0.35, amp: 0.3, col: ARC_COL.hielo, w: 1.7 }); }
         emit(_v1, 40, 0xd6f4ff, { spd: 4, up: 1.5, life: 0.8, grav: -3, drag: 2, spread: 0.3, size: 0.09, tex: 1, hdr: 4, rot: 3 });
       } else if (id === 'juicio') {
         skyBolt(pos, true);

@@ -204,7 +204,8 @@ const ok = (id, cond, info) => { res.push({ id, cond: !!cond, info }); console.l
 
   /* ================= capturas ================= */
   async function escena(spec, seq) {
-    if (process.env.SOLO && !seq.some(([, n]) => n && n.includes(process.env.SOLO))) return;   // SOLO=texto: repite solo las escenas cuyo nombre lo contiene
+    if (process.env.SOLO && !seq.some(([, n]) => n && process.env.SOLO.split(',').some((k) => n.includes(k)))) return;   // SOLO=texto: repite solo las escenas cuyo nombre lo contiene
+    await G(() => { __GAME__.MAGIA.limpiar(); __GAME__.step(220); document.querySelectorAll('.num').forEach((n) => n.remove()); document.getElementById('toast').classList.remove('on'); });   // sin restos del efecto anterior
     await G((sp) => {
       const M = __GAME__.MAGIA, P = __GAME__.P; M.limpiar(); __GAME__.setMode('control'); document.getElementById('hint').style.display = 'none'; P.pos.set(0, 0, 0); P.yaw = 0; P.hp = 60; P.hpMax = 100;
       M.codice.length = 0; (sp.codice || []).forEach((c) => M.codice.push(c));

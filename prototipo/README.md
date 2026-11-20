@@ -29,7 +29,7 @@ Si cambias `maqueta.src.html`, vuelve a generar `maqueta.html` con el comando de
 | `vfx/test.html`, `vfx/shoot.js`, `vfx/sheet.py` | Banco de pruebas del módulo de efectos y capturas (`vfx/capturas/`) |
 | `texturas/*.webp` | Texturas CC0 de Poly Haven (ver `juego/public/assets/CREDITOS.md`) |
 | `build.py` | Genera el HTML final incrustando texturas, el caballero GLB, `vfx.js` y `magia/magia.js` |
-| `pruebas/*.js` | Pruebas con Playwright: carga sin errores, vista de frente, combate (fuego, luz, martillo, correr atacando), hechizo de luz; `magia.js` verifica los criterios MQ-01..MQ-14 y saca las capturas `vfx/capturas/magia_*.png` (`node prototipo/pruebas/magia.js prototipo/dist prototipo/.three/package [dirCapturas] [mq\|cap]`) |
+| `pruebas/*.js` | Pruebas con Playwright: carga sin errores, vista de frente, combate (fuego, luz, martillo, correr atacando), hechizo de luz; `magia.js` verifica los criterios MQ-01..MQ-14 y saca las capturas `vfx/capturas/magia_*.webp` (`node prototipo/pruebas/magia.js prototipo/dist prototipo/.three/package [dirCapturas] [mq\|cap]`) |
 | `capturas/` | Capturas de referencia (render en Blender, poses, combate) |
 
 Modelos que incrusta la maqueta (detalle y licencias en `juego/public/assets/CREDITOS.md`):
