@@ -31,11 +31,12 @@ body {
 #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 #dmg { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 .num {
-  position: absolute; left: 0; top: 0; font-family: var(--f-display); font-weight: 700; font-size: 24px;
+  position: absolute; left: 0; top: 0; font-family: var(--f-display); font-weight: 700; font-size: 24px; line-height: 1; text-align: center;
   text-shadow: 0 2px 0 rgba(0,0,0,.75), 0 0 12px rgba(0,0,0,.7); white-space: nowrap; will-change: transform, opacity;
 }
 .num.big { font-size: 32px; }
-.num small { display: block; font-size: 16px; text-align: center; letter-spacing: .04em; font-weight: 600; }
+.num .v { display: block; line-height: 1; }
+.num small { display: block; line-height: 1; height: 16px; font-size: 16px; text-align: center; letter-spacing: .04em; font-weight: 600; }
 
 #hud { position: fixed; inset: 0; pointer-events: none; font-variant-numeric: tabular-nums; }
 #hud button { pointer-events: auto; font: inherit; color: inherit; cursor: pointer; }
@@ -452,7 +453,11 @@ addEventListener('resize', resize);
 let seed = 11;
 const rnd = () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const R = (a, b) => a + (b - a) * rnd();
-const rr = (a, b) => a + (b - a) * Math.random();
+const rr = (a, b) => a + (b - a) * Math.random();   // solo cosmético (partículas, luces)
+/* RNG con semilla para la simulación (orden de spawn, posiciones de aparición, esquiva de la IA): reproducible con ?test=1 */
+function mulberry32(a) { return () => { a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+let simRng = mulberry32(20240611);
+const simRand = () => simRng();
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const ease = (t) => t * t * (3 - 2 * t);
 const easeOut = (t) => 1 - (1 - t) * (1 - t);
@@ -997,25 +1002,48 @@ function updateFx(dt) {
 
 /* ---------- números de daño ---------- */
 const dmgLayer = $('#dmg');
-const nums = [];
-function spawnNum(pos, text, color, sub = null, big = false) {
-  const el = document.createElement('div'); el.className = 'num' + (big ? ' big' : ''); el.style.color = color; el.textContent = text;
-  if (sub) { const s = document.createElement('small'); s.textContent = sub; el.appendChild(s); }
-  dmgLayer.appendChild(el);
-  const np = pos.clone().add(new V3(rr(-0.4, 0.4), 0, rr(-0.4, 0.4)));
-  let k = 0; for (const n of nums) if (n.t < 0.7 && n.p.distanceToSquared(np) < 1.6) k++;   // apila los números cercanos en el tiempo
-  np.y += k * 0.42;
-  nums.push({ el, p: np, t: 0, dur: sub ? 1.3 : 0.9 });
-  if (nums.length > 40) { const o = nums.shift(); o.el.remove(); }
+const NUM_POOL = 32, nums = [], numFree = [];
+for (let i = 0; i < NUM_POOL; i++) {
+  const el = document.createElement('div'), v = document.createElement('span'), sm = document.createElement('small');
+  v.className = 'v'; el.appendChild(v); el.appendChild(sm); el.style.display = 'none'; dmgLayer.appendChild(el);
+  numFree.push({ el, v, sm, p: new V3(), t: 0, dur: 1, w: 0, h: 0, off: 0, big: false, sub: null, val: 0, tag: 0, cx: 0, cy: 0 });
 }
+function numSize(n) {   // tamaño real (offsetWidth/Height, sin escala); solo se lee al crear o fusionar un número
+  n.el.style.display = ''; n.w = n.el.offsetWidth; n.h = n.el.offsetHeight;
+}
+function spawnNum(pos, text, color, sub = null, big = false, val = 0) {
+  let n = numFree.pop();
+  if (!n) { n = nums.shift(); }   // solo si hay más de 32 vivos: recicla el más antiguo
+  n.el.style.display = ''; n.el.style.color = color; n.v.textContent = text;
+  n.sub = sub; n.sm.textContent = sub || ''; n.sm.style.display = sub ? 'block' : 'none';
+  n.el.className = 'num' + (big ? ' big' : ''); n.big = big; n.val = val; n.t = 0; n.dur = sub ? 1.3 : 0.9; n.off = 0; n.alive = true;
+  n.p.set(pos.x + rr(-0.4, 0.4), pos.y, pos.z + rr(-0.4, 0.4));
+  numSize(n); nums.push(n);
+  return n;
+}
+function limpiarNums() { while (nums.length) freeNum(nums.pop()); }
+function freeNum(n) { n.alive = false; n.el.style.display = 'none'; numFree.push(n); }
+let numClock = 0;   // reloj de los números (avanza con la simulación); lo usan los cooldowns de etiquetas
+const numRects = [];   // [x0, y0, x1, y1] de los números ya colocados este frame (reutilizado)
 function updateNums(dt) {
-  const w = innerWidth, h = innerHeight;
-  for (let i = nums.length - 1; i >= 0; i--) {
+  const w = innerWidth, h = innerHeight; let nr = 0; numClock += dt;
+  for (let i = 0; i < nums.length; i++) {   // los más antiguos se colocan primero y no se mueven
     const n = nums[i]; n.t += dt; n.p.y += dt * 1.3;
-    if (n.t >= n.dur) { n.el.remove(); nums.splice(i, 1); continue; }
+    if (n.t >= n.dur) { freeNum(n); nums.splice(i, 1); i--; continue; }
     tmp.copy(n.p).project(camera);
     if (tmp.z > 1) { n.el.style.opacity = 0; continue; }
-    const x = (tmp.x + 1) / 2 * w, y = (1 - tmp.y) / 2 * h, pop = n.t < 0.12 ? 1.35 - n.t * 2.9 : 1;
+    const x = (tmp.x + 1) / 2 * w, y0 = (1 - tmp.y) / 2 * h, pop = n.t < 0.12 ? 1.35 - n.t * 2.9 : 1, nw = n.w * pop, nh = n.h * pop;
+    let y = y0 - n.off;
+    for (let it = 0; it < 12; it++) {   // apilado en píxeles: si choca con uno ya colocado, sube alto + 2 px (y se queda ahí)
+      let hit = false;
+      for (let k = 0; k < nr; k++) {
+        const r = numRects[k];
+        if (x + nw / 2 > r[0] && x - nw / 2 < r[2] && y + nh / 2 > r[1] && y - nh / 2 < r[3]) { n.off += (y + nh / 2) - r[1] + 2; y = y0 - n.off; hit = true; break; }
+      }
+      if (!hit) break;
+    }
+    if (nr >= numRects.length) numRects.push([0, 0, 0, 0]);
+    const rc = numRects[nr++]; rc[0] = x - nw / 2; rc[1] = y - nh / 2; rc[2] = x + nw / 2; rc[3] = y + nh / 2;
     n.el.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%) scale(${pop})`;
     n.el.style.opacity = n.t > n.dur * 0.6 ? 1 - (n.t - n.dur * 0.6) / (n.dur * 0.4) : 1;
   }
@@ -1989,8 +2017,19 @@ function damageEnemy(e, dmg, color, tag = null, big = false) {
   if (e.dead) return;
   dmg = Math.round(dmg * P.bonus);
   e.hp -= dmg; e.hurtT = 0.16;
-  tmp.copy(e.m.g.position); tmp.y += e.def.h * e.sc + 0.2;
-  spawnNum(tmp, String(dmg), color, tag, big || !!tag);
+  if (tag) {   // cooldown de 0,6 s por enemigo + etiqueta
+    const tt = e.tagT || (e.tagT = {});
+    if (tt[tag] > numClock) { tag = null; big = false; } else tt[tag] = numClock + 0.6;
+  }
+  const ln = e.lastNum;
+  if (ln && ln.alive && ln.owner === e && ln.t < 0.1) {   // varios golpes en ~0,1 s: un solo número con la suma
+    ln.val += dmg; ln.v.textContent = String(ln.val);
+    if (tag && !ln.sub) { ln.sub = tag; ln.sm.textContent = tag; ln.sm.style.display = 'block'; ln.big = true; ln.el.className = 'num big'; ln.dur = 1.3; }
+    numSize(ln);
+  } else {
+    tmp.copy(e.m.g.position); tmp.y += e.def.h * e.sc + 0.2;
+    const n = spawnNum(tmp, String(dmg), color, tag, big || !!tag, dmg); n.owner = e; e.lastNum = n;
+  }
   if (e.type === 'jefe' && e.phase === 1 && e.hp < e.max * 0.5) {
     e.phase = 2; showBanner('Segunda fase', 'El Caballero No-muerto se enfurece', 2.2);
     e.eye.color.setRGB(3.6, 0.8, 3.0);
@@ -2174,7 +2213,7 @@ const FORMA_ICON = {
   cono: '<path d="M3 12 21 4v16z"/>',
   yo: '<circle cx="12" cy="7" r="3.2"/><path d="M5 21c0-5 3-8 7-8s7 3 7 8"/>'
 };
-const mV1 = new V3(), mV2 = new V3(), mV3 = new V3(), mV4 = new V3();
+const mV1 = new V3(), mV2 = new V3(), mV3 = new V3(), mV4 = new V3(), mAt = new V3(), mGround = new V3(), mFrom = new V3();
 const uniqEl = (a) => a.filter((x, i) => a.indexOf(x) === i);
 const MG = {
   ranuras: [null, null, null, null, null, null], pagina: 0, codice: [], semilla: 20240611,
@@ -2249,7 +2288,7 @@ Object.assign(MG, {
     const roll = P.roll, sobre = roll === 'sobrecarga' ? 1.5 : 1;
     if (roll === 'sobrecarga') { spawnNum(mV1.copy(P.pos).setY(2.5), 'Sobrecarga', '#ffd36a', null, true); shake(0.3); }
     const fwd = mV2.set(Math.sin(P.yaw), 0, Math.cos(P.yaw));
-    const from = GK ? castHandPos().addScaledVector(fwd, 0.2) : P.pos.clone().setY(1.35).addScaledVector(fwd, 0.6);
+    const from = GK ? castHandPos().addScaledVector(fwd, 0.2) : mFrom.copy(P.pos).setY(1.35).addScaledVector(fwd, 0.6);
     const el = uniqEl(c.elems), pot = c.potencia * sobre;
     if (c.forma === 'yo') return MG.liberarYo(c, el[0]);
     if (c.forma === 'proyectil') {
@@ -2264,19 +2303,18 @@ Object.assign(MG, {
       return;
     }
     if (c.forma === 'area') {
-      const pt = P.castPt.clone();
-      if (c.fusion === 'juicio') MG.juicio(pt, 3, c, pot, true);
-      else MG.explosion(c, pt, 3, pot);
+      if (c.fusion === 'juicio') MG.juicio(P.castPt.clone(), 3, c, pot, true);   // la copia la usa el closure diferido
+      else MG.explosion(c, P.castPt, 3, pot);
       return;
     }
-    if (c.forma === 'zona') { MG.crearZona(c, P.castPt.clone(), pot); return; }
+    if (c.forma === 'zona') { MG.crearZona(c, P.castPt, pot); return; }
     if (c.forma === 'cono') MG.cono(c, from, pot);
   },
   liberarYo(c, el) {
     P.buff[el] = 8; MG.stats.estados['yo:' + el] = 1;
     if (VFX) { if (MG.aura && MG.aura.active) VFX.auraStop(MG.aura); MG.aura = VFX.aura(el, P.pos, 8); }
     if (el === 'luz') {
-      if (VFX) { VFX.holyBurst(P.pos.clone(), 1.9); VFX.healSparkles(P.pos.clone()); } else { pillar(P.pos, 0xffd36a, 0.9); ring(P.pos, 0xffd36a, 0.5, 5.5, 0.6); }
+      if (VFX) { VFX.holyBurst(P.pos, 1.9); VFX.healSparkles(P.pos); } else { pillar(P.pos, 0xffd36a, 0.9); ring(P.pos, 0xffd36a, 0.5, 5.5, 0.6); }
       P.hp = Math.min(P.hpMax, P.hp + 20); MG.regen.t = 5; MG.regen.rate = 2;
       spawnNum(mV1.copy(P.pos).setY(2.4), '+20', '#b8e890');
     } else {
@@ -2302,10 +2340,10 @@ Object.assign(MG, {
     damageEnemy(e, res.total, col, tag, big);
     if (res.fuertes.includes('congelado') && VFX && !e.dead) VFX.impacto('hielo', mV1.copy(e.m.g.position).setY(1), 1);
   },
-  daño(e, v, color, tag) { if (e && !e.dead) damageEnemy(e, v, color, tag || null); },
+  dano(e, v, color, tag) { if (e && !e.dead) damageEnemy(e, v, color, tag || null); },
   /* ---------- reacciones ---------- */
   reaccionEnemigo(e, res, c) {
-    const id = res.reaccion, pos = mV2.copy(e.m.g.position).setY(0.05), p0 = pos.clone();
+    const id = res.reaccion, pos = mV2.copy(e.m.g.position).setY(0.05), p0 = pos;   // MG.suelo/nuevoSuelo solo leen x,z y VFX.zona copia la posición
     MG.stats.reacciones[id] = (MG.stats.reacciones[id] || 0) + 1; MG.descubrir(id);
     if (VFX) VFX.reaccion(id, mV3.copy(e.m.g.position).setY(e.def.h * e.sc * 0.55), res.cong);
     if (id === 'vapor') MG.suelo('vapor', p0, 2.5, 3);
@@ -2317,22 +2355,22 @@ Object.assign(MG, {
         if (o === e || o.dead || o.spawnT > 0) continue;
         if ((o.est.escarcha > 0 || o.est.congelado > 0) && o.m.g.position.distanceTo(e.m.g.position) < 8) {
           if (VFX) VFX.arc(mV3.copy(e.m.g.position).setY(1.1), mV4.copy(o.m.g.position).setY(1.1), { life: 0.22, amp: 0.25, col: [2.2, 5, 8], w: 1.2 });
-          FM.aplicarEstado(o.est, o.type, 'cargado', 5); MG.daño(o, Math.max(1, Math.round(res.base * 0.5)), '#9feeff', 'Cadena');
+          FM.aplicarEstado(o.est, o.type, 'cargado', 5); MG.dano(o, Math.max(1, Math.round(res.base * 0.5)), '#9feeff', 'Cadena');
         }
       }
     } else if (id === 'juicio') {
-      const pt = e.m.g.position.clone(); if (VFX) VFX.senal(pt, 1.2, 0.6, 'luz');
-      MG.despues(0.6, () => { if (VFX) VFX.skyBolt(pt, false); for (const o of enemies) if (!o.dead && o.m.g.position.distanceTo(pt) < 1.6) { MG.daño(o, Math.max(8, Math.round(res.base * 0.5)), '#ffe9b0', 'Rayo'); FM.aplicarEstado(o.est, o.type, 'aturdido', 1); } shake(0.2); });
+      const pt = e.m.g.position.clone(); if (VFX) VFX.senal(pt, 1.2, 0.6, 'luz');   // copia propia: la usa el closure diferido
+      MG.despues(0.6, () => { if (VFX) VFX.skyBolt(pt, false); for (const o of enemies) if (!o.dead && o.m.g.position.distanceTo(pt) < 1.6) { MG.dano(o, Math.max(8, Math.round(res.base * 0.5)), '#ffe9b0', 'Rayo'); FM.aplicarEstado(o.est, o.type, 'aturdido', 1); } shake(0.2); });
     } else if (id === 'niebla_negra') MG.suelo('niebla_negra', p0, 2.5, 3);
   },
   despues(t, fn) { const k = MG.tareas.find((x) => !x.activo); if (k) { k.activo = true; k.t = t; k.fn = fn; } else fn(); },
   /* ---------- impactos ---------- */
   impactoProy(p, pos, e) {
     const s = p.sp, c = s.comp, el = s.el, fus = c.fusion;
-    const at = pos.clone(); at.y = Math.max(0.05, Math.min(at.y, 1.6));
-    const ground = new V3(at.x, 0, at.z);
+    const at = mAt.copy(pos); at.y = Math.max(0.05, Math.min(at.y, 1.6));
+    const ground = mGround.set(at.x, 0, at.z);
     MG.convertirSuelos(ground, el);
-    if (fus === 'juicio') { MG.juicio(ground, 1.6, c, s.pot, false); return; }
+    if (fus === 'juicio') { MG.juicio(ground.clone(), 1.6, c, s.pot, false); return; }
     MG.vfxImpacto(c, at, 1.2, true);
     if (e) { MG.golpear(e, c, { pot: s.pot }); MG.empuje(e, el, p.hid, p.v); }
     if (el.includes('fuego') && !fus) {   // explota r 2 m: 50 % del daño
@@ -2450,7 +2488,7 @@ Object.assign(MG, {
         z.estilo = f.id; z.conv = true; if (f.id === 'incendio') z.r *= 1.5; z.r1 = Math.max(z.r1, z.r);
         if (VFX && z.h && z.h.active) { z.h.r = z.r; VFX.zonaStyle(z.h, f.id, z.r1); }
         MG.stats.reacciones['suelo:' + f.id] = (MG.stats.reacciones['suelo:' + f.id] || 0) + 1; MG.descubrir(f.id);
-        spawnNum(mV1.set(z.x, 1.8, z.z), FUS_TAG[f.id], '#ffe9b0', null, true);
+        if (!(z.tagT > numClock)) { z.tagT = numClock + 0.6; spawnNum(mV1.set(z.x, 1.8, z.z), FUS_TAG[f.id], '#ffe9b0', null, true); }
         break;
       }
     }
@@ -2476,7 +2514,7 @@ Object.assign(MG, {
       if (!tickA) continue;
       if (dmgSec > 0) {
         if (spell) { const res = MG.golpear(e, z.comp, { pot: dmgSec * 0.5, reac: false, sinEstados: !estados }); if (res) { /* daño ya mostrado */ } }
-        else { MG.daño(e, dmgSec * 0.5, '#ff9a4a'); if (!e.dead && estados) FM.aplicarEstado(s, e.type, 'ardiendo', 4); }
+        else { MG.dano(e, dmgSec * 0.5, '#ff9a4a'); if (!e.dead && estados) FM.aplicarEstado(s, e.type, 'ardiendo', 4); }
       } else if (estados && !spell) {
         if (st === 'rayo') FM.aplicarEstado(s, e.type, 'cargado', 5);
         if (st === 'tierra') FM.aplicarEstado(s, e.type, 'lastrado', 5);
@@ -2488,7 +2526,7 @@ Object.assign(MG, {
     if (tickA && st === 'juicio') {   // 1 rayo/s al enemigo más cercano
       if (z.n % 2 === 0) {
         let best = null, bd = 9; for (const e of enemies) { if (e.dead || e.spawnT > 0) continue; const d = Math.hypot(e.m.g.position.x - z.x, e.m.g.position.z - z.z); if (d < bd) { bd = d; best = e; } }
-        if (best) { if (VFX) VFX.skyBolt(best.m.g.position, false); MG.daño(best, 12, '#ffe9b0', 'Rayo'); }
+        if (best) { if (VFX) VFX.skyBolt(best.m.g.position, false); MG.dano(best, 12, '#ffe9b0', 'Rayo'); }
       }
     }
   },
@@ -2529,7 +2567,7 @@ Object.assign(MG, {
   hurtHook(src) {   // Yo: efectos al recibir un golpe cuerpo a cuerpo
     if (!src || !src.enemy || src.enemy.dead) return;
     const e = src.enemy;
-    if (P.buff.fuego > 0) { MG.daño(e, 6, '#ff9a4a', 'Escudo de fuego'); if (!e.dead) FM.aplicarEstado(e.est, e.type, 'ardiendo', 4); }
+    if (P.buff.fuego > 0) { MG.dano(e, 6, '#ff9a4a', 'Escudo de fuego'); if (!e.dead) FM.aplicarEstado(e.est, e.type, 'ardiendo', 4); }
     if (P.buff.hielo > 0 && !e.dead) FM.aplicarEstado(e.est, e.type, 'escarcha', 5);
   },
   reset() {
@@ -2797,7 +2835,7 @@ const enemyList = (w) => w.map(([t, n]) => n + ' ' + NAMES[t][n > 1 ? 1 : 0]).jo
 function startWave(i) {
   wave = i; wState = 'fight'; queue = [];
   WAVES[i].forEach(([t, n]) => { for (let k = 0; k < n; k++) queue.push(t); });
-  queue.sort(() => Math.random() - 0.5);
+  for (let i = queue.length - 1; i > 0; i--) { const j = Math.floor(simRand() * (i + 1)); const q = queue[i]; queue[i] = queue[j]; queue[j] = q; }   // Fisher-Yates con semilla
   const last = i === WAVES.length - 1;
   if (last) { queue = queue.filter((t) => t !== 'jefe'); queue.unshift('jefe'); }
   qTimer = 0.4;
@@ -2811,7 +2849,7 @@ function updateWaves(dt) {
       if (qTimer <= 0) {
         const t = queue.shift(); qTimer = t === 'jefe' ? 1.6 : 0.65;
         let pos, tries = 0;
-        do { const a = Math.random() * Math.PI * 2; pos = new V3(Math.cos(a) * 12, 0, Math.sin(a) * 12); tries++; } while (pos.distanceTo(P.pos) < 7 && tries < 12);
+        do { const a = simRand() * Math.PI * 2; pos = new V3(Math.cos(a) * 12, 0, Math.sin(a) * 12); tries++; } while (pos.distanceTo(P.pos) < 7 && tries < 12);
         if (t === 'jefe') { const a = Math.atan2(P.pos.z, P.pos.x) + Math.PI; pos.set(Math.cos(a) * 9, 0, Math.sin(a) * 9); }
         spawnEnemy(t, pos);
       }
@@ -3049,7 +3087,7 @@ function autopilot(dt) {
   for (const e of alive) {
     if (!e.def.ranged && e.atk > 0.18 && !e.apDodged && e.m.g.position.distanceTo(P.pos) < e.def.reach + 0.8) {
       e.apDodged = true;
-      if (P.st > 30 && Math.random() < 0.55) { it.dodge = true; it.move.set(-dir.z, 0, dir.x).multiplyScalar(Math.random() < 0.5 ? 1 : -1).addScaledVector(dir, -0.6).normalize(); return it; }
+      if (P.st > 30 && simRand() < 0.55) { it.dodge = true; it.move.set(-dir.z, 0, dir.x).multiplyScalar(simRand() < 0.5 ? 1 : -1).addScaledVector(dir, -0.6).normalize(); return it; }
     }
   }
   AP.think -= dt; const busy = P.act || P.cast;
@@ -3640,7 +3678,7 @@ window.__GAME__ = { P, SPELL, WEAP, TEST, step: stepN, get GK() { return GK; }, 
 Object.defineProperties(window.__GAME__, { colliders: { get: () => COLL.segs.length + COLL.boxes.length + 1 + (HZ ? 1 : 0) + 1 + enemies.filter(solidEnemy).length, enumerable: true }, COLL: { value: COLL }, DBG: { value: DBG }, showColliders: { value: showColliders }, collCheck: { value: collCheck }, camera: { value: camera }, renderer: { value: renderer } });   // colisiones y depuración
 window.__GAME__.MAGIA = {
   get ranuras() { return MG.ranuras; }, get pagina() { return MG.pagina; }, set pagina(v) { MG.pagina = v ? 1 : 0; MG.hudSlots(); },
-  get codice() { return MG.codice; }, get semilla() { return MG.semilla; }, set semilla(v) { MG.semilla = v >>> 0; },
+  get codice() { return MG.codice; }, get semilla() { return MG.semilla; }, set semilla(v) { MG.semilla = v >>> 0; simRng = mulberry32(MG.semilla); },
   get precompuestos() { return FM.PRECOMPUESTOS; }, get abierto() { return GRIM.open; }, get suelos() { return MG.suelos.filter((z) => z.activo); },
   get stats() { return MG.stats; }, get grimNav() { return { col: GRIM.col, row: GRIM.row, armed: GRIM.armed }; }, get editor() { return MG.editor; }, get oculto() { return MG.oculto; },
   compilar: (r) => MG.compilar(r), validar: (r) => FM.validar(r), equipar: (i, r) => MG.equipar(i, r), lanzar: (i) => MG.lanzar(i),
@@ -3652,6 +3690,7 @@ window.__GAME__.MAGIA = {
   limpiar() { for (const e of [...enemies]) removeEnemy(e); for (let i = projs.length - 1; i >= 0; i--) freeProj(projs[i], i); MG.reset(); wState = 'idle'; queue = []; Object.assign(P, { hp: P.hpMax, mp: P.mpMax, st: P.stMax, bonus: 1 }); for (const k in P.cds) P.cds[k] = 0; },
   spawn(type, x, z) { const e = spawnEnemy(type, new V3(x, 0, z)); e.spawnT = 0; e.m.g.position.y = 0; return e; },
   oleadas() { wave = -1; wState = 'pre'; wTimer = 1; queue = []; },
+  limpiarNums, dano: (e, v, c, tag) => MG.dano(e, v, c, tag),
   get lights() { return flashes.length; }
 };
 markSel();

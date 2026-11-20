@@ -1,4 +1,4 @@
-/* Pruebas de la magia rúnica (criterios MQ-01..MQ-14 de prototipo/magia/DISENO.md) + capturas.
+/* Pruebas de la magia rúnica (criterios MQ-01..MQ-15 de prototipo/magia/DISENO.md) + capturas.
    Uso: node prototipo/pruebas/magia.js <dir con maqueta.html> <ruta a three/package> [dirCapturas]
    La maqueta se abre con ?test=1: la simulación solo avanza con __GAME__.step(n) (determinista). */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path');
@@ -200,12 +200,39 @@ const ok = (id, cond, info) => { res.push({ id, cond: !!cond, info }); console.l
   const reacIds = [...new Set(Object.keys(demo.reac).map((k) => k.replace('suelo:', '')))];
   ok('MQ-14', Object.keys(demo.lanz).length >= 6 && reacIds.length >= 2, JSON.stringify(demo));
 
+  /* ---- MQ-15: números y etiquetas no se solapan (> 10 %) y una etiqueta no se repite sobre el mismo enemigo en 0,6 s ---- */
+  const leer = () => G(() => [...document.querySelectorAll('#dmg .num')].filter((n) => n.style.display !== 'none' && n.style.opacity !== '0').map((n) => { const r = n.getBoundingClientRect(); const v = n.querySelector('.v'), sm = n.querySelector('small'); return { t: v.textContent, s: sm && sm.style.display !== 'none' ? sm.textContent : '', x0: r.left, y0: r.top, x1: r.right, y1: r.bottom }; }));
+  const solape = (rs) => { let peor = 0; for (let i = 0; i < rs.length; i++) for (let j = i + 1; j < rs.length; j++) { const a = rs[i], c = rs[j]; const w = Math.min(a.x1, c.x1) - Math.max(a.x0, c.x0), h = Math.min(a.y1, c.y1) - Math.max(a.y0, c.y0); if (w > 0 && h > 0) peor = Math.max(peor, w * h / Math.min((a.x1 - a.x0) * (a.y1 - a.y0), (c.x1 - c.x0) * (c.y1 - c.y0))); } return peor; };
+  const mq15 = { peor: 0, n: 0, rep: 0 };
+  for (const esc of [{ forma: 'area', nucleo: ['fuego', 'hielo'], mods: [], en: [['esqueleto', 0, 8], ['goblin', 1.3, 8.5], ['goblin', -1.5, 8.2]] }, { forma: 'cono', nucleo: ['aire', 'fuego'], mods: [], en: [['esqueleto', 0, 4], ['goblin', 1.3, 4.3]] }]) {
+    await G((sp) => {
+      const M = __GAME__.MAGIA, P = __GAME__.P; M.limpiar(); M.limpiarNums(); __GAME__.setMode('control'); P.pos.set(0, 0, 0); P.yaw = 0; M.codice.length = 0;
+      const es = sp.en.map(([t, x, z]) => { const e = M.spawn(t, x, z); e.hp = e.max = 9999; return e; }); __GAME__.LOCK.t = es[0]; __GAME__.step(60);
+      es.forEach((e) => { const s = M.estados(e); if (sp.forma === 'area') s.escarcha = 4; });
+      M.equipar(0, { forma: sp.forma, nucleo: sp.nucleo, mods: sp.mods }); M.pagina = 0; P.castN = 1; M.lanzar(0);
+    }, esc);
+    for (let f = 0; f < 90; f++) {
+      await G(() => __GAME__.step(2));
+      if (f % 2 === 0) await p.waitForTimeout(20);
+      const rs = await leer(); mq15.n = Math.max(mq15.n, rs.length); mq15.peor = Math.max(mq15.peor, solape(rs));
+    }
+  }
+  /* misma etiqueta sobre el mismo enemigo: 3 golpes etiquetados separados 0,2 s (en 0,4 s) => una sola etiqueta visible */
+  mq15.rep = await G(() => {
+    const M = __GAME__.MAGIA; M.limpiar(); M.limpiarNums();
+    const e = M.spawn('esqueleto', 0, 6); e.hp = e.max = 99999; let n = 0;
+    for (let i = 0; i < 3; i++) { M.dano(e, 5, '#9feeff', 'Cadena'); __GAME__.step(12); }
+    document.querySelectorAll('#dmg .num').forEach((x) => { const sm = x.querySelector('small'); if (x.style.display !== 'none' && sm && sm.style.display !== 'none' && sm.textContent === 'Cadena') n++; });
+    return n;
+  });
+  ok('MQ-15', mq15.n >= 2 && mq15.peor <= 0.1 && mq15.rep <= 1, JSON.stringify(mq15));
+
   }
 
   /* ================= capturas ================= */
   async function escena(spec, seq) {
     if (process.env.SOLO && !seq.some(([, n]) => n && process.env.SOLO.split(',').some((k) => n.includes(k)))) return;   // SOLO=texto: repite solo las escenas cuyo nombre lo contiene
-    await G(() => { __GAME__.MAGIA.limpiar(); __GAME__.step(220); document.querySelectorAll('.num').forEach((n) => n.remove()); document.getElementById('toast').classList.remove('on'); });   // sin restos del efecto anterior
+    await G(() => { __GAME__.MAGIA.limpiar(); __GAME__.step(220); __GAME__.MAGIA.limpiarNums(); document.getElementById('toast').classList.remove('on'); });   // sin restos del efecto anterior
     await G((sp) => {
       const M = __GAME__.MAGIA, P = __GAME__.P; M.limpiar(); __GAME__.setMode('control'); document.getElementById('hint').style.display = 'none'; P.pos.set(0, 0, 0); P.yaw = 0; P.hp = 60; P.hpMax = 100;
       M.codice.length = 0; (sp.codice || []).forEach((c) => M.codice.push(c));
@@ -228,7 +255,7 @@ const ok = (id, cond, info) => { res.push({ id, cond: !!cond, info }); console.l
       await escena({ enemies: [E()], receta: por[el] }, [[14, el + '_carga'], [20, el + '_proyectil'], [16, el + '_impacto'], [14, el + '_impacto2']]);
     }
     // áreas / zonas / cono / yo
-    await escena({ enemies: [E('esqueleto', 0, 8), E('goblin', 2, 9), E('goblin', -2, 9)], receta: R('area', ['fuego', 'hielo']) }, [[20, 'area_vapor_aviso'], [10, 'area_vapor_1'], [30, 'area_vapor_2']]);
+    await escena({ enemies: [E('esqueleto', 0, 8), E('goblin', 2, 9), E('goblin', -2, 9)], receta: R('area', ['fuego', 'hielo']) }, [[20, 'area_vapor_aviso'], [10, 'area_vapor_1'], [28, 'area_vapor_2']]);
     await escena({ enemies: [E('esqueleto', 0, 8), E('goblin', 2, 9)], receta: R('area', ['luz', 'rayo'], ['potencia']) }, [[24, 'area_juicio_aviso'], [50, 'area_juicio_rayo'], [20, 'area_juicio_post']]);
     await escena({ enemies: [E('esqueleto', 0, 8), E('esqueleto', 1.5, 9)], receta: R('zona', ['fuego', 'tierra']) }, [[60, 'zona_magma_1'], [120, 'zona_magma_2']]);
     await escena({ enemies: [E('goblin', 0, 8), E('cultista', 2, 9)], receta: R('zona', ['aire', 'sombra']) }, [[90, 'zona_niebla']]);
