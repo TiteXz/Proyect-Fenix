@@ -1081,7 +1081,15 @@ function setWeapon(w) {
 }
 setWeapon('espada');
 
-/* ---------- caballero realista: GLB generado con MakeHuman (CC0) + armadura en Blender, animado por huesos ---------- */
+/* ---------- caballero: GLB animado por huesos ----------
+   Ahora es el soldado (personajes/caballero_soldado.glb, rig tipo Mixamo "UnknownSoldier_*") re-enlazado offline
+   (juego/tools/assets/build_caballero.mjs) con los NOMBRES y EJES LOCALES del rig anterior, así todo lo de abajo
+   (zócalos de mano, escudo, bloqueo, mitades sup/inf, codos, anti-atravesado, montura) sirve sin duplicar sistemas:
+     pelvis←Hips · spine_01/02/03←Spine/Spine1/Spine2 · neck_01←Neck · head←Head
+     clavicle_x←XShoulder · upperarm_x←XArm · lowerarm_x←XForeArm · hand_x←XHand · {thumb,index,middle,ring,pinky}_0n_x←XHand{…}n
+     thigh_x←XUpLeg · calf_x←XLeg · foot_x←XFoot · ball_x←XToeBase   (x = l/r ← Left/Right; falanges 4, puntas y R_Hand_locator → su padre)
+   Los clips (reposo, guardia, andar, correr, tajo, martillazo, disparo_arco, conjurar, invocar, hechizo, rodar, golpeado, morir,
+   montado, montado_galope) son los del caballero anterior; no trae capa_1..4 (sin capa) ni yelmo. ---------- */
 const KNIGHT_GLB = /*__KNIGHT__*/'';
 let GK = null;
 const AX = new V3(1, 0, 0), AY = new V3(0, 1, 0), AZ = new V3(0, 0, 1);
@@ -1101,9 +1109,11 @@ const AX = new V3(1, 0, 0), AY = new V3(0, 1, 0), AZ = new V3(0, 0, 1);
     // zócalo de mano: la hoja sale del puño por el lado del pulgar; Z = dirección de los dedos
     const handSocket = (hand) => {
       const s = new THREE.Object3D(); hand.add(s);
-      const mid = child(hand, /^middle_01/), th = child(hand, /^thumb_01/);
+      const mid = child(hand, /^middle_01/), th = child(hand, /^thumb_01/), ix = child(hand, /^index_01/), pk = child(hand, /^pinky_01/);
       const fz = mid.position.clone().normalize();
-      const up = th.position.clone(); up.sub(fz.clone().multiplyScalar(up.dot(fz))).normalize();
+      // eje del puño: la empuñadura pasa por los dedos cerrados, paralela a la línea de nudillos meñique -> índice.
+      // (El pulgar del soldado nace 34° hacia la palma; usarlo inclinaba la hoja hacia la cara. En el rig anterior ambos ejes difieren ~8°.)
+      const up = ix && pk ? ix.position.clone().sub(pk.position) : th.position.clone(); up.sub(fz.clone().multiplyScalar(up.dot(fz))).normalize();
       const x = new V3().crossVectors(up, fz).normalize();
       s.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(x, up, fz));
       s.position.copy(mid.position).multiplyScalar(0.5);
@@ -1306,9 +1316,10 @@ function updateHorse(dt, intent) {
   HZ.g.rotation.y = HZ.yaw;
   const sp = HZ.speed;
   if (sp < 0.25) playHorse('caballo_reposo', 1);
-  else if (sp < 2.6) playHorse('caballo_paso', Math.max(0.5, sp / 1.8));
-  else if (sp < 5.6) playHorse('caballo_trote', sp / 3.8);
-  else playHorse(HZ.acts.caballo_galope ? 'caballo_galope' : 'caballo_trote', sp / 8.5);
+  // casco apoyado a timeScale 1 (medido en caballo_pinto.glb): paso ≈ 1,0 m/s, galope ≈ 4,2 m/s; el «trote» es el galope más lento
+  else if (sp < 2.2) playHorse('caballo_paso', Math.max(0.5, sp / 1.0));
+  else if (sp < 5.6) playHorse('caballo_trote', Math.max(0.6, sp / 4.2));
+  else playHorse(HZ.acts.caballo_galope ? 'caballo_galope' : 'caballo_trote', Math.min(1.9, sp / 4.6));
   HZ.mixer.update(dt);
   if (sp > 3) { HZ.dustT -= dt; if (HZ.dustT <= 0) { HZ.dustT = 0.06; smoke(tmp.copy(HZ.pos).setY(0.1).addScaledVector(tmp2.set(Math.sin(HZ.yaw), 0, Math.cos(HZ.yaw)), rr(-1, 0.8)), 1, 0x3a352e, { spd: 1, up: 0.4, life: 1.1, grav: 0.1, spread: 0.4 }); } }
 }
@@ -1338,6 +1349,25 @@ function updateMountUI(dt) {
 }
 
 const qa = new THREE.Quaternion(), qb = new THREE.Quaternion();
+// mirada al frente: el soldado no lleva yelmo y, al mezclar piernas/tronco de un clip (p. ej. correr_inf, muy inclinado)
+// con cuello/cabeza de otro (_sup), la cara acababa mirando al suelo. Tras el mixer se mide el cabeceo real de la cara
+// (eje de la cara en el espacio del hueso = boneInverse·bindMatrix del skin) y se sube lo que pase de -8° (cuello 40 %, cabeza 60 %).
+const HL = { f: null, head: null, neck: null, v: new V3(), h: new V3(), ax: new V3(), q: new THREE.Quaternion(), qw: new THREE.Quaternion(), qp: new THREE.Quaternion() };
+function turnW(b, axis, ang) { b.parent.getWorldQuaternion(HL.qp); b.getWorldQuaternion(HL.qw); HL.q.setFromAxisAngle(axis, ang); HL.qw.premultiply(HL.q); b.quaternion.copy(HL.qp.invert().multiply(HL.qw)); b.updateMatrixWorld(true); }
+function headLevel() {
+  if (HL.f === null) {
+    HL.f = false; HL.head = GK.root.getObjectByName('head'); HL.neck = GK.root.getObjectByName('neck_01');
+    GK.root.traverse((o) => { if (HL.f || !o.isSkinnedMesh) return; const i = o.skeleton.bones.indexOf(HL.head); if (i >= 0) HL.f = new V3(0, 0, 1).transformDirection(new THREE.Matrix4().multiplyMatrices(o.skeleton.boneInverses[i], o.bindMatrix)); });
+  }
+  if (!HL.f || !HL.neck || P.down || P.dodgeT > 0) return;
+  HL.head.getWorldQuaternion(HL.qw); const f = HL.v.copy(HL.f).applyQuaternion(HL.qw);
+  const pitch = Math.asin(clamp(f.y, -1, 1)), lim = -0.14;
+  if (pitch >= lim) return;
+  HL.h.set(f.x, 0, f.z); if (HL.h.lengthSq() < 1e-6) return;
+  HL.ax.crossVectors(HL.h.normalize(), AY).normalize();
+  const fix = (lim - pitch) * 0.85;   // conserva un poco de lo que bajaba
+  turnW(HL.neck, HL.ax, fix * 0.4); turnW(HL.head, HL.ax, fix * 0.6);
+}
 function rotB(b, rots) {   // gira un hueso alrededor de ejes del modelo, sobre su pose de reposo
   qa.identity();
   for (const [ax, ang] of rots) { if (!ang) continue; qb.setFromAxisAngle(ax, ang); qa.premultiply(qb); }
@@ -1361,8 +1391,9 @@ function playOn(ch, name, key, ts, once, fade, syncWith) {
   } else if (!once) a.setEffectiveTimeScale(ts);
 }
 function stopOn(ch, fade) { if (ch.cur) { ch.cur.fadeOut(fade); ch.cur = null; ch.key = ''; } }
-// zancada medida en el GLB (velocidad del pie apoyado a timeScale 1): andar 0,99 m/s, correr 3,43 m/s
-const STRIDE = { andar: 0.99, correr: 3.43 }, LOCO_RE = /^(andar|correr)/;
+// zancada medida en el GLB (velocidad del pie apoyado a timeScale 1). Caballero anterior: andar 0,99 m/s, correr 3,43 m/s;
+// el soldado tiene las piernas más cortas (recorrido del pie al 82-83 %): andar 0,81 m/s, correr 2,86 m/s
+const STRIDE = { andar: 0.81, correr: 2.86 }, LOCO_RE = /^(andar|correr)/;
 function knightAnim(dt) {
   const M = GK.main, U = GK.upper;
   // velocidad real (no la del stick): así los pies no patinan al atacar, bloquear o conjurar andando
@@ -1375,7 +1406,7 @@ function knightAnim(dt) {
   GK.px = P.pos.x; GK.pz = P.pos.z;
   const moving = GK.v > 0.3 && P.speed > 0.05;
   if (GK.walkClip === 'correr' ? GK.v < 1.8 : GK.v > 2.25) GK.walkClip = GK.walkClip === 'correr' && GK.acts.andar ? 'andar' : 'correr';   // con histéresis
-  const loco = GK.walkClip, runTs = clamp(GK.v / STRIDE[loco], loco === 'andar' ? 0.7 : 0.8, loco === 'andar' ? 2.1 : 1.45) * (GK.back ? -1 : 1);
+  const loco = GK.walkClip, runTs = clamp(GK.v / STRIDE[loco], loco === 'andar' ? 0.7 : 0.8, loco === 'andar' ? 2.1 : 1.6) * (GK.back ? -1 : 1);
   let act = null, actKey = '', actTs = 1;
   if (P.act) {
     act = GK.acts[ACT_CLIP[P.act]] ? ACT_CLIP[P.act] : (P.act === 'arco' ? 'hechizo' : 'tajo');
@@ -1416,6 +1447,7 @@ function knightAnim(dt) {
   GK.hurtT = Math.max(0, GK.hurtT - dt);
   GK.mixer.update(dt);
   if (P.mounted) seatRider(dt);
+  headLevel();
   hammerWrist(dt); bowRoll(dt); weaponAvoid(dt);
   shieldUpdate(dt);   // transición espalda ↔ brazo y peso de la guardia alta (GK.bw)
   const BK = GK.blk;
