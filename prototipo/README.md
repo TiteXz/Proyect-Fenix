@@ -1,13 +1,17 @@
 # Prototipo visual — Proyecto Fénix
 
-Maqueta jugable de un solo archivo HTML para validar el **estilo** (fantasía oscura realista) y la
+Maqueta jugable de un solo archivo HTML para validar el **estilo** y la
 **sensación de combate** antes de construir el juego de verdad en `juego/`. No es el juego: es una
 referencia viva para el `director-arte`, el `artista-3d` y los programadores.
+
+> **Estilo pendiente de actualizar.** La maqueta se hizo en fantasía oscura (patio nocturno). El proyecto ha pasado a
+> **fantasía realista luminosa con ciclo día/noche** (ver `contexto/CONTEXTO_PROYECTO.md`); la iluminación y el
+> ambiente de la maqueta todavía no se han adaptado.
 
 Publicada en: https://claude.ai/artifact/YNiWbvQBq5CYroDscJQ3QA (privada; compártela desde su menú).
 
 ## Probarla en tu PC (lo más rápido)
-1. Clona o descarga el repositorio (rama `claude/share-generated-agent-9lfcsr`).
+1. Clona o descarga el repositorio (rama `main`).
 2. Abre **`prototipo/maqueta.html`** con doble clic en Chrome, Edge o Firefox. Lleva dentro las texturas,
    el caballero y los efectos; solo necesita internet para cargar three.js y las fuentes desde la CDN.
 3. Conecta el mando de PS5/PS4 por USB o Bluetooth y pulsa cualquier botón (o usa teclado y ratón).
@@ -27,13 +31,22 @@ Si cambias `maqueta.src.html`, vuelve a generar `maqueta.html` con el comando de
 | `pruebas/*.js` | Pruebas con Playwright: carga sin errores, vista de frente, combate (fuego, luz, martillo, correr atacando), hechizo de luz |
 | `capturas/` | Capturas de referencia (render en Blender, poses, combate) |
 
-El modelo del caballero vive en `juego/public/assets/personajes/caballero.glb` (generado por
-`juego/tools/blender/caballero.py`, con animaciones de `retarget.py` y `poses.py`).
+Modelos que incrusta la maqueta (detalle y licencias en `juego/public/assets/CREDITOS.md`):
+| Modelo | Fichero | Cómo se genera |
+|---|---|---|
+| Caballero (soldado) | `juego/public/assets/personajes/caballero_soldado.glb` | `juego/tools/assets/build_caballero.mjs`: re-enlaza el esqueleto del soldado con el del caballero anterior y le copia sus clips |
+| Caballo pinto | `juego/public/assets/animales/caballo_pinto.glb` | `juego/tools/assets/build_caballo.mjs` |
+| Katana | `juego/public/assets/armas/katana.glb` | `juego/tools/blender/katana.py` |
+
+**Licencia pendiente:** el soldado y el caballo pinto salen de zips aportados por el usuario sin licencia. Hasta
+confirmarla no se publican; si no se pueden usar, se vuelve a `caballero.glb` (generado por
+`juego/tools/blender/caballero.py`, con animaciones de `retarget.py` y `poses.py`) y `caballo.glb`, que siguen en el repo.
 
 ## Generar la maqueta
 ```bash
 python3 prototipo/build.py prototipo/maqueta.src.html prototipo/texturas prototipo/maqueta.html \
-  juego/public/assets/personajes/caballero.glb vfx \n  katana=juego/public/assets/armas/katana.glb caballo=juego/public/assets/animales/caballo.glb
+  juego/public/assets/personajes/caballero_soldado.glb vfx \
+  katana=juego/public/assets/armas/katana.glb caballo=juego/public/assets/animales/caballo_pinto.glb
 ```
 El 5º argumento `vfx` incrusta `vfx/vfx.js`; sin él se usan los efectos básicos de respaldo. Sin `katana=` y
 `caballo=` la maqueta sale sin la katana ni el caballo.
@@ -41,6 +54,7 @@ El 5º argumento `vfx` incrusta `vfx/vfx.js`; sin él se usan los efectos básic
 ## Probar sin acceso a CDN
 ```bash
 bash prototipo/preparar_three.sh                       # three.js 0.147 desde npm a prototipo/.three
+mkdir -p prototipo/dist && cp prototipo/maqueta.html prototipo/dist/
 node prototipo/pruebas/carga.js prototipo/dist prototipo/.three/package '[{"w":1000,"h":560,"n":"carga","t":20000}]'
 node prototipo/pruebas/combate.js prototipo/dist prototipo/.three/package   # capturas c-*.png en dist/
 node prototipo/vfx/shoot.js                            # capturas del módulo de efectos
