@@ -6,7 +6,8 @@
 
 ## Elevator pitch
 Juego de acción 3D de fantasía medieval para navegador, en un **mundo abierto hiper optimizado**.
-El jugador explora a pie y a caballo un reino de fantasía vivo y luminoso y combina **armas cuerpo a cuerpo, a distancia
+El mundo se llama **Bronsil** y la región jugable, **Valdera** (lore en `docs/GDD.md` §10).
+El jugador explora a pie y a caballo un reino de fantasía vivo y luminoso y combina **espada
 y magia** contra enemigos de mundo y, en los **dungeons** (instancias de oleadas y jefe), contra
 hordas organizadas. La gracia está en cambiar de arma y de hechizo en pleno combate para aprovechar
 las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
@@ -15,7 +16,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 1. **Combate con decisiones:** cada arma y cada hechizo tienen un papel claro (alcance, velocidad,
    daño, control). Ninguno sirve para todo.
 2. **Arma + magia combinadas:** los combos y las interacciones elementales premian alternar
-   (p. ej. congelar con escarcha y romper con la maza).
+   (p. ej. congelar con escarcha y rematar con la espada).
 3. **Respuesta inmediata:** golpes con peso (hit-stop, retroceso, sonido, partículas) y controles precisos.
 4. **Mundo grande que invita a explorar sin perder el combate:** ≈ 2/3 del mapa de GTA V, con puntos
    de interés repartidos; explorar nunca penaliza la fluidez (ningún frame > 33 ms al cruzar zonas).
@@ -27,8 +28,9 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 ## Público y plataforma
 - Navegadores de escritorio recientes (Chrome/Edge/Firefox/Safari). Móvil fuera del MVP. **[SUPUESTO]**
 - Controles: teclado y ratón; mando (Gamepad API) en el hito de pulido.
-  - WASD mover · Ratón cámara · Clic izq. ataque · Clic der. bloquear/apuntar · Espacio esquivar
-  - 1-2-3 cambiar arma · Q/E/R lanzar hechizo · Rueda ciclar hechizos · Esc pausa
+  - WASD mover · Ratón cámara · Clic izq. ataque · Clic der. bloquear · Espacio esquivar
+  - Dirección de ataque/parada: WASD o stick izquierdo (detalle en `docs/GUIA_UI.md`)
+  - Q/E/R lanzar hechizo · Rueda ciclar hechizos · Esc pausa
   - F interactuar (entrar al dungeon, recoger) · F mantenida montar/desmontar caballo **[SUPUESTO]** (E queda para hechizos)
   - A caballo: Shift galopa. El prototipo ya valida montar/galopar (`prototipo/README.md`).
 
@@ -52,20 +54,23 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 
 ## Sistemas principales
 - **Recursos del jugador:** Vida, Aguante (ataques fuertes, esquivar, bloquear) y Maná (hechizos), que se regenera lentamente.
-- **Armas (MVP: 3)** **[SUPUESTO]**
+- **Armas (MVP: espada + magia; escudo opcional que se equipa)** (decisión del usuario)
   | Arma | Papel | Rasgos |
   |---|---|---|
-  | Espada y escudo | Equilibrada | Combo de 3 golpes, bloqueo, contraataque tras bloquear a tiempo (parry) |
-  | Martillo de guerra a dos manos | Lenta y pesada | Mucho daño, rompe guardias y escudos, ataque cargado en área |
-  | Arco | A distancia | Apuntar con clic derecho, carga de tensión, flechas limitadas que se recogen |
+  | Espada (sola o con escudo) | Equilibrada | Combo de 3 golpes, bloqueo, contraataque tras parada perfecta (parry). Dos configuraciones, solo espada / espada + escudo, con animaciones distintas según cuál lleves |
+  - En reserva para más adelante: martillo y arco. Los enemigos sí pueden usar arcos (goblin arquero).
+- **Combate cuerpo a cuerpo direccional** (detalle en `docs/COMBATE.md` §1.1; solo afecta al cuerpo a cuerpo):
+  - Los ataques llegan por izquierda, derecha, arriba y abajo; la dirección se marca con el stick izquierdo y el jugador ataca igual.
+  - Parada perfecta: stick hacia el golpe + L1 a tiempo. Con el stick ya mantenido, solo bloqueo normal.
+  - Mínimo una animación por dirección, más remates/ejecuciones y contraataque tras parada.
 - **Magias (MVP: 3 escuelas)** **[SUPUESTO]**
   | Hechizo | Elemento | Efecto |
   |---|---|---|
   | Bola de fuego | Fuego | Proyectil con explosión en área y quemadura (daño en el tiempo) |
-  | Lanza de escarcha | Hielo | Ralentiza; si se acumula, congela (el siguiente golpe contundente hace daño extra) |
+  | Lanza de escarcha | Hielo | Ralentiza; si se acumula, congela (el siguiente golpe de espada hace daño extra) |
   | Destello sagrado | Luz | Cura al jugador y hace daño extra a no-muertos |
-- **Interacciones elementales:** fuego derrite la congelación (gran daño); los esqueletos son débiles a lo
-  contundente (martillo) y a la luz; los enemigos con escudo resisten las flechas de frente.
+- **Interacciones elementales:** fuego derrite la congelación (gran daño); los esqueletos son débiles a la luz
+  (el resto de reglas de daño del jugador en `docs/COMBATE.md` §1).
 - **Enemigos (MVP)** **[SUPUESTO]**: esqueleto guerrero (cuerpo a cuerpo), goblin arquero (a distancia,
   huye si te acercas), cultista mago (lanza hechizos y crea escudos) y un jefe: caballero no-muerto
   con dos fases. En el mundo aparecen en grupos pequeños (patrullas, campamentos); el jefe solo en el dungeon.
@@ -95,7 +100,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   - **Dungeon "Patio del castillo en ruinas"**: 5 oleadas + jefe, como instancia cargada desde el mundo.
   - **Ciclo día/noche dinámico** (≈ 24 min reales por día **[SUPUESTO]**): sol/luna como única luz direccional
     con sombra, cielo analítico (scattering) y entorno/IBL actualizado de forma escalonada, no cada frame.
-  - 3 armas, 3 hechizos, 4 tipos de enemigo; HUD (vida/aguante/maná, arma y hechizos activos con su
+  - Espada (con escudo opcional) + 3 hechizos, 4 tipos de enemigo; HUD (vida/aguante/maná, arma y hechizos activos con su
     tiempo de recarga, brújula/minimapa); menú principal, pausa, ajustes, pantalla de victoria/derrota;
     tienda de mejoras; sonido y música; guardado de partida en `localStorage`.
 - **Fuera del MVP:** multijugador, mundo mayor de ≈ 33 km², clima dinámico completo (lluvia/tormentas
@@ -160,7 +165,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   van en `juego/src/config/`; los presupuestos de rendimiento, en un único fichero de config verificable.
 
 ## Glosario
-- **Parry:** bloqueo en el momento justo (ventana ≈ 0,2 s) que aturde al enemigo.
+- **Parry (parada perfecta):** stick hacia el golpe + L1 a tiempo (ventana ≈ 0,2 s); aturde al enemigo. **Bloqueo normal:** con el stick ya mantenido.
 - **Congelado:** estado tras acumular escarcha; el enemigo no actúa y recibe más daño contundente.
 - **Celda:** bloque cuadrado del mundo (128 m) que se carga, simula y descarga como unidad.
 - **Streaming:** carga/descarga progresiva y asíncrona de celdas según la posición del jugador.
