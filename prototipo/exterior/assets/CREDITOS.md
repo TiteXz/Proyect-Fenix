@@ -61,3 +61,20 @@ Todo **CC0** de Poly Haven (https://polyhaven.com/license), descargado de la API
 | acantilado_04 | `namaqualand_boulder_02` | Greg Zaal (foto), Rico Cilliers | 5,2 k | 1530 | de 184 k tris, 3,6 x 1,3 x 1,75 m (peñasco bajo) |
 Nota: no hay textura `roca_talud` nueva (`rock_face` 2K sigue siendo adecuada para triplanar). Ronda 2 anade 6,9 MB netos a `assets/`.
 **Obsoletos (siguen en la carpeta para no romper la escena en curso; borrar al migrar, -1,3 MB):** `hierba_mechones.glb`, `flores_matas.glb`, `talud_roca_01.glb`, `talud_roca_02.glb`.
+
+## Edificios de la aldea (Sketchfab, CC-BY 4.0: ATRIBUCION OBLIGATORIA)
+**Atencion:** el resto de este fichero es CC0; esta seccion NO. Licencia de todos: Creative Commons Attribution 4.0 (http://creativecommons.org/licenses/by/4.0/). Descargados el 2026-11-23 con la API de Sketchfab (`/v3/models/<uid>/download`, sin claves en el repo). Hoja de candidatos y elegidos fuera del repo (scratchpad). Script: `herramientas/edificios.sh` (+ `procesar_edificios.mjs`, `decimar_blender.py`, `sketchfab_*.py`).
+Cambios comunes: decimado con Blender 4.2 (modificador Collapse, UV conservadas) hasta el presupuesto, eliminados los macetones/flores de ventana (geometria de plantas) o reducidos, `KHR_materials_unlit` quitado (torre), reescalado a metros reales, origen en el suelo y centrado en XZ, texturas WebP (color 768-1024 px, normal/ORM a la mitad). GLB sin compresion de malla. No se ha tocado el aspecto del autor mas alla de eso.
+| Fichero | Titulo original | Autor (Sketchfab) | URL | Tris (orig. -> final) | KB | Altura |
+|---|---|---|---|---|---|---|
+| casa_entramado_a.glb | House | local.yany | https://sketchfab.com/3d-models/house-672d14d5a32343c49f77d1381e6e75ff | 252 k -> 15,5 k | 1442 | 9,5 m |
+| casa_entramado_b.glb | House | local.yany | https://sketchfab.com/3d-models/house-c0fb208eb32f47729f918cd3dda6b977 | 384 k -> 16,0 k | 1345 | 9,5 m |
+| casa_entramado_c.glb | House | local.yany | https://sketchfab.com/3d-models/house-ec32670a757b4922becffe2184777abb | 170 k -> 15,5 k | 1760 | 9,0 m |
+| casa_tudor.glb | Medieval Tudor Cottage | Mutasim_ | https://sketchfab.com/3d-models/medieval-tudor-cottage-82cbf472edfc4814a8824fcd14d30848 | 46 k -> 11,0 k | 592 | 8,0 m (original a 0,98 m: x8,2) |
+| casa_piedra.glb | Medieval house | DoniTodorov | https://sketchfab.com/3d-models/medieval-house-a8ad9d2723444b1b8ac054c232e61f12 | 27,8 k -> 13,0 k | 1246 | 6,9 m |
+| casa_rustica.glb | Romano-British House in Medieval London - free | Andy Woodhead (Andywoodhead) | https://sketchfab.com/3d-models/romano-british-house-in-medieval-london-free-a13b6ace269945a78918518d69378eef | 12,9 k -> 12,9 k | 1928 | 7,0 m (original a 0,7 m: x10) |
+| granero.glb | Medieval granary | WorkingRaven659 | https://sketchfab.com/3d-models/medieval-granary-ea7f8c281081436aa32e4fefc85ef0af | 95 k -> 11,0 k | 1223 | 6,5 m |
+| torre_piedra.glb | Weathered Medieval Stone Watchtower | mana5677 | https://sketchfab.com/3d-models/weathered-medieval-stone-watchtower-b987b82f37d74994869d8dc008412353 | 17,2 k -> 8,0 k | 326 | 11 m (original a 1 m: x11); era unlit con luz horneada |
+| pozo_piedra.glb (prop) | Stone well | Lyskilde (longtail) | https://sketchfab.com/3d-models/stone-well-885951c7fc0646f4bb5b136475ee2f6c | 7,9 k -> 4,5 k | 372 | 2,6 m; texturas 512 |
+| carro.glb (prop) | Old Cart | Lyskilde (longtail) | https://sketchfab.com/3d-models/old-cart-f536745fd82144eeb5cc4900a48e816e | 17,5 k -> 6,0 k | 494 | 5,2 m largo; texturas 512 |
+Total edificios (8): ~103 k tris, 9,6 MiB; props 10,5 k tris, 0,9 MiB.
