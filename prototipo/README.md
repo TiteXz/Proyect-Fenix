@@ -84,7 +84,11 @@ en `?test=1` la aldea solo se renderiza con `step(n)` o `render()` (el render po
 | Calidad | Los presets `QUAL.*.ext` ajustan sombras (4096/2048/1024), densidad de hierba (100/60/30 %), radios de hierba completa (14/12/8 m) y LOD (52/42/30 m), viento y flores; SAO + bruma solo en Alta |
 
 **Medida** (`renderer.info` de un render completo con las dos pasadas de sombra, encuadre C1, Chromium + SwiftShader, 1280 × 720; «escena» = sin jugador ni caballo; no incluye la pasada de profundidad del SAO, que dibuja solo opacos a media resolución):
-RESULTADOS_MEDIDA
+| Preset | Draw calls (escena / con jugador) | Triángulos (escena / con jugador) | Presupuesto |
+|---|---|---|---|
+| Alta | 148 / 226 | 1,64 M / 1,86 M | ≤ 160 calls, ≤ 2 M |
+| Media | 134 / 212 | 1,19 M / 1,41 M | |
+| Baja | 124 / 202 | 0,94 M / 1,16 M | |
 
 No se mide FPS: el entorno de pruebas es render por CPU. Sin impostores de árbol (los lejanos usan LOD1). `maqueta.html` ≈ 44 MB (+28 MB sobre la maqueta base; `build.py` no incrusta `acantilado_03/04` ni `roca_07`).
 

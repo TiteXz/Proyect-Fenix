@@ -34,13 +34,15 @@ const info = (p, soloEscena) => p.evaluate((solo) => {   // renderer.info de un 
   let { p, errs } = await abrir(b, '?escena=aldea&test=1');
   await p.evaluate(() => window.__GAME__.escenaListo);
   const est = await p.evaluate(() => window.__GAME__.escena);
-  ok(est.id === 'aldea' && est.stats && est.stats.arboles >= 18 && est.stats.arboles <= 25, 'escena aldea cargada: ' + JSON.stringify(est.stats));
+  ok(est.id === 'aldea' && est.stats && est.stats.arboles >= 18 && est.stats.arboles <= 32, 'escena aldea cargada: ' + JSON.stringify(est.stats));
   ok(await p.evaluate(() => !!document.querySelector('#scn') && document.querySelector('#scn').textContent === 'Escena: Aldea'), 'botón «Escena: Aldea» visible en el HUD');
   await p.addStyleTag({ content: '#hud,#dmg,#toast,#mountPrompt{display:none!important}' });
   const C = {   // encuadres del brief (alturas relativas al terreno, que sube hacia la aldea)
     C1: { x: -3.2, y: 1.7, z: 46, lx: 2, ly: 3, lz: -30, fov: 42, rel: true },
     C2: { rs: 26, rside: 1.9, ry: 1.2, ls: 35, lside: 3.5, ly: 0.7, fov: 35 },          // plano medio del muro (tramo con muro, hierba y flores en primer plano)
-    C3: { x: 0, y: 3, z: -10, lx: 0, ly: 4, lz: -45, fov: 50, rel: true }
+    C3: { x: 0, y: 3, z: -10, lx: 0, ly: 4, lz: -45, fov: 50, rel: true },
+    C5: { x: -20, y: 7, z: -30, lx: -2, ly: 4, lz: -54, fov: 50, rel: true },        // aldea desde la loma, más alta que C3 (para ver el afloramiento y las casas de lado)
+    C6: { x: 3, y: 2, z: -42, lx: -11, ly: 3, lz: -52, fov: 50, rel: true }           // fachadas de cerca
   };
   const poner = (c, mount) => p.evaluate(({ c, mount }) => {
     const G = window.__GAME__, A = G.aldea; let o = Object.assign({}, c);
@@ -63,6 +65,8 @@ const info = (p, soloEscena) => p.evaluate((solo) => {   // renderer.info de un 
   await poner(C.C1); await shot('C1_entrada');
   await poner(C.C2); await shot('C2_muro');
   await poner(C.C3); await shot('C3_aldea');
+  await poner(C.C5); await shot('C5_aldea_alta');
+  await poner(C.C6); await shot('C6_fachadas');
   // caballero a caballo en el camino (cámara tras el jinete, ligeramente a la derecha)
   await p.evaluate(() => { const G = window.__GAME__; G.camara(null); G.setMode('control'); G.colocar(16, 0.2); G.step(2); G.toggleMount(); G.step(90); });
   await p.evaluate(() => { const G = window.__GAME__, P = G.P, A = G.aldea, h = A.heightAt(P.pos.x + 2.6, P.pos.z + 5.6); G.camara({ x: P.pos.x + 2.6, y: h + 1.9, z: P.pos.z + 5.6, lx: P.pos.x - 0.2, ly: P.pos.y + 1.5, lz: P.pos.z - 4, fov: 42 }); G.step(2); G.render(); });

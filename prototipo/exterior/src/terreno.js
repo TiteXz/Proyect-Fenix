@@ -114,7 +114,7 @@
       const t = h * 0.5 + (fbm2(x * 0.22, z * 0.22, seed + 31, 3) - 0.5) * 2.4, f = t - Math.floor(t);
       const terrace = (Math.floor(t) + sstep(0.5, 0.95, f) - t) * 1.1;                     // repisas de ~2 m con frente casi vertical
       const rid = (1 - Math.abs(fbm2(x * 0.45, z * 0.45, seed + 47, 3) * 2 - 1)) - 0.55;  // crestas y grietas
-      return h + m * (terrace * 0.85 + rid * 1.5 + (fbm2(x * 1.3, z * 1.3, seed + 53, 2) - 0.5) * 0.35);
+      return h + m * (terrace * 1.1 + rid * 1.9 + (fbm2(x * 1.3, z * 1.3, seed + 53, 2) - 0.5) * 0.35);
     }
     // malla
     const N1 = SEG + 1, hm = new Float32Array(N1 * N1);

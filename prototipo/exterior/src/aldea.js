@@ -184,9 +184,9 @@ vec3 gNm = gN(aT(tGN, xz, 2.6, nk)); vec3 rNm = gN(aT(tRN, xz, 1.9, nk2)); vec3 
 // roca triplanar real: 3 proyecciones × 2 escalas (anti-repetición), normales «whiteout» y oclusión del ARM en las grietas
 vec3 bw = pow(abs(N0), vec3(7.0)); bw /= (bw.x + bw.y + bw.z);
 vec2 uX = vWP.zy, uY = vWP.xz, uZ = vWP.xy;
-vec4 kD = (mix(texture2D(tKD, uX * 0.4), texture2D(tKD, uX * 0.113 + 0.37), 0.4)) * bw.x + (mix(texture2D(tKD, uY * 0.4), texture2D(tKD, uY * 0.113 + 0.37), 0.4)) * bw.y + (mix(texture2D(tKD, uZ * 0.4), texture2D(tKD, uZ * 0.113 + 0.37), 0.4)) * bw.z;
-vec4 kA = texture2D(tKA, uX * 0.4) * bw.x + texture2D(tKA, uY * 0.4) * bw.y + texture2D(tKA, uZ * 0.4) * bw.z;
-vec3 tX = texture2D(tKN, uX * 0.4).xyz * 2.0 - 1.0, tY = texture2D(tKN, uY * 0.4).xyz * 2.0 - 1.0, tZ = texture2D(tKN, uZ * 0.4).xyz * 2.0 - 1.0;
+vec4 kD = (mix(texture2D(tKD, uX * 0.7), texture2D(tKD, uX * 0.113 + 0.37), 0.4)) * bw.x + (mix(texture2D(tKD, uY * 0.7), texture2D(tKD, uY * 0.113 + 0.37), 0.4)) * bw.y + (mix(texture2D(tKD, uZ * 0.7), texture2D(tKD, uZ * 0.113 + 0.37), 0.4)) * bw.z;
+vec4 kA = texture2D(tKA, uX * 0.7) * bw.x + texture2D(tKA, uY * 0.7) * bw.y + texture2D(tKA, uZ * 0.7) * bw.z;
+vec3 tX = texture2D(tKN, uX * 0.7).xyz * 2.0 - 1.0, tY = texture2D(tKN, uY * 0.7).xyz * 2.0 - 1.0, tZ = texture2D(tKN, uZ * 0.7).xyz * 2.0 - 1.0;
 tX = vec3(tX.xy + N0.zy, abs(tX.z) * N0.x); tY = vec3(tY.xy + N0.xz, abs(tY.z) * N0.y); tZ = vec3(tZ.xy + N0.xy, abs(tZ.z) * N0.z);
 vec3 nW = normalize(tX.zyx * bw.x + tY.xzy * bw.y + tZ.xyz * bw.z);
 { float hb = rockH(vWP); vec3 sX = dFdx(vWP), sY = dFdy(vWP), R1 = cross(sY, nW), R2 = cross(nW, sX); float det = dot(sX, R1);
@@ -194,7 +194,7 @@ vec3 nW = normalize(tX.zyx * bw.x + tY.xzy * bw.y + tZ.xyz * bw.z);
 float strata = vn(vec2(vWP.x * 0.21 + vWP.z * 0.17, vWP.y * 2.3)) * 0.6 + vn(vec2(vWP.x * 0.9 - vWP.z * 0.7, vWP.y * 6.0)) * 0.4;
 float nG = vn(xz * 1.1) * 0.6 + vn(xz * 3.9 + 5.0) * 0.4;
 float rh = rockH(vWP); float kL = dot(kD.rgb, vec3(0.33));
-kD.rgb = mix(vec3(kL), kD.rgb, 0.1) * vec3(0.96, 0.93, 0.9) * mix(0.55, 1.45, strata) * mix(0.55, 1.0, rh) * 1.7;
+kD.rgb = mix(vec3(kL), kD.rgb, 0.1) * vec3(0.96, 0.93, 0.9) * mix(0.4, 1.65, strata) * mix(0.55, 1.0, rh) * 1.7;
 kD.rgb = mix(kD.rgb, vec3(0.5, 0.45, 0.38) * kL * 2.2, 0.35 * smoothstep(0.35, 0.65, vn3(vWP * 0.18)));   // manchas de roca más clara/grisácea
 kD.rgb *= 1.0 - 0.5 * min(rockCrack, 1.0);
 float mossK = smoothstep(0.3, 0.72, N0.y + (nG - 0.5) * 0.3) * smoothstep(0.42, 0.72, nG) * 0.7;
@@ -390,11 +390,19 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       E_ = EDI.crear(THREE, rng); BB = new E_.Builder();
       const C = E_.COL;
       // aldea sobre la meseta (z < -46); calle central que termina en la plaza
-      placeBuilding('casaEntramado', -11.5, -52, 0.22, { w: 6.2, d: 4.8, pisos: 2, ang: 52, revoco: C.revoco[0], madera: C.madera[0], teja: [1.0, 0.94, 0.88], lucerna: false });
-      placeBuilding('casaEntramado', 11.5, -53, -0.3, { w: 5.0, d: 4.4, pisos: 1, ang: 48, revoco: C.revoco[1], madera: C.madera[2], teja: [1.0, 0.93, 0.86], lucerna: true });
-      placeBuilding('casaPiedra', -0.5, -58.2, 0.02, { w: 7.4, d: 5.2, teja: [1.0, 0.94, 0.88] });
-      placeBuilding('almacen', 21, -56, -0.12, { w: 8.0, d: 5.0, teja: [0.95, 0.92, 0.86], revoco: C.revoco[2] });
-      placeBuilding('torre', -23, -57, 0, {});
+      // disposición irregular (no en fila): orientaciones, retranqueos y tamaños distintos alrededor de una plaza con carro, huerto y leña
+      placeBuilding('casaEntramado', -13.5, -50.5, 0.42, { w: 6.4, d: 4.8, pisos: 2, ang: 52, revoco: C.revoco[0], madera: C.madera[0], teja: [1.0, 0.9, 0.82], lucerna: false });
+      placeBuilding('casaEntramado', 9.5, -49.6, -0.6, { w: 5.0, d: 4.4, pisos: 1, ang: 48, revoco: C.revoco[1], madera: C.madera[2], teja: [0.95, 0.88, 0.82], lucerna: true });
+      placeBuilding('casaPiedra', 1.5, -61, -0.1, { w: 7.4, d: 5.2, teja: [0.95, 0.9, 0.84] });
+      placeBuilding('almacen', 23.5, -53, -0.55, { w: 8.0, d: 5.0, teja: [0.9, 0.86, 0.8], revoco: C.revoco[2] });
+      placeBuilding('torre', -26, -56, 0, {});
+      placeBuilding('casaEntramado', -3.5, -51.5, 0.1, { w: 4.2, d: 3.6, pisos: 1, ang: 46, revoco: C.revoco[2], madera: C.madera[1], teja: [0.9, 0.84, 0.78], lucerna: false });
+      {   // carro en la plaza, huerto con vallado y leña
+        const cy = (x, z) => ter.hAt(x, z);
+        E_.carro(BB, E_.xf(7.5, cy(7.5, -55) + 0.02, -55, 0, 0.5, 0)); ctx.addSeg(7.0, -55.3, 8.0, -54.7, 0.8); foot.push({ x: 7.5, z: -55, w: 2.6, d: 1.6, yaw: 0.5 }); stamp(7.5, -55, 2.2, 0.5, 0.4);
+        const hx = 17, hz = -45.5, hy = Math.max(cy(hx - 3, hz - 2), cy(hx + 3, hz + 2)) + 0.02;
+        E_.huerto(BB, E_.xf(hx, hy, hz, 0, 0.12, 0), 6, 4); foot.push({ x: hx, z: hz, w: 6.6, d: 4.6, yaw: 0.12 }); stamp(hx, hz, 4, 0.3, 0.5);
+      }
       // puerta de la aldea: dos pilares de piedra, dintel y tejadillo
       const gy = Math.max(ter.hAt(-2.9, -45.5), ter.hAt(2.9, -45.5)) + 0.1;
       for (const sx of [-1, 1]) {
@@ -420,6 +428,7 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
           }
         }
       };
+      { const hx = 17, hz = -45.5, c = Math.cos(0.12), sn = Math.sin(0.12), P = (lx, lz) => [hx + lx * c + lz * sn, hz - lx * sn + lz * c]; fence([P(-3.4, -2.4), P(-3.4, 0), P(-3.4, 2.4), P(-1.1, 2.4), P(1.1, 2.4), P(3.4, 2.4), P(3.4, 0), P(3.4, -2.4), P(1.1, -2.4), P(-1.1, -2.4), P(-3.4, -2.4)]); }
       pointAt(34, PA); fence([[PA.x - 5.2 + 0, PA.z], [PA.x - 5.3, PA.z - 2.4], [PA.x - 5.4, PA.z - 4.8], [PA.x - 5.2, PA.z - 7.2], [PA.x - 5.0, PA.z - 9.6]]);
       pointAt(70, PA); fence([[PA.x + 5.0, PA.z + 4], [PA.x + 5.2, PA.z + 1.6], [PA.x + 5.3, PA.z - 0.8], [PA.x + 5.0, PA.z - 3.2]]);
     }
@@ -428,10 +437,10 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       const pbr = (n, o) => MT(new THREE.MeshStandardMaterial(Object.assign({ map: T$(n + '_Diffuse'), normalMap: T$(n + '_nor_gl'), roughnessMap: T$(n + '_arm'), vertexColors: true, roughness: 1, metalness: 0, envMapIntensity: 0.6 }, o)));
       bmat.madera = pbr('madera', { normalScale: new THREE.Vector2(1.4, 1.4) });
       bmat.revoco = pbr('revoco', { normalScale: new THREE.Vector2(1.6, 1.6) });
-      bmat.teja = pbr('teja', { normalScale: new THREE.Vector2(1.5, 1.5), side: THREE.DoubleSide });
+      bmat.teja = pbr('teja', { normalScale: new THREE.Vector2(3, 3), side: THREE.DoubleSide });
       bmat.piedra = pbr('muro_piedra', { normalScale: new THREE.Vector2(1.8, 1.8) });
       bmat.hierro = MT(new THREE.MeshStandardMaterial({ color: 0x2a2b2e, metalness: 0.75, roughness: 0.5, envMapIntensity: 0.8 }));
-      bmat.cristal = MT(new THREE.MeshStandardMaterial({ color: 0x05090e, metalness: 0.1, roughness: 0.1, envMapIntensity: 0.8 }));
+      bmat.cristal = MT(new THREE.MeshStandardMaterial({ color: 0x1b1611, metalness: 0.65, roughness: 0.22, envMapIntensity: 0.6 }));   // vidrio oscuro cálido con reflejo tenue (no azul)
       bmat.flora = MT(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.85, metalness: 0, side: THREE.DoubleSide, envMapIntensity: 0.5 }));
       for (const k of ['madera', 'revoco', 'teja', 'piedra', 'hierro', 'cristal', 'flora']) {
         const g = BB.geometry(k); if (!g) continue; G(g);
@@ -507,6 +516,7 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       ring(11, 11, 34, -42, 56, 8, () => { const r = rng(); return r < 0.4 ? 0 : r < 0.75 ? 1 : 2; });
       ring(7, 30, 70, -57, 57, 8, () => (rng() < 0.45 ? 2 : rng() < 0.5 ? 0 : 1));
       for (const p of scatter(60, (x, z) => z < -46 && Math.abs(x) > 27 && ok(x, z, 8))) { if (trees.filter((t) => t.z < -46).length >= 3) break; taken.push(p); trees.push({ x: p[0], z: p[1], sp: 1, yaw: rng() * 6.28, sc: lerp(0.9, 1.1, rng()) }); }
+      for (const [x, z, sp] of [[-8, -57, 1], [5.5, -60, 0], [-17, -60.5, 1], [15, -58, 1], [-20, -47, 0]]) if (!inFoot(x, z, 3.5)) trees.push({ x, z, sp, yaw: rng() * 6.28, sc: lerp(0.8, 1.0, rng()) });   // árboles entre las casas
       for (const t of trees) { t.y = ter.hAt(t.x, t.z) - 0.12; stamp(t.x, t.z, 2.2, 0.35, 0.2); if (t.sp !== 2) ctx.addSeg(t.x, t.z, t.x, t.z, 0.4); else ctx.addSeg(t.x, t.z, t.x, t.z, 0.55); }
       // mallas instanciadas
       SPECIES.forEach(([name, H], si) => {
@@ -537,7 +547,7 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       for (let s = 0; s < 3; s++) for (let l = 0; l < 2; l++) for (const im of treeMeshes[s][l]) { im.count = n[s][l]; im.instanceMatrix.needsUpdate = true; }
     }
     // ----- rocas, arbustos, helechos y piedras: se fusionan por material (props estáticos) -----
-    const Q_ = { dens: 12, big: 80, ledge: 14, mid: 60, scree: 100, fern: 12, shrub: 5 };
+    const Q_ = { dens: 12, big: 26, ledge: 22, mid: 0, scree: 55, fern: 12, shrub: 5 };
     function buildClutter() {
       const rocks = parts(GLB.roca_musgo_set).map((p) => ({ geo: centered(simplify(p.geo, 17)), mat: p.mat }));
       const r9 = parts(GLB.roca_09)[0]; r9.geo = centered(simplify(r9.geo, 18)); const peb = parts(GLB.piedra_01)[0]; centered(peb.geo);
@@ -567,7 +577,7 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       veg('helecho_02', 10, (x, z) => inFoot(x, z, 2.0) && !inFoot(x, z, 0.8) && z < -44, 0.7, 1.2, 0.02);
       // ----- talud de la loma: rocas grandes encastradas (medio enterradas, ejes alineados con la pendiente, escala no uniforme), repisas, detritos al pie y vegetación en grietas -----
       const slopeRocks = [];   // variantes: {geo, mat, w, h}
-      const addVar = (geo, mat, nm) => { geo.computeBoundingBox(); const b = geo.boundingBox; slopeRocks.push({ geo, mat, w: Math.max(b.max.x - b.min.x, b.max.z - b.min.z), h: b.max.y - b.min.y, nm }); mat.roughness = 0.95; mat.metalness = 0; mat.envMapIntensity = 0.45; mat.color.setRGB(0.62, 0.62, 0.7); };
+      const addVar = (geo, mat, nm) => { geo.computeBoundingBox(); const b = geo.boundingBox; slopeRocks.push({ geo, mat, w: Math.max(b.max.x - b.min.x, b.max.z - b.min.z), h: b.max.y - b.min.y, nm }); mat.roughness = 0.95; mat.metalness = 0; mat.envMapIntensity = 0.45; mat.color.setRGB(0.7, 0.64, 0.6); };
       for (const p of rocks) addVar(p.geo, p.mat, 'musgo');   
       for (const nm of ['acantilado_01', 'acantilado_02']) if (GLB[nm]) for (const p of parts(GLB[nm])) { addVar(centered(simplify(p.geo, 24)), p.mat, nm); }
       const tn = (x, z, out) => out.set(-(ter.hAt(x + 1, z) - ter.hAt(x - 1, z)) / 2, 1, -(ter.hAt(x, z + 1) - ter.hAt(x, z - 1)) / 2).normalize();
@@ -575,18 +585,20 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       let nt = 0;
       const slopeRock = (x, z, w, flat, bury) => {
         const pool = flat && slopeRocks.some((q) => /acantilado/.test(q.nm)) ? slopeRocks.filter((q) => /acantilado/.test(q.nm)) : slopeRocks.filter((q) => !/acantilado/.test(q.nm)), v = pool[Math.floor(rng() * pool.length)], y = ter.hAt(x, z); tn(x, z, nT);
-        uA.copy(Yv).lerp(nT, 0.72).normalize();                                   // el «arriba» de la roca es una mezcla vertical/normal de la pendiente
-        q1.setFromUnitVectors(Yv, uA); q2.setFromAxisAngle(Yv, rng() * 6.28); q1.multiply(q2);
-        const sx = w / v.w * (flat ? lerp(1.5, 2.2, rng()) : lerp(0.8, 1.2, rng())), sy = w / v.w * lerp(0.6, 1.15, rng()) * (flat ? 0.7 : 1), sz = w / v.w * lerp(0.7, 1.25, rng());
+        uA.copy(Yv).lerp(nT, 0.8).normalize();                                    // el «arriba» de la roca sigue la pendiente
+        const cyaw = Math.atan2(nT.x, -nT.z) + (rng() < 0.5 ? 0 : Math.PI) + (rng() - 0.5) * 0.35;   // eje largo siguiendo la curva de nivel: todas las capas van en la misma dirección
+        q1.setFromUnitVectors(Yv, uA); q2.setFromAxisAngle(Yv, cyaw); q1.multiply(q2);
+        const k = w / v.w, sx = k * (flat ? lerp(1.0, 1.25, rng()) : lerp(0.9, 1.3, rng())), sy = k * lerp(0.7, 1.1, rng()) * (flat ? 0.9 : 0.8), sz = k * lerp(0.8, 1.1, rng());
         ss.set(sx, sy, sz); const hW = v.h * sy;
-        Vt.set(x, y, z).addScaledVector(nT, -bury * hW + 0.05);                      // medio enterrada a lo largo de la normal
+        Vt.set(x, y, z).addScaledVector(nT, -bury * hW);                           // muy enterrada: solo se ve el 30-60 %
         Mt.compose(Vt, q1, ss); sAdd(v.geo, v.mat, Mt, z); nt++;
-        stamp(x, z, w * 0.9, 0.55, 0.15); if (w > 1.2) ctx.addSeg(x, z, x, z, w * 0.3);
+        stamp(x, z, w * 0.7, 0.55, 0.15); if (w > 1.2) ctx.addSeg(x, z, x, z, w * 0.25);
       };
-      const steep = (x, z) => ter.slopeAt(x, z) > 0.62 && ter.hAt(x, z) > 2.5 && roadOK(x, z, 4) && free(x, z, 2.5) && z > -50;
-      for (const p of scatter(Q_.big, steep, 120000)) slopeRock(p[0], p[1], lerp(1.8, 4.6, rng() * rng() * 1.5), false, lerp(0.3, 0.5, rng()));
-      for (const p of scatter(Q_.ledge, (x, z) => steep(x, z) && ter.slopeAt(x, z) < 1.1, 120000)) slopeRock(p[0], p[1], lerp(3.0, 5.6, rng()), true, lerp(0.35, 0.55, rng()));
-      for (const p of scatter(Q_.mid, steep, 120000)) slopeRock(p[0], p[1], lerp(0.45, 1.1, rng()), false, lerp(0.2, 0.45, rng()));
+      // afloramiento: pocas rocas GRANDES (acantilados) en bandas siguiendo la pendiente más empinada, separadas ≥ 6 m, más algunas medianas en las juntas
+      const steep = (x, z) => ter.slopeAt(x, z) > 0.8 && ter.hAt(x, z) > 3 && ter.hAt(x, z) < 11.8 && roadOK(x, z, 4) && free(x, z, 2.5) && z > -50;
+      const placed = [];
+      for (const p of scatter(Q_.ledge, (x, z) => { if (!steep(x, z)) return false; for (const q of placed) if (Math.hypot(q[0] - x, q[1] - z) < 4.5) return false; return true; }, 200000)) { placed.push(p); slopeRock(p[0], p[1], lerp(4.5, 8, rng()), true, lerp(0.4, 0.62, rng())); }
+      for (const p of scatter(Q_.big, (x, z) => ter.slopeAt(x, z) > 0.7 && ter.hAt(x, z) > 3 && ter.hAt(x, z) < 12 && roadOK(x, z, 4) && free(x, z, 2.5) && z > -50 && placed.some((q) => { const d = Math.hypot(q[0] - x, q[1] - z); return d > 2.5 && d < 8; }), 200000)) slopeRock(p[0], p[1], lerp(2.2, 4.0, rng()), false, lerp(0.4, 0.6, rng()));
       // detritos: piedras sueltas y gravas al pie del talud (donde la pendiente se suaviza bajo una ladera fuerte)
       const atFoot = (x, z) => { if (ter.slopeAt(x, z) > 0.5 || ter.hAt(x, z) < 1.5) return false; for (let a = 0; a < 8; a++) { const an = a * 0.785, ux = x + Math.cos(an) * 4.5, uz = z + Math.sin(an) * 4.5; if (ter.slopeAt(ux, uz) > 0.85 && ter.hAt(ux, uz) > ter.hAt(x, z) + 1.2) return true; } return false; };
       let scree = 0;

@@ -94,7 +94,7 @@
       const push = (p, nn) => { pos.push(p.x, p.y, p.z); nor.push(nn.x, nn.y, nn.z); const d = new V().subVectors(p, o0); uv.push(d.dot(e1) / tile + ou, d.dot(e2) / tile + ov); };
       // teselado: cada triángulo del abanico se divide en una rejilla baricéntrica (~0,55 m) para poder pintar musgo y oscurecimiento por vértice
       const sub = (A, B2, C) => {
-        const nn = Math.max(1, Math.min(10, Math.ceil(Math.max(A.distanceTo(B2), B2.distanceTo(C), C.distanceTo(A)) / 0.55))), P = (i, j) => new V().copy(A).addScaledVector(new V().subVectors(B2, A), i / nn).addScaledVector(new V().subVectors(C, A), j / nn);
+        const nn = Math.max(1, Math.min(10, Math.ceil(Math.max(A.distanceTo(B2), B2.distanceTo(C), C.distanceTo(A)) / 0.85))), P = (i, j) => new V().copy(A).addScaledVector(new V().subVectors(B2, A), i / nn).addScaledVector(new V().subVectors(C, A), j / nn);
         for (let i = 0; i < nn; i++) for (let j = 0; j < nn - i; j++) {
           push(P(i, j), n); push(P(i + 1, j), n); push(P(i, j + 1), n);
           if (i + j < nn - 1) { push(P(i + 1, j), n); push(P(i + 1, j + 1), n); push(P(i, j + 1), n); }
@@ -109,6 +109,15 @@
           const d = 0.8 + 0.2 * vn3(p.x * 3.1, p.y * 3.1, p.z * 3.1) - 0.12 * (1 - sstep(0, 0.25, t));
           return [lerp(1, 0.52, m) * d, lerp(1, 1.18, m) * d, lerp(1, 0.4, m) * d];
         } });
+      if (pts.length === 4 && o.hileras !== false) {   // hileras de teja con relieve (listones medio redondos a lo largo del alero cada ~0,3 m) con variación de tono
+        const A = pts[0], Bp = pts[1], C = pts[2], D = pts[3], len = A.distanceTo(Bp), down = new V().subVectors(D, A), nrow = Math.max(3, Math.round(down.length() / 0.32));
+        for (let k = 1; k < nrow; k++) {
+          const tt = k / nrow, a = new V().copy(A).addScaledVector(down, tt), b = new V().copy(Bp).addScaledVector(new V().subVectors(C, Bp), tt), mid = new V().addVectors(a, b).multiplyScalar(0.5), ex = new V().subVectors(b, a), L = ex.length(); ex.normalize();
+          const ez = new V().crossVectors(ex, n).normalize(), mm = new M4().makeBasis(ex, n, ez).setPosition(mid.x + n.x * 0.02, mid.y + n.y * 0.02, mid.z + n.z * 0.02);
+          const cg = new THREE.CylinderGeometry(0.035, 0.05, L * 0.98, 4, 1); cg.rotateZ(Math.PI / 2); const cu = cg.attributes.uv; for (let q = 0; q < cu.count; q++) cu.setXY(q, cu.getX(q) * L / TILE.teja, cu.getY(q));
+          B.add('teja', cg, mm, { color: (o.color || [1, 1, 1]).map((c, i) => c * [0.74, 0.68, 0.6][i] * (0.75 + 0.5 * rng())), uvo: [rng(), 0], vcol: (p) => { const m2 = sstep(0.5, 0.72, vn3(p.x * 0.8, p.y * 0.7, p.z * 0.8)); return [lerp(1, 0.55, m2), lerp(1, 1.15, m2), lerp(1, 0.42, m2)]; } });
+        }
+      }
       // grosor: una segunda capa 7 cm por debajo con la cara inferior (madera oscura) para que el borde no sea una lámina
       const cpos = [], cnor = []; for (let i = 1; i < pts.length - 1; i++) for (const q of [pts[0], pts[i + 1], pts[i]]) { cpos.push(q.x - n.x * 0.09, q.y - n.y * 0.09, q.z - n.z * 0.09); cnor.push(-n.x, -n.y, -n.z); }
       const g2 = new THREE.BufferGeometry(); g2.setAttribute('position', new THREE.Float32BufferAttribute(cpos, 3)); g2.setAttribute('normal', new THREE.Float32BufferAttribute(cnor, 3)); g2.setAttribute('uv', new THREE.Float32BufferAttribute(Array.from({ length: cpos.length / 3 * 2 }, (_, i) => { const q = i >> 1; return i & 1 ? cpos[q * 3 + 1] : cpos[q * 3] + cpos[q * 3 + 2] * 0.7; }), 2));
@@ -147,10 +156,12 @@
     /* ---- ventana con marco, alféizar, dintel, cristal oscuro, contraventanas y maceta ---- */
     const SHUT = [[0.28, 0.34, 0.3], [0.22, 0.3, 0.4], [0.46, 0.2, 0.16], [0.5, 0.4, 0.2], [0.34, 0.26, 0.2]];
     function ventana(B, m, w, h, o) {
-      B.add('cristal', new THREE.PlaneGeometry(w, h), mul(m, xf(0, 0, 0.035)), {});
-      const t = 0.06, mc = o.marco || [0.5, 0.36, 0.26];
-      for (const [x, y, lw, lh] of [[0, h / 2 + t / 2, w + t * 2, t], [-w / 2 - t / 2, 0, t, h], [w / 2 + t / 2, 0, t, h], [0, 0, 0.03, h], [0, 0, w, 0.03]])
-        B.add('madera', boxM(lw, lh, 0.08, 1), mul(m, xf(x, y, 0.045)), { color: mc });
+      B.add('cristal', new THREE.PlaneGeometry(w, h), mul(m, xf(0, 0, 0.02)), {});
+      const t = 0.075, mc = o.marco || [0.5, 0.36, 0.26], dp = 0.17;   // jambas de 17 cm: el cristal queda hundido 15 cm respecto al frente del marco
+      for (const [x, y, lw, lh] of [[0, h / 2 + t / 2, w + t * 2, t], [0, -h / 2 - t / 2, w + t * 2, t], [-w / 2 - t / 2, 0, t, h], [w / 2 + t / 2, 0, t, h]])
+        B.add('madera', boxM(lw, lh, dp, 1), mul(m, xf(x, y, dp / 2)), { color: mc, uvo: [rng(), rng()], jit: 0.1 });
+      B.add('madera', boxM(0.035, h, 0.06, 1), mul(m, xf(0, 0, 0.05)), { color: mc }); B.add('madera', boxM(w, 0.035, 0.06, 1), mul(m, xf(0, h * 0.12, 0.05)), { color: mc });   // montante y travesaño (cuarterones)
+      B.add('hierro', boxM(w, h * 0.5, 0.03, 1), mul(m, xf(0, -h * 0.25, 0.012)), {}); B.add('hierro', boxM(w, h * 0.5, 0.03, 1), mul(m, xf(0, h * 0.25, 0.012)), {});   // fondo oscuro de la hoja
       B.add('madera', boxM(w + 0.2, 0.07, 0.2, 1), mul(m, xf(0, -h / 2 - 0.05, 0.1)), { color: mc.map((c) => c * 0.9), uvo: [rng(), rng()] });   // alféizar volado
       B.add('madera', boxM(w + 0.18, 0.09, 0.12, 1), mul(m, xf(0, h / 2 + 0.1, 0.07)), { color: mc.map((c) => c * 0.85), uvo: [rng(), rng()] });  // dintel
       if (o.postigos) {   // contraventanas de tablas: abiertas contra el muro (o una cerrada a medias), de color propio, con herrajes
@@ -213,7 +224,7 @@
     /* ---- pared con entramado: m = matriz del plano (x a lo ancho, y arriba, z hacia fuera), w ancho, h alto ---- */
     function paredEntramado(B, m, w, h, o) {
       const y0 = o.y0, gr = o.grime;
-      B.add('revoco', boxM(w, h, 0.22, TILE.revoco, 0.45), mul(m, xf(0, h / 2, -0.11)), { color: o.revoco, uvo: [rng(), rng()], grime: gr, y0, jit: 0.06, dirt: 1, moss: gr ? 0.5 : 0 });
+      B.add('revoco', boxM(w, h, 0.22, TILE.revoco, 0.65), mul(m, xf(0, h / 2, -0.11)), { color: o.revoco, uvo: [rng(), rng()], grime: gr, y0, jit: 0.06, dirt: 1, moss: gr ? 0.5 : 0 });
       const bw = 0.14, protr = 0.045, cols = Math.max(2, Math.round(w / 1.25)), dx = w / cols;
       // barras: bar() tiene el eje largo en Z; se rota para ponerla vertical (eje X→90º) u horizontal
       const vert = (x, y, len) => B.add('madera', bar(len, bw, 0.16, 0.016), mul(m, mul(xf(x, y, protr - 0.04), rot(Math.PI / 2, 0, 0))), { color: o.madera, jit: 0.2, uvo: [rng(), rng()], grime: gr, y0, dirt: 0.5 });
@@ -281,12 +292,36 @@
       o.chim.push([x, y + h + 0.5, z]);
     }
 
+    /* ---- carro de madera con dos ruedas con radios, varas apoyadas en el suelo (m: origen en el suelo, z = eje del carro) ---- */
+    function carro(B, m) {
+      const wd = [0.5, 0.38, 0.28];
+      B.add('madera', boxM(1.9, 0.1, 1.0, 1), mul(m, xf(0, 0.68, 0)), { color: wd, uvo: [rng(), rng()], jit: 0.15 });
+      for (const s2 of [-1, 1]) { B.add('madera', boxM(1.9, 0.38, 0.07, 1), mul(m, xf(0, 0.92, s2 * 0.5)), { color: wd.map((c) => c * 0.9), uvo: [rng(), rng()], jit: 0.2 }); B.add('madera', boxM(0.07, 0.38, 1.0, 1), mul(m, xf(s2 * 0.95, 0.92, 0)), { color: wd, uvo: [rng(), rng()] }); }
+      B.add('madera', bar(1.0, 0.1, 0.1, 0.01), mul(m, xf(0, 0.54, 0)), { color: [0.34, 0.26, 0.2] });
+      for (const s2 of [-1, 1]) {
+        const w = mul(m, xf(0, 0.42, s2 * 0.62, 0, Math.PI / 2)); const tg = new THREE.TorusGeometry(0.4, 0.035, 5, 16); B.add('madera', tg, mul(m, xf(0, 0.42, s2 * 0.62)), { color: [0.3, 0.22, 0.16] }); B.add('hierro', new THREE.TorusGeometry(0.42, 0.012, 4, 16), mul(m, xf(0, 0.42, s2 * 0.62)), {});
+        B.add('madera', new THREE.CylinderGeometry(0.06, 0.06, 0.1, 8), mul(m, xf(0, 0.42, s2 * 0.62, Math.PI / 2)), { color: [0.3, 0.22, 0.16] });
+        for (let k = 0; k < 6; k++) B.add('madera', boxM(0.78, 0.045, 0.045, 1), mul(m, xf(0, 0.42, s2 * 0.62)).clone().multiply(new M4().makeRotationZ(k * Math.PI / 6)), { color: [0.4, 0.3, 0.22] });
+      }
+      for (const s2 of [-1, 1]) B.add('madera', bar(2.6, 0.07, 0.08, 0.01), mul(m, mul(xf(1.9, 0.38, s2 * 0.32, 0, Math.PI / 2, 0.0), rot(0.0, 0.0, -0.1))), { color: [0.42, 0.32, 0.24], uvo: [rng(), rng()] });
+      for (let i = 0; i < 4; i++) B.add('flora', new THREE.OctahedronGeometry(0.2, 0), mul(m, xf(-0.5 + (i % 2) * 0.6, 1.15 + (i > 1 ? 0.1 : 0), -0.2 + (i % 3) * 0.2)), { color: [0.55 + rng() * 0.1, 0.42, 0.2], jit: 0.2 });   // fardos de paja
+    }
+    /* ---- huerto: bancal de tierra con hileras de hortalizas (m: origen en el suelo en el centro) ---- */
+    function huerto(B, m, w, d) {
+      B.add('flora', new THREE.BoxGeometry(w, 0.1, d), mul(m, xf(0, 0.05, 0)), { color: [0.2, 0.13, 0.08], jit: 0.2 });
+      const rows = Math.floor(d / 0.55);
+      for (let r = 0; r < rows; r++) {
+        const z = -d / 2 + 0.35 + r * 0.55; B.add('flora', new THREE.BoxGeometry(w - 0.2, 0.08, 0.3), mul(m, xf(0, 0.13, z)), { color: [0.24, 0.16, 0.1], jit: 0.2 });
+        for (let i = 0; i < w / 0.5 - 1; i++) mata(B, m, -w / 2 + 0.4 + i * 0.5 + (rng() - 0.5) * 0.1, 0.12, z, 0.15 + rng() * 0.06, 5, r % 3 === 2 && i % 3 === 0 ? { n: 3, cols: FLOWERS[r % 3] } : null);
+      }
+    }
+
     /* ---- edificios ---- */
     const COL = { revoco: [[1.32, 1.25, 1.1], [1.38, 1.32, 1.2], [1.28, 1.24, 1.12]], madera: [[0.62, 0.45, 0.32], [0.5, 0.38, 0.28], [0.56, 0.4, 0.3]] };
     function casaEntramado(B, o) {   // o: {w, d, pisos, ang, chim, tint}
       const w = o.w, d = o.d, y0 = o.y0 || 0, ph = 2.55, rev = o.revoco || COL.revoco[0], mad = o.madera || COL.madera[0];
       const plinth = 0.8;
-      B.add('piedra', boxM(w + 0.16, plinth + 1.2, d + 0.16, TILE.piedra, 0.4), xf(0, -1.2 + (plinth + 1.2) / 2, 0), { color: [1.15, 1.1, 1.0], grime: 1.0, y0: 0, uvo: [rng(), rng()], jit: 0.12, dirt: 0.9, moss: 1.2 });
+      B.add('piedra', boxM(w + 0.16, plinth + 1.2, d + 0.16, TILE.piedra, 0.6), xf(0, -1.2 + (plinth + 1.2) / 2, 0), { color: [1.15, 1.1, 1.0], grime: 1.0, y0: 0, uvo: [rng(), rng()], jit: 0.12, dirt: 0.9, moss: 1.2 });
       let y = plinth; const grime = 1.2;
       const g = { revoco: rev, madera: mad, y0: 0, grime };
       // planta baja
@@ -345,7 +380,7 @@
 
     function casaPiedra(B, o) {   // cuatro aguas
       const w = o.w, d = o.d, h = 4.2, y0 = 0;
-      B.add('piedra', boxM(w, h + 1.2, d, TILE.piedra, 0.5), xf(0, -1.2 + (h + 1.2) / 2, 0), { color: [1.25, 1.2, 1.1], grime: 1.6, y0: 0, uvo: [rng(), rng()], jit: 0.14, dirt: 1, moss: 1.3 });
+      B.add('piedra', boxM(w, h + 1.2, d, TILE.piedra, 0.75), xf(0, -1.2 + (h + 1.2) / 2, 0), { color: [1.25, 1.2, 1.1], grime: 1.6, y0: 0, uvo: [rng(), rng()], jit: 0.14, dirt: 1, moss: 1.3 });
       // sillares de esquina que sobresalen (alternados)
       for (const [sx, sz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) for (let i = 0; i < 11; i++) {
         const lw = i % 2 ? 0.52 : 0.34, ld = i % 2 ? 0.34 : 0.52;
@@ -387,7 +422,7 @@
 
     function almacen(B, o) {
       const w = o.w, d = o.d, h = 3.0;
-      B.add('piedra', boxM(w + 0.1, 1.3 + 0.9, d + 0.1, TILE.piedra, 0.5), xf(0, -1.2 + 1.1, 0), { color: [1.15, 1.1, 1.0], grime: 1.0, y0: 0, uvo: [rng(), rng()], dirt: 1, moss: 1.2 });
+      B.add('piedra', boxM(w + 0.1, 1.3 + 0.9, d + 0.1, TILE.piedra, 0.75), xf(0, -1.2 + 1.1, 0), { color: [1.15, 1.1, 1.0], grime: 1.0, y0: 0, uvo: [rng(), rng()], dirt: 1, moss: 1.2 });
       // tablas verticales (textura madera en metros, tinte gris-parda)
       for (const [x, z, ry, ww] of [[0, d / 2, 0, w], [0, -d / 2, Math.PI, w], [w / 2, 0, Math.PI / 2, d], [-w / 2, 0, -Math.PI / 2, d]])
         B.add('madera', boxM(ww, h - 0.9, 0.2, 1.2, 0.5), xf(x, 0.9 + (h - 0.9) / 2, z, 0, ry), { color: [0.78, 0.66, 0.54], grime: 1.2, y0: 0.9, uvo: [rng(), rng()], jit: 0.1, dirt: 1, moss: 0.4 });
@@ -432,7 +467,7 @@
       o.col.push({ circle: true, x: 0, z: 0, r: 2.95 });
     }
 
-    return { rot, Builder, casaEntramado, casaPiedra, almacen, torre, bar, boxM, xf, mul, COL, TILE };
+    return { rot, Builder, carro, huerto, mata, FLOWERS, casaEntramado, casaPiedra, almacen, torre, bar, boxM, xf, mul, COL, TILE };
   }
   if (typeof module !== 'undefined' && module.exports) module.exports = { crear }; else root.FenixEdificios = { crear };
 })(typeof window !== 'undefined' ? window : globalThis);
