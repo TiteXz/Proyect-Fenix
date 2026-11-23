@@ -7,10 +7,12 @@ sin táctil, glifos procedurales.
 **[DECISIÓN] Armamento «por ahora»:** el jugador lleva **espada + magia**, con **escudo opcional que se equipa**:
 dos configuraciones, «solo espada» y «espada + escudo» (las animaciones cambian según la que lleve). Martillo y arco
 quedan fuera. Consecuencias en la UI: no hay cambio de arma en partida (se descartan △ pulsar, cruceta ▲ y teclas 1 2 3
-de la maqueta), ni selector de arma, ni contador o HUD de flechas. Quedan **libres** (sin función asignada, reservados)
-**△ fuera de combate y la cruceta ▲**. El escudo se equipa desde el libro (Bolso › Armas, §2.8), sin botón de cambio
-rápido en combate, pero **[DECISIÓN] hay atajo: la cruceta ▲ alterna** entre «solo espada» y «espada + escudo», solo fuera
-de combate (sin enemigos en alerta). Detalle en §5.1. El HUD indica la configuración activa.
+de la maqueta; la cruceta ▲ deja de cambiar de arma y pasa a ser el atajo de configuración), ni selector de arma, ni
+contador o HUD de flechas. Queda **libre** (reservado) **△ fuera de combate**. Cada configuración tiene su habilidad del
+arma en **L1 + R1**: **Estocada de quiebre** (solo espada, EP) y **Embestida** (espada + escudo, EE). El escudo se equipa
+desde el libro (Bolso › Armas, §2.8), y **[DECISIÓN] la cruceta ▲ alterna** entre «solo espada» y «espada + escudo», solo
+fuera de combate (sin enemigos en alerta); no hay botón de cambio en combate. Detalle en §5.1. El HUD indica la
+configuración activa y el nombre de su habilidad.
 
 Reglas base (CLAUDE.md): UI en DOM/CSS sobre el canvas, nunca en WebGL; estilo fantasía realista luminosa,
 **nunca cartoon**. La UI escucha eventos del bus y emite acciones; no lee estado interno de los sistemas.
@@ -45,7 +47,7 @@ toman de `docs/GUIA_VISUAL.md` (tokens como CSS custom properties, `--ui-*`). En
 | Apartado | Contenido | Sub-pestañas |
 |---|---|---|
 | **Hechizos** | Una hoja por hechizo; índice con favoritos/archivo; ranuras equipadas (8, con 7 y 8 bloqueables); árbol de mutaciones; propuestas pendientes; importar/exportar código | Grimorio · Ranuras · Mutaciones (incluye propuestas, máx. 5) · Importar |
-| **Bolso** | Inventario sin peso del bolso mágico, cuadrícula con filtro y búsqueda; tinta rúnica visible en la cabecera | Armas · Armaduras · Objetos y materiales |
+| **Bolso** | Inventario sin peso del bolso mágico, cuadrícula con filtro y búsqueda; tinta rúnica visible en la cabecera | Armas (espadas y escudos) · Armaduras · Objetos y materiales |
 | **Códice** | **Uno solo**, dos secciones: Elemental (runas, elementos y reacciones descubiertas) y Fragmentos (lore, incluidas las hazañas que insinúan al protagonista, GDD 10.4) | Elemental · Fragmentos |
 | **Mapa** | Mapa de Valdera con las piedras de paso (posición y orden), nombre, marcador de lugares conocidos | — |
 | **Ajustes** | Contenido PENDIENTE (§4) | — |
@@ -125,7 +127,10 @@ una pista genérica por categoría. La receta sigue visible en el libro y es cop
 Cuadrícula sin peso, sin límite de huecos visible. Pestañas Armas (espadas, una equipada a la vez, y **escudos** en una subsección «Mano izquierda» con casilla
 «Sin escudo»; [SUPUESTO] el escudo va en Armas por ser de combate y no de armadura; sin flechas ni munición), Armaduras y
 Objetos/materiales. La tarjeta de detalle indica la configuración resultante («Solo espada» / «Espada + escudo») y
-que cambian las animaciones y la habilidad del arma. Equipar el escudo no se permite en combate. Tarjeta de detalle
+que cambian las animaciones y la habilidad del arma (**Estocada de quiebre** con solo espada / **Embestida** con espada
++ escudo, L1 + R1). Equipar o quitar el escudo se hace aquí (✕ / Intro / clic sobre el escudo; la casilla «Sin escudo» lo
+retira) o con el atajo de §5.1, y no se permite en combate. Sin escudos en el bolso, la subsección muestra «No tienes ningún escudo».
+`data-testid`: `bag-shield-<id>`, `bag-no-shield`. Tarjeta de detalle
 con descripción y usos (por ejemplo, materiales de crafteo muestran qué recetas los consumen). Contador de **tinta
 rúnica** siempre visible en la cabecera del apartado Hechizos y Bolso. Acciones: equipar, favorito, descartar (con
 confirmación). Ordenar y filtrar por tipo.
@@ -226,7 +231,7 @@ texto accesible); avisos de inestabilidad en texto/icono (COMBATE 2.15). Fijado 
 ### 5.1 Ranuras de hechizo y controles de combate [DECISIÓN salvo marcado]
 Hasta **8 ranuras equipadas, sin páginas** (6 + 1 por arcano descubierto, máx. 8; COMBATE M-30). Se desechan de la
 maqueta: paginación L2 + ▲/▼, Tab, indicador 1/2, L2 + ✕ como habilidad del arma y el **cambio de arma** (△ pulsar,
-cruceta ▲, teclas 1 2 3). Sin selector de arma en el HUD.
+cruceta ▲ como cambio de arma, teclas 1 2 3; la cruceta ▲ se reutiliza como atajo de configuración, abajo). Sin selector de arma en el HUD.
 
 **Indicador de configuración [DECISIÓN del usuario: el HUD lo muestra]:** insignia pequeña junto a las ranuras con icono
 de espada sola o espada + escudo y texto corto («Espada» / «Espada + escudo», no solo icono); cambia solo al equipar desde
@@ -254,16 +259,17 @@ los golpes bloqueados provocan un descenso visible y rápido de la barra con un 
 
 **Revisión de choques de teclas (sin armas):** 1–8 = ranuras de hechizo en combate sin conflicto (las teclas 1 2 3 ya no
 cambian arma). En el libro 1–5 saltan de apartado salvo con «equipar» activo (§2.3); no hay solape porque el libro pausa
-y usa su propio contexto de input. **Libres y reservados:** △ fuera de combate, cruceta ▲ (y ◄ ► ▼ si no se usan para
-objetos). En combate △ sigue siendo ranura 2/6 con L2/R2 mantenido; sin gatillo no hace nada.
+y usa su propio contexto de input. **Cruceta ▲ = atajo de configuración** (teclado V). **Libres y reservados:** △ fuera de
+combate (y ◄ ► ▼ si no se usan para objetos). En combate △ sigue siendo ranura 2/6 con L2/R2 mantenido; sin gatillo no hace nada.
 
 | Control | Mando | Teclado [SUPUESTO] | Ratón [SUPUESTO] |
 |---|---|---|---|
 | Ranuras 1–4 | Mantener **L2** + □ / △ / ○ / ✕ | 1 / 2 / 3 / 4 | — |
 | Ranuras 5–8 | Mantener **R2** + □ / △ / ○ / ✕ | 5 / 6 / 7 / 8 | — |
 | Magia elegida | **L2 pulsar y soltar** (sin botón de cara) | Tecla dedicada por definir (propuesta: C) | — |
-| Habilidad del arma (depende de la configuración: solo espada / espada + escudo; nombres por definir por disenador-combate) | **L1 + R1 a la vez** | G | Clic izq. + der. a la vez |
+| Habilidad del arma (según configuración: **Estocada de quiebre** con solo espada / **Embestida** con espada + escudo; COMBATE §1.1) | **L1 + R1 a la vez** | G | Clic izq. + der. a la vez |
 | Bloquear / atacar | L1 mantenido / R1 | según mapa base | clic der. / clic izq. |
+| Alternar configuración (solo fuera de combate) | **Cruceta ▲** | V [SUPUESTO] | Clic en `hud-loadout` |
 | **Dirección de ataque y guardia** [DECISIÓN usuario] | Stick izq. (sin cambios) | **Ratón** (ver abajo); WASD **solo mueve al personaje** | Ratón |
 
 **Dirección con ratón (teclado) [DECISIÓN usuario; mapeo concreto SUPUESTO].** En teclado, la dirección del golpe y de la
