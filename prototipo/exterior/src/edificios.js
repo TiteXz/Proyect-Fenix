@@ -75,7 +75,7 @@
       const push = (p, nn) => { pos.push(p.x, p.y, p.z); nor.push(nn.x, nn.y, nn.z); const d = new V().subVectors(p, o0); uv.push(d.dot(e1) / tile + ou, d.dot(e2) / tile + ov); };
       for (let i = 1; i < pts.length - 1; i++) { push(pts[0], n); push(pts[i], n); push(pts[i + 1], n); }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
-      B.add('teja', g, new M4(), { color: o.color, jit: 0.1 });
+      B.add('teja', g, new M4(), { color: (o.color || [1, 1, 1]).map((c, i) => c * [0.78, 0.8, 0.74][i] * (0.8 + 0.4 * rng())), jit: 0.4 });
       // grosor: una segunda capa 7 cm por debajo con la cara inferior (madera oscura) para que el borde no sea una lámina
       const g2 = g.clone(); g2.translate(-n.x * 0.09, -n.y * 0.09, -n.z * 0.09);
       const p2 = g2.attributes.position; for (let i = 0; i < p2.count; i += 3) { const a = p2.getX(i + 1), b = p2.getY(i + 1), c = p2.getZ(i + 1); p2.setXYZ(i + 1, p2.getX(i + 2), p2.getY(i + 2), p2.getZ(i + 2)); p2.setXYZ(i + 2, a, b, c); }

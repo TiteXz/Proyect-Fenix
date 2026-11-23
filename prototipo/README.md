@@ -78,16 +78,16 @@ en `?test=1` la aldea solo se renderiza con `step(n)` o `render()` (el render po
 | Terreno 120 × 120 m | Malla 160 × 160 con alturas de `exterior/src/terreno.js` (fBm con semilla, espolón de +14 m con la aldea en la meseta, camino Catmull-Rom de 7 puntos en S de 110 m, pendiente máx. del camino 14,6 %), máscara 1024² (R camino, G roca por pendiente, B barro, A oclusión de contacto) y shader por `onBeforeCompile`: hierba / camino / barro / roca triplanar con mezcla por altura (las piedras del camino asoman), anti-repetición por dos escalas y ruido |
 | Muros de piedra seca | ≈ 430 bloques irregulares (8 esquinas con ruido, remate achaflanado, textura `muro_piedra` con desplazamiento de UV por bloque), siguen el terreno, tramos caídos y huecos por ruido, base sucia (≥ 30 cm), musgo en la coronación y cara norte; colisión por cápsulas |
 | Aldea | 5 edificios con primitivas biseladas (`exterior/src/edificios.js`): 2 casas de entramado (vigas extruidas con chaflán, arriostres, piso volado, tejado a dos aguas a 48-52° con alero y cumbrera, lucerna, chimenea), casa de piedra de cuatro aguas con sillares de esquina, almacén y torre cónica de 11 m; 6 materiales compartidos (madera, revoco, teja, piedra, hierro, cristal) = 6 draw calls; puerta de piedra, vallado con cuerda, barriles, cajón, cubo, farol |
-| Vegetación | 25 árboles (3 especies × LOD0/LOD1 instanciados, viento por `onBeforeCompile`), arbustos y helechos, rocas con musgo y guijarros dispersos por máscara con semilla, módulos de `talud_roca_*` en la ladera, **hierba**: ≈ 122 k matas (3 mechones, 36 tris; LOD de 12 tris) en `InstancedMesh` por chunks de 24 m con tinte por `instanceColor` (el atlas sale oliva; se calcula `paleta / color medio del atlas`), viento en el vertex shader, normales hacia arriba; **flores** moradas/naranjas/blancas en parches con ruido, desaturadas y medio ocultas en la hierba |
+| Vegetación | 25 árboles (3 especies × LOD0/LOD1 instanciados, viento por `onBeforeCompile`), arbustos y helechos, rocas con musgo y guijarros dispersos por máscara con semilla, módulos de `talud_roca_*` en la ladera, **hierba**: ≈ 208 k matas (2 mechones, 24 tris; LOD de 8 tris) en `InstancedMesh` por chunks de 24 m con tinte por `instanceColor` (el atlas sale oliva; se calcula `paleta / color medio del atlas`), viento en el vertex shader, normales hacia arriba; **flores** moradas/naranjas/blancas en parches con ruido, desaturadas y medio ocultas en la hierba |
 | Luz | Sol 30° de elevación y 235° de azimut (suroeste), dos `DirectionalLight` como cascadas (40 m ajustado al texel y 140 m actualizado cada 4 pasos; la suma de intensidades es la del sol, así que lejos las sombras quedan al ≈ 40 %), cielo `cielo_kloofendal_1k.hdr` girado con un shader de cielo propio (y recortado a ≤ 12 para que el PMREM no duplique el sol), PMREM como entorno, `HemisphereLight` de relleno, `FogExp2` de perspectiva aérea; etalonaje: `exposure 0,95`, bloom 0,25 |
 | Calidad | Los presets existentes (`QUAL.*.ext`) ajustan sombras (4096/2048/1024 cerca), densidad de hierba (100/60/25 %), radios de LOD, viento y flores |
 
 **Medida** (`renderer.info` de un render completo con las dos pasadas de sombra, encuadre C1, Chromium + SwiftShader, 1280 × 720; «escena» = sin jugador ni caballo, que el brief no cuenta):
 | Preset | Draw calls (escena / con jugador) | Triángulos (escena / con jugador) | Presupuesto del brief |
 |---|---|---|---|
-| Alta | 119 / 197 | 1,67 M / 1,89 M | ≈ 140 calls, ≤ 2,0 M |
-| Media | 112 / 190 | 1,13 M / 1,35 M | |
-| Baja | 108 / 186 | 0,79 M / 1,01 M | |
+| Alta | 122 / 200 | 1,91 M / 2,13 M | ≈ 140 calls, ≤ 2,0 M |
+| Media | 114 / 192 | 1,31 M / 1,52 M | |
+| Baja | 102 / 180 | 0,93 M / 1,15 M | |
 
 No se mide FPS: el entorno de pruebas es render por CPU. Sin SAO/SSAO (la oclusión va pintada en la máscara del terreno, en las
 tonalidades de vértice de muros y edificios y en `instanceColor` de la hierba); sin impostores (los árboles lejanos usan LOD1).

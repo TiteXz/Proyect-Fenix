@@ -153,22 +153,23 @@ vec3 tNd; float tRo; float tAO;`)
 vec3 N0 = normalize(vWN); vec2 xz = vWP.xz;
 vec4 sp = texture2D(tSplat, (xz + 60.0) / 120.0);
 float nk = vn(xz * 0.06), nk2 = vn(xz * 0.31 + 7.0);
-vec4 gD = aT(tGD, xz, 2.6, nk); vec4 rD = aT(tRD, xz, 1.9, nk2); vec4 mD = aT(tMD, xz, 2.4, nk);
+vec4 gD = aT(tGD, xz, 1.7, nk); vec4 rD = aT(tRD, xz, 1.9, nk2); vec4 mD = aT(tMD, xz, 2.4, nk);
 vec4 gA = aT(tGA, xz, 2.6, nk); vec4 rA = aT(tRA, xz, 1.9, nk2);
 vec3 gNm = gN(aT(tGN, xz, 2.6, nk)); vec3 rNm = gN(aT(tRN, xz, 1.9, nk2)); vec3 mNm = gN(texture2D(tMN, xz / 2.4));
 // roca triplanar (3 proyecciones) para el talud
-vec3 bw = pow(abs(N0), vec3(5.0)); bw /= (bw.x + bw.y + bw.z);
+vec3 bw = pow(abs(N0), vec3(9.0)); bw /= (bw.x + bw.y + bw.z);
 vec4 kx = texture2D(tKD, vWP.zy / 2.4), ky = texture2D(tKD, vWP.xz / 2.4), kz = texture2D(tKD, vWP.xy / 2.4);
 vec4 kD = kx * bw.x + ky * bw.y + kz * bw.z; kD.rgb = mix(vec3(dot(kD.rgb, vec3(0.33))), kD.rgb, 0.12) * mix(0.8, 1.2, vn(vWP.xz * 0.35 + vWP.y * 0.4));
 vec3 kNx = gN(texture2D(tKN, vWP.zy / 2.4)), kNz = gN(texture2D(tKN, vWP.xy / 2.4)), kNy = gN(texture2D(tKN, vWP.xz / 2.4));
 float lumR = dot(rD.rgb, vec3(0.33)); float lumG = dot(gD.rgb, vec3(0.33));
 float wR = smoothstep(0.42, 0.62, sp.r + (lumR - 0.22) * 0.55);
 float wM = smoothstep(0.35, 0.65, sp.b + (0.3 - dot(mD.rgb, vec3(0.33))) * 0.4) * (1.0 - wR);
-float wK = smoothstep(0.3, 0.7, sp.g + (dot(kD.rgb, vec3(0.33)) - 0.25) * 0.4);
+float wK = smoothstep(0.3, 0.7, sp.g + (dot(kD.rgb, vec3(0.33)) - 0.25) * 0.4); wK = max(wK, 1.0 - smoothstep(0.6, 0.8, N0.y)); wR *= (1.0 - wK); wM *= (1.0 - wK);
 // prado: el color sale de una paleta verde (con tinte de gran escala) y la luminancia de la textura aporta el detalle
 float gl = dot(gD.rgb, vec3(0.33));
 vec3 gTarget = mix(vec3(0.04, 0.1, 0.03), vec3(0.09, 0.15, 0.04), smoothstep(0.3, 0.75, vn(xz * 0.035 + 3.0)) * 0.85 + 0.15 * nk2);
-vec3 gCol = gTarget * clamp(gl / 0.17, 0.4, 1.9) * mix(vec3(1.0), vec3(1.15, 0.95, 0.7), clamp((gD.r - gD.g) * 3.0, 0.0, 0.6));
+gTarget = mix(gTarget, vec3(0.16, 0.14, 0.06), smoothstep(0.55, 0.8, vn(xz * 0.12 + 11.0)) * 0.55);
+vec3 gCol = gTarget * pow(clamp(gl / 0.17, 0.2, 2.4), 1.5) * mix(vec3(1.0), vec3(1.15, 0.95, 0.7), clamp((gD.r - gD.g) * 3.0, 0.0, 0.6));
 vec3 col = mix(gCol, mD.rgb * 1.15, wM); vec3 rC = rD.rgb * vec3(1.0, 0.97, 0.92); rC = mix(rC, vec3(dot(rC, vec3(0.33))) * vec3(1.12, 0.96, 0.8), 0.4) * 1.1; col = mix(col, rC, wR); col = mix(col, kD.rgb * vec3(1.02, 0.98, 0.93), wK);
 diffuseColor.rgb *= col * mix(0.6, 1.0, sp.a) * mix(0.75, 1.0, mix(gA.r, rA.r, wR));
 tRo = mix(mix(gA.g * 0.15 + 0.85, 0.95, wM), rA.g * 0.2 + 0.8, wR); tRo = mix(tRo, 0.9, wK);
@@ -202,18 +203,18 @@ tNd = normalize(Nd);`)
     const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
     const SUN_EL = 30 * Math.PI / 180, SUN_AZ = 235 * Math.PI / 180;
     const sunDir = new V3(Math.sin(SUN_AZ) * Math.cos(SUN_EL), Math.sin(SUN_EL), -Math.cos(SUN_AZ) * Math.cos(SUN_EL));   // hacia el sol: suroeste (x<0, z>0)
-    const SKY_ROT = (145 - 34) * Math.PI / 180;   // el sol del HDRI está en atan2(z,x)=34°; se gira para que caiga en 145° (= sunDir)
+    const SKY_ROT = Math.PI;   // gira el HDRI para que las nubes grandes caigan hacia la aldea (el sol queda a la espalda del jugador y no se ve)   // el sol del HDRI está en atan2(z,x)=34°; se gira para que caiga en 145° (= sunDir)
     let sky = null, sunN = null, sunF = null, envRT = null, prevEnv = null, prevFog = null, prevBg = null;
     function skyMaterial() {
       return MT(new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { tSky: { value: skyTex }, uRot: { value: SKY_ROT }, uGain: { value: 1.0 } },
         vertexShader: 'varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }',
         fragmentShader: `uniform sampler2D tSky; uniform float uRot, uGain; varying vec3 vDir;
           void main(){ vec3 d = normalize(vDir); float c = cos(uRot), s = sin(uRot); d = vec3(d.x * c + d.z * s, d.y, -d.x * s + d.z * c);
-            vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5);
+            vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5, clamp(asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 * 1.2 + 0.5 + 0.07, 0.0, 0.995));
             vec3 col = texture2D(tSky, uv).rgb * uGain; gl_FragColor = vec4(col, 1.0); }` }));
     }
     function buildSky() {
-      sky = new THREE.Mesh(G(new THREE.SphereGeometry(420, 48, 32)), skyMaterial()); sky.material.uniforms.uGain.value = 2.0; sky.frustumCulled = false; sky.renderOrder = -10; sky.name = 'cielo'; group.add(sky);
+      sky = new THREE.Mesh(G(new THREE.SphereGeometry(420, 48, 32)), skyMaterial()); sky.material.uniforms.uGain.value = 1.5; sky.frustumCulled = false; sky.renderOrder = -10; sky.name = 'cielo'; group.add(sky);
       // entorno: el mismo cielo + suelo verde-tierra para el rebote (PMREM)
       const es = new THREE.Scene(), em = skyMaterial(), eg = G(new THREE.SphereGeometry(60, 32, 16));
       es.add(new THREE.Mesh(eg, em));
@@ -512,6 +513,8 @@ tNd = normalize(Nd);`)
       };
       veg('arbusto_02', 34, (x, z) => { const d = ter.roadDist(x, z) - sd(x, z); return ((d > 2.6 && d < 14) || (z < -44 && d > 6)) && free(x, z, 1.2) && ter.slopeAt(x, z) < 0.6; }, 0.8, 1.35, 0.03);
       veg('helecho_02', 34, (x, z) => { const d = ter.roadDist(x, z) - sd(x, z); return d > 1.9 && free(x, z, 0.8) && ter.slopeAt(x, z) < 0.7 && (d < 12 || ter.fbm2(x * 0.1, z * 0.1, 8, 3) > 0.55); }, 0.9, 1.7, 0.02);
+      veg('arbusto_02', 14, (x, z) => inFoot(x, z, 2.4) && !inFoot(x, z, 1.0) && z < -44 && free(x, z, 0), 0.5, 0.9, 0.03);
+      veg('helecho_02', 22, (x, z) => inFoot(x, z, 2.0) && !inFoot(x, z, 0.8) && z < -44, 0.7, 1.2, 0.02);
       // talud de roca: módulos de la cara rocosa orientados cuesta abajo
       for (const nm of ['talud_roca_01', 'talud_roca_02']) {
         const ps = parts(GLB[nm]); const geo = ps[0].geo; geo.computeBoundingBox(); const b = geo.boundingBox; geo.translate(-(b.min.x + b.max.x) / 2, -b.min.y, -(b.min.z + b.max.z) / 2);
@@ -521,7 +524,7 @@ tNd = normalize(Nd);`)
       }
       const tl = [buildClutter.talud_roca_01, buildClutter.talud_roca_02]; let nt = 0;
       const nt3 = new V3(), q1 = new Q4(), q2 = new Q4(), ss = new V3();
-      for (const p of scatter(24, (x, z) => ter.slopeAt(x, z) > 1.05 && ter.hAt(x, z) > 4 && roadOK(x, z, 5) && free(x, z, 2) && z > -50, 60000)) {
+      for (const p of scatter(36, (x, z) => ter.slopeAt(x, z) > 0.95 && ter.hAt(x, z) > 4 && roadOK(x, z, 5) && free(x, z, 2) && z > -50, 60000)) {
         const m = tl[nt++ % 2], x = p[0], z = p[1], y = ter.hAt(x, z);
         nt3.set(-(ter.hAt(x + 1, z) - ter.hAt(x - 1, z)) / 2, 1, -(ter.hAt(x, z + 1) - ter.hAt(x, z - 1)) / 2).normalize();   // normal del terreno: la placa de roca se apoya en el talud
         q1.setFromUnitVectors(m.ns, nt3); q2.setFromAxisAngle(nt3, rng() * 6.28); q2.multiply(q1);
@@ -570,7 +573,7 @@ tNd = normalize(Nd);`)
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vHt;')
           .replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('normal = normal * faceDirection;', ''))
           .replace('#include <color_fragment>', `#include <color_fragment>
-          diffuseColor.rgb *= mix(0.38, 1.1, smoothstep(0.0, 0.85, vHt));
+          diffuseColor.rgb *= mix(0.22, 1.05, smoothstep(0.0, 0.9, vHt));
           ${flower ? 'float lu = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)); diffuseColor.rgb = mix(vec3(lu), diffuseColor.rgb, 0.5) * 0.85;' : ''}`);
       };
       m.customProgramCacheKey = () => 'aldea-tuft-' + flower;
@@ -588,11 +591,11 @@ tNd = normalize(Nd);`)
       const hm = parts(GLB.hierba_mechones)[0];
       grassMat = tuftMaterial(false, hm.mat.map); const aAvg = avgColor(hm.mat.map);
       const offs = [[0, 0, 0.3], [0.2, 0.12, 2.1], [-0.16, 0.17, 4.0]];
-      const full = clumpGeo({ glb: 'hierba_mechones', names: ['mechon_0', 'mechon_2', 'mechon_5'] }, 0, offs);
-      const lodG = clumpGeo({ glb: 'hierba_mechones', names: ['mechon_lod_1', 'mechon_lod_3', 'mechon_lod_4'] }, 1, offs); lodG.scale(1.25, 1.25, 1.25);
+      const full = clumpGeo({ glb: 'hierba_mechones', names: ['mechon_0', 'mechon_5'] }, 0, offs);
+      const lodG = clumpGeo({ glb: 'hierba_mechones', names: ['mechon_lod_1', 'mechon_lod_4'] }, 1, offs); lodG.scale(1.25, 1.25, 1.25);
       grassTris = [full.attributes.position.count / 3, lodG.attributes.position.count / 3];
       const pal = [lin(0x4f7a32), lin(0x5f8a3c), lin(0x6c9440), lin(0x587f30)], dry = lin(0x9a9650);
-      const CH = 24, NC = 5, DENS = 10, c = new THREE.Color(), nrm = (v, a) => clamp(v / Math.max(a, 1e-3), 0.25, 3.2);
+      const CH = 24, NC = 5, DENS = 17, c = new THREE.Color(), nrm = (v, a) => clamp(v / Math.max(a, 1e-3), 0.25, 3.2);
       const grassOK = (x, z) => {
         const dR = ter.roadDist(x, z), w = ter.halfW(ter.roadS(x, z));
         if (dR < w + 0.25 + (ter.fbm2(x * 1.7, z * 1.7, 4, 2) - 0.5) * 0.8) return 0;
@@ -605,12 +608,12 @@ tNd = normalize(Nd);`)
         const x0 = -60 + ci * CH, z0 = -60 + cj * CH, maxN = Math.floor(CH * CH * DENS), mats = new Float32Array(maxN * 16), cols = new Float32Array(maxN * 3); let n = 0, minH = 1e9, maxH = -1e9;
         for (let t = 0; t < maxN; t++) {
           const x = x0 + rng() * CH, z = z0 + rng() * CH, k = grassOK(x, z); if (!k || rng() > k) continue;
-          const y = ter.hAt(x, z), tall = 0.85 + 0.9 * sstep(0.35, 0.75, ter.fbm2(x * 0.08 + 5, z * 0.08, 12, 3)), sc = lerp(0.75, 1.15, rng());
-          compose(x, y - 0.03, z, rng() * 6.28, sc * (0.9 + 0.2 * rng()), sc * tall * (0.85 + 0.3 * rng()), sc, (rng() - 0.5) * 0.18, (rng() - 0.5) * 0.18);
+          const y = ter.hAt(x, z), tall = 0.85 + 0.9 * sstep(0.35, 0.75, ter.fbm2(x * 0.08 + 5, z * 0.08, 12, 3)), sc = lerp(0.8, 1.25, rng());
+          compose(x, y - 0.03, z, rng() * 6.28, sc * (0.9 + 0.2 * rng()), sc * tall * (0.7 + 0.6 * rng() * rng() * 1.6), sc, (rng() - 0.5) * 0.18, (rng() - 0.5) * 0.18);
           Mt.toArray(mats, n * 16);
           // color: paleta verde con tinte de gran escala (verde ↔ amarillo), variación ±12 % y oscurecimiento junto a muros/rocas
           const big = ter.fbm2(x * 0.017 + 3, z * 0.017, 6, 3), v = rng();
-          c.copy(pal[Math.floor(v * 4) % 4]).lerp(dry, sstep(0.58, 0.8, big) * 0.4 + (rng() < 0.03 ? 0.4 : 0)).multiplyScalar(lerp(0.88, 1.12, rng()));
+          c.copy(pal[Math.floor(v * 4) % 4]).lerp(dry, sstep(0.5, 0.75, big) * 0.5 + (rng() < 0.12 ? 0.35 + rng() * 0.3 : 0)).lerp(new THREE.Color(0.1, 0.1, 0.09), 0.15).multiplyScalar(lerp(0.7, 1.15, rng()));
           let wl = 1; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (wg(x + a * 0.5, z + b * 0.5)) wl = 0.62;
           cols[n * 3] = nrm(c.r * wl, aAvg[0]); cols[n * 3 + 1] = nrm(c.g * wl, aAvg[1]); cols[n * 3 + 2] = nrm(c.b * wl, aAvg[2]);
           minH = Math.min(minH, y); maxH = Math.max(maxH, y); n++;
@@ -631,9 +634,9 @@ tNd = normalize(Nd);`)
         const x0 = -60 + ci * CF, z0 = -60 + cj * CF, per = [[], [], []];
         for (let t = 0; t < CF * CF * 1.6; t++) {
           const x = x0 + rng() * CF, z = z0 + rng() * CF, pf = ter.fbm2(x * 0.11 + 40, z * 0.11, ter.seed + 5, 3);
-          if (pf < 0.52 || rng() > clamp((pf - 0.5) * 5, 0, 0.95)) continue; const k = grassOK(x, z); if (!k || k < 0.6 || ter.roadDist(x, z) > 30) continue;
-          const ty = ter.fbm2(x * 0.06, z * 0.06, ter.seed + 8, 2), type = ty < 0.42 ? 0 : ty < 0.6 ? 1 : 2, y = ter.hAt(x, z), sc = lerp(1.0, 1.7, rng());
-          compose(x, y - 0.02, z, rng() * 6.28, sc, sc * lerp(0.9, 1.4, rng()), sc, (rng() - 0.5) * 0.2, (rng() - 0.5) * 0.2); per[type].push(Mt.toArray([]));
+          if (pf < 0.55 || rng() > clamp((pf - 0.53) * 5, 0, 0.9) * (0.25 + 1.5 * ter.fbm2(x * 0.6, z * 0.6, ter.seed + 21, 2) * ter.fbm2(x * 0.6, z * 0.6, ter.seed + 21, 2) * 2)) continue; const k = grassOK(x, z); if (!k || k < 0.6 || ter.roadDist(x, z) > 30) continue;
+          const ty = ter.fbm2(x * 0.06, z * 0.06, ter.seed + 8, 2) + (rng() - 0.5) * 0.45, type = ty < 0.4 ? 0 : ty < 0.58 ? 1 : 2, y = ter.hAt(x, z), sc = lerp(1.0, 1.7, rng());
+          compose(x, y - 0.02, z, rng() * 6.28, sc * 0.8, sc * lerp(0.9, 1.4, rng()) * 0.8, sc * 0.8, (rng() - 0.5) * 0.2, (rng() - 0.5) * 0.2); per[type].push(Mt.toArray([]));
         }
         per.forEach((arr, ty) => {
           if (!arr.length) return; const im = new THREE.InstancedMesh(fgeo[ty], flowerMat, arr.length); arr.forEach((a, i) => im.instanceMatrix.array.set(a, i * 16));
@@ -691,7 +694,7 @@ tNd = normalize(Nd);`)
       buildingMeshes(); sFlush();
       buildSplat(); buildTerrain(); buildGrass();
       prevEnv = scene.environment; prevFog = scene.fog; prevBg = scene.background;
-      scene.environment = envRT.texture; scene.fog = new THREE.FogExp2(0xb4cbe6, 0.0058); scene.background = null;
+      scene.environment = envRT.texture; scene.fog = new THREE.FogExp2(0xb4cbe6, 0.0044); scene.background = null;
       group.traverse((o) => { if (o.material) [].concat(o.material).forEach((m) => { if (m.envMapIntensity !== undefined && !m.userData.envDone) { m.envMapIntensity *= 1.8; m.userData.envDone = true; } }); });   // reflejo/ambiente del HDRI ≈ 0,6-1
       scene.add(group); setQuality(Q); updateTrees(true);
       S.listo = true; return api;
