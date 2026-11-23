@@ -86,11 +86,11 @@ en `?test=1` la aldea solo se renderiza con `step(n)` o `render()` (el render po
 **Medida** (`renderer.info` de un render completo con las dos pasadas de sombra, encuadre C1, Chromium + SwiftShader, 1280 × 720; «escena» = sin jugador ni caballo; no incluye la pasada de profundidad del SAO, que dibuja solo opacos a media resolución):
 | Preset | Draw calls (escena / con jugador) | Triángulos (escena / con jugador) | Presupuesto |
 |---|---|---|---|
-| Alta | 148 / 226 | 1,64 M / 1,86 M | ≤ 160 calls, ≤ 2 M |
-| Media | 134 / 212 | 1,19 M / 1,41 M | |
-| Baja | 124 / 202 | 0,94 M / 1,16 M | |
+| Alta | 147 / 225 | 1,68 M / 1,90 M | ≤ 160 calls, ≤ 2 M |
+| Media | 132 / 210 | 1,24 M / 1,46 M | |
+| Baja | 116 / 194 | 0,97 M / 1,19 M | |
 
-No se mide FPS: el entorno de pruebas es render por CPU. Sin impostores de árbol (los lejanos usan LOD1). `maqueta.html` ≈ 44 MB (+28 MB sobre la maqueta base; `build.py` no incrusta `acantilado_03/04` ni `roca_07`).
+No se mide FPS: el entorno de pruebas es render por CPU. Sin impostores de árbol (los lejanos usan LOD1). `maqueta.html` ≈ 55,2 MB (los 8 GLB de Sketchfab suman +10,9 MB sobre los 44,3 MB anteriores; `build.py` no incrusta `acantilado_03/04` ni `roca_07`).
 
 ```bash
 bash prototipo/preparar_three.sh                         # three 0.147 local (prototipo/.three/package), si hace falta
