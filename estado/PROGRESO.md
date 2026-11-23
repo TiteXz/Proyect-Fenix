@@ -73,3 +73,8 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
 - Problemas abiertos / deuda: lore del MVP, post-final y rejugabilidad del dungeon, mercaderes (D-6), Códice vs lore, chamán goblin, bolso mágico (GDD §5); escudo y sets de animación por ejecutar (`artista-3d`); prototipo sigue con martillo/arco (no se toca).
 - Siguiente recomendada: `/iniciar` (arquitecto + planificador) — no existe `feature_list.json` ni arquitectura; sin backlog no se puede elegir feature.
 - Progreso: n/a (`estado/feature_list.json` ausente; 0 features verificadas)
+- 2026-11-23 (cont.): buenas prácticas de render actualizadas a petición del usuario: `WebGPURenderer` con respaldo
+  WebGL 2, TSL, postproceso de nodos (TRAA, GTAO, bloom, volumétrica), `CSMShadowNode`, impostores octaédricos,
+  `BatchedMesh` y streaming con límites. Cambiados `contexto/BUENAS_PRACTICAS_JUEGOS_WEB_3D.md`, el stack de
+  `CONTEXTO_PROYECTO.md` y los agentes programador-motor y optimizador-rendimiento. Pendiente: ADR del arquitecto; la
+  maqueta (r147, GLSL) no se migra.

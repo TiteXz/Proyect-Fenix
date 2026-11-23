@@ -139,8 +139,10 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - Música orquestal/folk medieval; golpes con peso.
 
 ## Stack (por defecto; el arquitecto puede cambiarlo con un ADR)
-- Vite + TypeScript estricto + Three.js (WebGLRenderer; el arquitecto puede valorar WebGPURenderer con un ADR)
-- Postproceso: `postprocessing` (pmndrs) o el EffectComposer de Three.js; sombras en cascada (CSM) limitadas
+- Vite + TypeScript estricto + Three.js con **`WebGPURenderer` y respaldo automático a WebGL 2** (decisión del usuario,
+  2026-11-23; el arquitecto lo formaliza en un ADR). Shaders y materiales propios en **TSL** (sin GLSL a mano)
+- Postproceso: pipeline de nodos de Three.js (TRAA, GTAO, bloom, niebla volumétrica por preset); sombras en cascada
+  (`CSMShadowNode`) limitadas. Detalle en `contexto/BUENAS_PRACTICAS_JUEGOS_WEB_3D.md`
 - Física y colisiones: Rapier (`@dimforge/rapier3d-compat`) para personaje, proyectiles y hitboxes
 - ECS ligero (miniplex o propio); animaciones con `AnimationMixer` (glTF) y máquina de estados de animación
 - UI: DOM/HTML+CSS sobre el canvas

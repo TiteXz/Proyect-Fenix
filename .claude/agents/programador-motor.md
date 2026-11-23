@@ -19,6 +19,9 @@ tipado, testeable y sin asignaciones en el bucle caliente.
 - Física en su propio sistema; sincroniza cuerpos → componentes Transform → Object3D.
 - Carga de assets asíncrona con manifiesto, barra de progreso vía eventos, caché y `dispose()`.
 - `ResizeObserver` para el canvas, `setPixelRatio(min(dpr, 2))`.
+- Render con `WebGPURenderer` (respaldo WebGL 2): materiales y efectos en TSL, postproceso con nodos; nada de
+  `ShaderMaterial`/`onBeforeCompile`/`EffectComposer`. Comprueba también el camino `forceWebGL: true`.
+- Compute solo tras comprobar capacidad, con alternativa para WebGL 2.
 - Modo test: semilla, bucle detenido, `window.__GAME__.step(n)` y `state()` serializable.
 
 ## Hecho significa

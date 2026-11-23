@@ -14,6 +14,30 @@
 - **Configuración como datos** (`juego/src/config/*.ts` o JSON): velocidades, daños, curvas de
   dificultad. El diseñador ajusta sin tocar sistemas.
 
+## Render (Three.js, estado 2026)
+- **`WebGPURenderer` (`three/webgpu`) con respaldo automático a WebGL 2.** WebGPU ya está en Chrome/Edge, Firefox
+  (Windows y Mac Apple Silicon) y Safari 26; el respaldo cubre el resto. Inicializar con `await renderer.init()`
+  (o `setAnimationLoop`) y probar el camino WebGL 2 desde el día 1 con `forceWebGL: true`.
+- **Shaders y materiales en TSL** (nodos que compilan a WGSL y a GLSL). Con este renderer no funcionan
+  `ShaderMaterial`, `RawShaderMaterial` ni `onBeforeCompile`: nada de GLSL a mano.
+- **Postproceso con el pipeline de nodos** (`PostProcessing` + `pass()`, MRT y fusión automática de pasadas):
+  TRAA, GTAO, SSR, bloom, DOF… desde `three/addons/tsl/display/`. `EffectComposer` y la librería `postprocessing`
+  no sirven con `WebGPURenderer`.
+- **Compute solo con comprobación:** en WebGL 2 el compute se emula con limitaciones (sin storage textures ni
+  atómicos). Toda función que dependa de compute (partículas masivas, hierba, culling GPU) necesita una versión
+  más modesta para el respaldo, elegida por capacidad del dispositivo, no por navegador.
+- Fijar la versión exacta de three.js y revisar las notas de versión al actualizar: la API de nodos aún cambia.
+
+## Calidad visual (fantasía realista luminosa)
+- **Cielo y atmósfera físicos** (Rayleigh/Mie, perspectiva aérea) que alimentan el IBL; el entorno se recalcula de
+  forma escalonada (no cada frame) siguiendo el ciclo día/noche.
+- **Sol con sombras en cascada** (`CSMShadowNode`; ≤ 3 cascadas en Alto). Sombras virtuales/paginadas solo como
+  opción de Ultra y tras medir.
+- **TRAA** como antialiasing por defecto (estable con vegetación y GTAO); FXAA/SMAA en Bajo.
+- **GTAO**, bloom HDR y niebla/luz volumétrica a resolución reducida, escalados por preset.
+- PBR con texturas KTX2, salida HDR y tonemapping ACES o AgX; exposición coherente entre día y noche.
+- Cada efecto tiene coste medido y un preset mínimo en el que se activa.
+
 ## Estructura sugerida de `juego/src`
 ```
 core/        bucle, tiempo, eventos, estados, RNG con semilla, pools
@@ -30,16 +54,25 @@ debug/       stats, lil-gui, window.__GAME__
 ```
 
 ## Rendimiento (medir antes de optimizar)
-- Presupuesto orientativo (estilo realista, preset Alto): < 300 draw calls, ~1,5–2 M triángulos visibles,
-  texturas 2K (4K solo en piezas protagonistas). El preset Bajo debe rondar la mitad.
-- Presets de calidad (sombras, SSAO, resolución, LOD, densidad de partículas) en lugar de un único nivel.
-- `InstancedMesh` / `BatchedMesh` para muchos objetos iguales; fusionar geometría estática.
-- Texturas KTX2 (Basis) y geometría Meshopt/Draco; LOD para objetos lejanos.
-- Sombras con moderación: una luz direccional con sombra, `shadow.mapSize` ajustado, sombras horneadas
-  cuando se pueda. Limitar `renderer.setPixelRatio(Math.min(devicePixelRatio, 2))`.
+- **Presupuestos por preset** (Bajo/Medio/Alto/Ultra: FPS, draw calls, triángulos, memoria GPU, MB de descarga) en
+  un único fichero de config que comprueban los tests (`renderer.info`). La tabla vigente está en `CONTEXTO_PROYECTO.md`.
+- Presets de calidad (sombras, AO, resolución, LOD, densidad de partículas y vegetación). WebGL 2 es la base del preset Bajo.
+- **Pocas llamadas de dibujo:** `BatchedMesh` para geometrías distintas con el mismo material; `InstancedMesh`
+  para copias; fusionar geometría estática. Atlas/arrays de texturas para compartir material.
+- **Impostores octaédricos** (atlas KTX2) para árboles y rocas lejanos; sustituir solo cuando el impostor no ocupe
+  en pantalla más que su resolución horneada. LOD generados con meshoptimizer.
+- **Terreno:** heightmap con LOD (quadtree o clipmaps) y splatting de ≤ 4 capas PBR en KTX2. Nunca PNG/JPG sin
+  comprimir en el terreno (dispara la VRAM y puede perder el contexto).
+- **Streaming por celdas:** cola priorizada por distancia, límite de cargas simultáneas, transcodificación KTX2 en
+  Workers (núcleos − 2, entre 2 y 8), subida a GPU repartida entre frames y `dispose()` al descargar.
+- Workers para generación procedural, navmesh, colisiones y decodificación; el hilo principal solo integra.
+- Geometría Meshopt (o Draco) y texturas KTX2 (Basis); las que ya usan Zstandard apenas ganan con más compresión.
+- Sombras con moderación: una direccional con sombra; `setPixelRatio(Math.min(devicePixelRatio, 2))` y escala de
+  resolución dinámica si cae el FPS.
 - Nada de `new Vector3()`, closures ni arrays nuevos dentro del bucle; reutilizar y usar pools.
-- `dispose()` de geometrías, materiales, texturas y render targets al cambiar de escena.
-- Herramientas: `renderer.info`, stats.js/stats-gl, la pestaña Performance del navegador, Spector.js.
+- `dispose()` de geometrías, materiales, texturas y render targets al cambiar de escena o descargar celda.
+- Herramientas: `renderer.info`, stats-gl, la pestaña Performance del navegador, Spector.js (WebGL) y el
+  inspector de WebGPU.
 
 ## Calidad y testeo (clave para que un agente pueda verificar)
 - Lógica pura testeable con Vitest (sin DOM ni WebGL).
@@ -61,3 +94,9 @@ debug/       stats, lil-gui, window.__GAME__
 - https://abratabia.com/threejs/performance.php
 - https://discoverthreejs.com/tips-and-tricks/
 - https://threejs.org/manual/
+- https://threejs.org/manual/en/webgpurenderer
+- https://threejs.org/manual/en/webgpu-postprocessing.html
+- https://threejs.org/docs/pages/CSMShadowNode.html
+- https://web.dev/blog/webgpu-supported-major-browsers
+- https://www.utsubo.com/blog/webgpu-threejs-migration-guide
+- https://discourse.threejs.org/t/a-forest-of-octahedral-impostors/85735
