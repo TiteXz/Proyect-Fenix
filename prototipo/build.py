@@ -70,8 +70,11 @@ def embed_exterior():
     ext, code = {}, ''
     if use_ext:
         adir = opts.get('exterior') or os.path.join(here, 'exterior', 'assets')
+        skip = {'acantilado_03.glb', 'acantilado_04.glb', 'roca_07.glb'}   # variantes sin usar en la escena: no se incrustan (ahorran ≈ 3,4 MB de HTML)
         for f in sorted(os.listdir(adir)):
             fp = os.path.join(adir, f)
+            if f in skip:
+                continue
             if f.endswith('.webp'):
                 ext[f] = 'data:image/webp;base64,' + base64.b64encode(open(fp, 'rb').read()).decode()
             elif f.endswith(('.glb', '.hdr')):

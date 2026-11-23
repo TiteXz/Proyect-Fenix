@@ -55,7 +55,7 @@ const info = (p, soloEscena) => p.evaluate((solo) => {   // renderer.info de un 
     await poner(C.C1); await p.waitForTimeout(1500);
     presets[q] = await info(p, true); const tot = await info(p, false); presets[q].total = tot; console.log('renderer.info C1 ' + q + ' (solo escena | con jugador y caballo):', JSON.stringify(presets[q]));
   }
-  ok(presets.alta.calls <= 200 && presets.alta.tris <= 2.0e6, 'Alta dentro del presupuesto (≤ 200 draw calls, ≤ 2 M tris): ' + presets.alta.calls + ' / ' + (presets.alta.tris / 1e6).toFixed(2) + ' M');
+  ok(presets.alta.calls <= 160 && presets.alta.tris <= 2.0e6, 'Alta dentro del presupuesto de escena (≤ 160 draw calls, ≤ 2 M tris): ' + presets.alta.calls + ' / ' + (presets.alta.tris / 1e6).toFixed(2) + ' M');
   ok(presets.baja.tris < presets.media.tris && presets.media.tris < presets.alta.tris, 'los presets reducen la densidad de hierba (tris baja < media < alta)');
   for (let i = 0; i < 3 && (await p.evaluate(() => document.querySelector('#qual').textContent)) !== 'Calidad: Alta'; i++) await p.evaluate(() => document.querySelector('#qual').click());
   // ---------- 2) capturas ----------

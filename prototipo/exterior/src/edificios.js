@@ -103,7 +103,7 @@
       for (let i = 1; i < pts.length - 1; i++) sub(pts[0], pts[i], pts[i + 1]);
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
       const eY = Math.min(...pts.map((p) => p.y)), tY = Math.max(...pts.map((p) => p.y)), mo = o.moss === undefined ? 1 : o.moss;
-      B.add('teja', g, new M4(), { color: (o.color || [1, 1, 1]).map((c, i) => c * [0.78, 0.8, 0.74][i] * (0.8 + 0.4 * rng())), jit: 0.18,
+      B.add('teja', g, new M4(), { color: (o.color || [1, 1, 1]).map((c, i) => c * [0.8, 0.72, 0.64][i] * (0.8 + 0.4 * rng())), jit: 0.18,
         vcol: (p, nw) => {   // musgo en parches (más en la vertiente norte y junto al alero), hollín cerca de la cumbrera y tejas más oscuras en el alero
           const t = (p.y - eY) / Math.max(0.5, tY - eY), north = nw.z < 0 ? 1 : 0.45, m = mo * sstep(0.46, 0.72, vn3(p.x * 0.8, p.y * 0.7, p.z * 0.8)) * north * (1 - 0.55 * t);
           const d = 0.8 + 0.2 * vn3(p.x * 3.1, p.y * 3.1, p.z * 3.1) - 0.12 * (1 - sstep(0, 0.25, t));
