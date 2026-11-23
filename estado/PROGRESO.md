@@ -48,3 +48,28 @@ La siguiente sesión empieza leyendo las 2–3 últimas entradas.
 - 2026-11-19 (cont.): COMBATE.md actualizado: runas de control con hueco propio; sin bloqueos por nivel (dificultad vs dominio
   → coste y fallo de ejecución); XP 75–80 % exploración / resto uso con rendimientos decrecientes; afinidad por elemento;
   Rebobinar/Estasis válidos con jefes; piedras de paso fuera de dungeons; Velo y planeo a caballo; inscripciones → inventario/crafteo.
+
+## 2026-11-20 — Sistema de magia por runas en la maqueta (`prototipo/`)
+- Commits 2f42a8f, 1cee601, a3a1a01 (docs), da4b64d, bf4d064 y 8f04488 (fix): `prototipo/magia/` (VFX.md, DISENO.md, magia.js), `prototipo/vfx/vfx.js` (hechizos con runas) y `prototipo/maqueta.src.html`.
+- Pruebas `prototipo/pruebas/magia.js` MQ-01..MQ-15 en verde (según el usuario). Arreglos posteriores: números de daño sin solape, RNG con semilla, menos asignaciones en el bucle.
+- Límites pendientes en `prototipo/magia/DISENO.md` §10: draw calls de VFX por encima de la meta, sin heat haze ni soft particles, sin Cellisca/Tempestad, grimorio sin localStorage.
+- Es maqueta, no juego: no hay código en `juego/src`.
+
+## 2026-11-21 — Commit c6197b5: mundo Bronsil / Valdera, combate y lore
+- Commit c6197b5 del usuario. Recoge: mundo Bronsil / región Valdera, MVP solo espada con escudo opcional (martillo y arco en reserva, COMBATE §1.2), combate direccional con parada perfecta (COMBATE §1.1), lore en `docs/GDD.md` §10, nueva `docs/GUIA_UI.md` y nueva `docs/GUIA_VISUAL.md`.
+
+## 2026-11-23 — Sincronización de contexto y guías (commits 38d2cfd, 4aae6dd, a647bdc)
+- `contexto/CONTEXTO_PROYECTO.md`: asentamientos con nombre, interacciones EP/EE por configuración y sección «Preguntas abiertas».
+- `docs/GUIA_UI.md`: dos configuraciones de espada (solo espada / espada + escudo); cruceta ▲ alterna la configuración fuera de combate; escudo equipable desde Armas.
+- `docs/GUIA_VISUAL.md`: escudo del jugador, sets de animación EP/EE y telegrafiado de dirección.
+- Marcados como aplicados en `docs/GDD.md` §10.10 (nombres de asentamientos) y `docs/COMBATE.md` §1.3 (CONTEXTO, GUIA_UI, requisitos de GUIA_VISUAL); el resto sigue abierto.
+- Añadidos a `docs/COMBATE.md` §1.3: ratón (gesto M-1 vs stick virtual de GUIA_UI §5.1) y dos contradicciones de CONTEXTO con otros docs (cambio de arma en combate; WASD para dirección). No se reescribieron docs ajenos.
+- Estado: aún no hay `docs/ARQUITECTURA.md`, ADRs (`estado/decisiones/` sin ADR de juego), `estado/feature_list.json` ni `juego/src`. Siguiente paso: `/iniciar` (arquitecto + planificador).
+
+## Sesión 2026-11-23 08:33 — Cierre documental (sin feature)
+- Resultado: PASA (tarea documental; sin feature del backlog)
+- Hecho: entradas de diario añadidas; §10.10 de GDD y §1.3 de COMBATE marcados como aplicados donde procede; pendiente ratón (M-1 vs stick virtual) y dos contradicciones anotadas en COMBATE §1.3; sin commit.
+- Decisiones: no se reescriben docs de otros roles; las contradicciones quedan como pendiente. Sin ADR nuevo.
+- Problemas abiertos / deuda: lore del MVP, post-final y rejugabilidad del dungeon, mercaderes (D-6), Códice vs lore, chamán goblin, bolso mágico (GDD §5); escudo y sets de animación por ejecutar (`artista-3d`); prototipo sigue con martillo/arco (no se toca).
+- Siguiente recomendada: `/iniciar` (arquitecto + planificador) — no existe `feature_list.json` ni arquitectura; sin backlog no se puede elegir feature.
+- Progreso: n/a (`estado/feature_list.json` ausente; 0 features verificadas)

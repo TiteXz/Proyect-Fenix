@@ -358,15 +358,18 @@ No se borran: quedan como referencia para recuperarlos sin rediseñar desde cero
   DPS/TTK.
 
 ### 1.3 Pendiente de sincronizar
-- `contexto/CONTEXTO_PROYECTO.md` debe actualizarse (lo hace `optimizador-prompt`). Ya recoge espada + escudo
+- ✔ aplicado (2026-11-23) en `contexto/CONTEXTO_PROYECTO.md`. Original: `contexto/CONTEXTO_PROYECTO.md` debe actualizarse (lo hace `optimizador-prompt`). Ya recoge espada + escudo
   opcional y martillo/arco en reserva; falta reflejar el ajuste de interacciones, ya validado por el usuario (esqueletos
   débiles a contundente vía Tierra y escudo; escudos y flechas según la configuración).
 - La maqueta `prototipo/` sigue teniendo martillo, arco y escudo (con sus habilidades Embestida / Terremoto / Andanada y
   el cambio de arma 1-2-3) y **no se toca**: no es el juego.
-- `docs/GUIA_UI.md` (cabecera y §5.1) dice «espada (sin escudo)», «habilidad de la espada (única)» y deja la cruceta ▲ libre: debe usar ▲ como atajo para alternar la configuración fuera de combate, y pasar a dos
+- ✔ aplicado (2026-11-23) en `docs/GUIA_UI.md`. Original: `docs/GUIA_UI.md` (cabecera y §5.1) dice «espada (sin escudo)», «habilidad de la espada (única)» y deja la cruceta ▲ libre: debe usar ▲ como atajo para alternar la configuración fuera de combate, y pasar a dos
   configuraciones con dos habilidades (Estocada de quiebre / Embestida) y a equipar el escudo desde la pestaña Armas
   (lo hace `interfaz-ui`).
-- `docs/GUIA_VISUAL.md` / `artista-3d`: modelo de escudo y dos sets de animaciones del jugador (C-18).
+- ✔ aplicado (2026-11-23) en `docs/GUIA_VISUAL.md` (requisitos de escudo y sets EP/EE). Original: `docs/GUIA_VISUAL.md` / `artista-3d`: modelo de escudo y dos sets de animaciones del jugador (C-18). **Abierto:** la ejecución (modelo `escudo_jugador.glb` y sets de animación) sigue pendiente para `artista-3d`.
+- **Ratón: gesto por movimiento vs. «stick virtual» con botón mantenido (abierto; `disenador-combate` + `interfaz-ui`).** §1.1 M-1, M-3 y M-4 usan un gesto por desplazamiento relativo del ratón (≥ 8 px en 100 ms) sin botón extra. `docs/GUIA_UI.md` §5.1 usa un «stick virtual» que solo alimenta la dirección mientras clic der. o clic izq. están mantenidos (radio 60 px, zona muerta 30 px, decaimiento 0,6 s). Hay que decidir si la dirección exige botón mantenido o no, y unificar umbrales, la regla de «guardia neutra sin mover» y la congelación de cámara (M-4) en ambos documentos.
+- ✔ aplicado (2026-11-23): el pitch de CONTEXTO ya habla de alternar espada y hechizos, no de cambiar de arma. Original: **Contradicción con CONTEXTO:** `contexto/CONTEXTO_PROYECTO.md` (pitch, línea 12) promete «cambiar de arma … en pleno combate», mientras `docs/GUIA_UI.md` (intro y §5.1) elimina el cambio de arma en partida (solo configuración fuera de combate). Decidir cuál prevalece y corregir el pitch o la UI.
+- ✔ aplicado (2026-11-23): CONTEXTO ya dice ratón en teclado / stick en mando. Original: **Contradicción de input:** `contexto/CONTEXTO_PROYECTO.md` (línea 32) dice «Dirección de ataque/parada: WASD o stick izquierdo», mientras §1.1-7 de este documento fija que en teclado WASD solo mueve y la dirección la marca el ratón.
 
 ---
 

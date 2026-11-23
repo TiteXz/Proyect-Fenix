@@ -142,7 +142,7 @@ Nota: el orquestador recomendó combinar 1 + 4; el usuario aún no ha decidido.
 11. **Lengua rúnica:** ¿«Valdera» y los nombres de los Tejedores siguen sus raíces o son castellano/neutros?
 
 ### 10.10 Pendiente de sincronizar
-- `contexto/CONTEXTO_PROYECTO.md` no nombra los asentamientos (Aldea del Vado, Puerto Gaviota, Caleta, Oasis de
+- ✔ aplicado (2026-11-23) en `contexto/CONTEXTO_PROYECTO.md` (nombres de asentamientos, Bronsil/Valdera). Original: `contexto/CONTEXTO_PROYECTO.md` no nombra los asentamientos (Aldea del Vado, Puerto Gaviota, Caleta, Oasis de
   Arenal, Refugio del lago) ni Bronsil/Valdera; solo habla de «6–7 asentamientos». Añadir los nombres allí.
 - `CONTEXTO_PROYECTO.md` deja fuera del MVP «misiones/diálogos complejos» (máx. 1–2 encargos simples): la trama
   principal, los NPCs que «reconocen» al protagonista y la escena final necesitan decidir **qué parte del lore entra en

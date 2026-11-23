@@ -9,7 +9,7 @@ Juego de acción 3D de fantasía medieval para navegador, en un **mundo abierto 
 El mundo se llama **Bronsil** y la región jugable, **Valdera** (lore en `docs/GDD.md` §10).
 El jugador explora a pie y a caballo un reino de fantasía vivo y luminoso y combina **espada
 y magia** contra enemigos de mundo y, en los **dungeons** (instancias de oleadas y jefe), contra
-hordas organizadas. La gracia está en cambiar de arma y de hechizo en pleno combate para aprovechar
+hordas organizadas. La gracia está en leer la dirección de cada golpe y alternar espada y hechizos en pleno combate para aprovechar
 las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 
 ## Pilares de diseño
@@ -29,7 +29,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - Navegadores de escritorio recientes (Chrome/Edge/Firefox/Safari). Móvil fuera del MVP. **[SUPUESTO]**
 - Controles: teclado y ratón; mando (Gamepad API) en el hito de pulido.
   - WASD mover · Ratón cámara · Clic izq. ataque · Clic der. bloquear · Espacio esquivar
-  - Dirección de ataque/parada: WASD o stick izquierdo (detalle en `docs/GUIA_UI.md`)
+  - Dirección de ataque/parada: ratón en teclado (WASD solo mueve) o stick izquierdo en mando (detalle en `docs/COMBATE.md` §1.1 y `docs/GUIA_UI.md` §5.1)
   - Q/E/R lanzar hechizo · Rueda ciclar hechizos · Esc pausa
   - F interactuar (entrar al dungeon, recoger) · F mantenida montar/desmontar caballo **[SUPUESTO]** (E queda para hechizos)
   - A caballo: Shift galopa. El prototipo ya valida montar/galopar (`prototipo/README.md`).
