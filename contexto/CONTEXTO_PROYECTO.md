@@ -70,7 +70,9 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   | Lanza de escarcha | Hielo | Ralentiza; si se acumula, congela (el siguiente golpe de espada hace daño extra) |
   | Destello sagrado | Luz | Cura al jugador y hace daño extra a no-muertos |
 - **Interacciones elementales:** fuego derrite la congelación (gran daño); los esqueletos son débiles a la luz
-  (el resto de reglas de daño del jugador en `docs/COMBATE.md` §1).
+  y a lo **contundente** (vía Tierra y el escudo: Embestida, golpe de escudo tras parada). Escudos y flechas según la
+  configuración: **EE** bloquea de frente flechas (−80 %) y hechizos (−50 %); **EP** no los bloquea, solo desvía flechas
+  con la hoja (L1 ≤ 150 ms antes, de frente) y esquiva el resto (`docs/COMBATE.md` §1.1; el resto de reglas en §1).
 - **Enemigos (MVP)** **[SUPUESTO]**: esqueleto guerrero (cuerpo a cuerpo), goblin arquero (a distancia,
   huye si te acercas), cultista mago (lanza hechizos y crea escudos) y un jefe: caballero no-muerto
   con dos fases. En el mundo aparecen en grupos pequeños (patrullas, campamentos); el jefe solo en el dungeon.
@@ -93,8 +95,9 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
     bosque, montaña y desierto del mar; **monte nevado** con macizos escarpados y un **lago glaciar**; 4–5 **islas** a > 1 km de la costa;
     **desierto ampliado** con **oasis** y una **zona rocosa** de mesetas y cañones con la **Ciudad de la Roca** (maravilla):
     ciudad excavada en un macizo, con varios niveles en terrazas alrededor de un **gran pozo central** que los conecta
-    (puentes, rampas y torre central) y entrada por un desfiladero; caminos entre asentamientos; 6–7 asentamientos y
-    50–70 puntos de interés **[SUPUESTO]**. Terreno y vegetación base **procedurales
+    (puentes, rampas y torre central) y entrada por un desfiladero; caminos entre asentamientos; 6–7 asentamientos
+    (Aldea del Vado, Puerto Gaviota, Caleta, Oasis de Arenal, Refugio del lago, la Ciudad de la Roca y, si cabe, uno más;
+    nombres y papel en `docs/GDD.md` §10.1) y 50–70 puntos de interés **[SUPUESTO]**. Terreno y vegetación base **procedurales
     con semilla** (heightmap + reglas de colocación); asentamientos, POI y dungeon colocados a mano.
   - Recorrido a pie y a caballo; enemigos de mundo; streaming por celdas; clima/niebla fijos por zona.
   - **Dungeon "Patio del castillo en ruinas"**: 5 oleadas + jefe, como instancia cargada desde el mundo.
@@ -163,6 +166,13 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - Sin backend: progreso, estado del mundo y ajustes en `localStorage`.
 - Todos los números de combate (daño, costes, tiempos de recarga, resistencias) y de dungeons/oleadas
   van en `juego/src/config/`; los presupuestos de rendimiento, en un único fichero de config verificable.
+
+## Preguntas abiertas (decide el usuario; detalle en `docs/GDD.md` §10.10)
+- **Lore en el MVP:** qué parte de la trama (NPCs que «reconocen» al protagonista, escena final) entra y cuál pasa a fase 2/3.
+- **Post-final:** estado persistente tras liberar al Guardián y si el dungeon se rejuega (GDD §10.9 p. 10).
+- **Mercaderes:** uno fijo (supuesto actual) o uno por asentamiento (GDD §10.11 D-6).
+- **Códice elemental** (COMBATE, XP) vs **entradas de lore**: ¿mismo apartado o distinto?
+- **Chamán goblin:** figura solo en COMBATE §2.14 (fase 2), no en el MVP **[SUPUESTO: queda fuera]**; ficha pendiente (COMBATE p. 14).
 
 ## Glosario
 - **Parry (parada perfecta):** stick hacia el golpe + L1 a tiempo (ventana ≈ 0,2 s); aturde al enemigo. **Bloqueo normal:** con el stick ya mantenido.
