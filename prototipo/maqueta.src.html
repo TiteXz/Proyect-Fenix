@@ -67,7 +67,7 @@ body {
 .btn { padding: 6px 12px; border-radius: 3px; border: 1px solid var(--edge-strong); background: rgba(16,14,10,.8); font-weight: 700; font-size: 14px; color: var(--parch); }
 .btn:hover { background: rgba(40,34,24,.92); }
 #mode { border-color: rgba(232,196,106,.55); color: var(--holy); }
-#qual { font-size: 12px; padding: 4px 10px; color: var(--parch-dim); }
+#qual, #scn { font-size: 12px; padding: 4px 10px; color: var(--parch-dim); }
 .btn:focus-visible, .slot:focus-visible, .tbtn:focus-visible { outline: 2px solid var(--holy); outline-offset: 2px; }
 .tag { font-size: 11px; color: var(--parch-dim); letter-spacing: .06em; text-transform: uppercase; text-align: right; max-width: 170px; line-height: 1.35; }
 
@@ -255,6 +255,7 @@ body.touchctl #pauseBtn { width: 40px; }
         <button id="mode" class="btn" type="button" data-testid="mode-button">Jugar yo</button>
       </div>
       <button id="qual" class="btn" type="button">Calidad: Alta</button>
+      <button id="scn" class="btn" type="button" data-testid="scene-button" aria-label="Cambiar de escena (Patio / Aldea)">Escena: Patio</button>
       <div class="tag" id="modeTag">Modo demo · juega solo</div>
     </div>
   </div>
@@ -328,6 +329,7 @@ body.touchctl #pauseBtn { width: 40px; }
         <li><button class="pm-item" type="button" data-testid="pause-grimorio" id="pmGrim">Grimorio</button></li>
         <li><button class="pm-item" type="button" data-testid="pause-controls" id="pmCtl">Controles</button></li>
         <li><button class="pm-item" type="button" data-testid="pause-quality" id="pmQual">Calidad <small id="pmQualV">Alta</small></button></li>
+        <li><button class="pm-item" type="button" data-testid="pause-scene" id="pmScn">Escena <small id="pmScnV">Patio</small></button></li>
         <li><button class="pm-item" type="button" data-testid="pause-demo" id="pmDemo">Salir a la demo</button></li>
       </ul>
     </div>
@@ -369,9 +371,11 @@ body.touchctl #pauseBtn { width: 40px; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/RGBELoader.js"></script>
 <script>/*__VFX__*/</script>
 <script>/*__RAYOS__*/</script>
 <script>/*__MAGIA__*/</script>
+<script>/*__ALDEA__*/</script>
 <script>
 (() => {
 const THREE = window.THREE;
@@ -385,6 +389,8 @@ try {
 
 /* Texturas CC0 de Poly Haven (cobblestone_floor_08, castle_brick_07, medieval_blocks_02, metal_plate_02, rusty_metal_02), incrustadas en WebP */
 const TEX = /*__TEX__*/{};
+/* Assets de la escena exterior (Aldea del Vado): nombre de fichero → data URI (webp) o base64 (glb, hdr). Los incrusta build.py con el argumento «exterior» */
+const EXT = /*__EXTERIOR__*/{};
 
 const V3 = THREE.Vector3;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -409,17 +415,17 @@ composer.addPass(new THREE.RenderPass(scene, camera));
 const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(256, 256), 0.6, 0.55, 0.92);
 composer.addPass(bloom);
 const grade = new THREE.ShaderPass({
-  uniforms: { tDiffuse: { value: null }, time: { value: 0 }, exposure: { value: 1.15 }, vig: { value: 0.55 }, hurt: { value: 0 } },
+  uniforms: { tDiffuse: { value: null }, time: { value: 0 }, exposure: { value: 1.15 }, vig: { value: 0.55 }, hurt: { value: 0 }, sat: { value: 0.78 }, shT: { value: new THREE.Vector3(0.84, 0.94, 1.14) }, liT: { value: new THREE.Vector3(1.07, 1.0, 0.9) } },
   vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
   fragmentShader: `
-    uniform sampler2D tDiffuse; uniform float time, exposure, vig, hurt; varying vec2 vUv;
+    uniform sampler2D tDiffuse; uniform float time, exposure, vig, hurt, sat; uniform vec3 shT, liT; varying vec2 vUv;
     vec3 aces(vec3 x){ const float a=2.51, b=0.03, c=2.43, d=0.59, e=0.14; return clamp((x*(a*x+b))/(x*(c*x+d)+e), 0.0, 1.0); }
     float rnd(vec2 c){ return fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453); }
     void main(){
       vec3 c = texture2D(tDiffuse, vUv).rgb * exposure;
       float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
-      c = mix(vec3(l), c, 0.78);
-      c *= mix(vec3(0.84, 0.94, 1.14), vec3(1.07, 1.0, 0.9), smoothstep(0.0, 0.55, l));
+      c = mix(vec3(l), c, sat);
+      c *= mix(shT, liT, smoothstep(0.0, 0.55, l));
       c = aces(c);
       vec2 q = vUv - 0.5; float v = smoothstep(0.9, 0.22, length(q * vec2(1.15, 1.0)));
       c *= mix(1.0 - vig, 1.0, v);
@@ -432,9 +438,9 @@ const grade = new THREE.ShaderPass({
 composer.addPass(grade);
 
 const QUAL = {
-  baja: { name: 'Baja', pr: 1, bloom: false, shadow: 1024, soft: false, mist: false },
-  media: { name: 'Media', pr: 1.25, bloom: true, shadow: 1024, soft: true, mist: true },
-  alta: { name: 'Alta', pr: 1.75, bloom: true, shadow: 2048, soft: true, mist: true }
+  baja: { name: 'Baja', pr: 1, bloom: false, shadow: 1024, soft: false, mist: false, ext: { sombra: 1024, sombraFar: 1024, hierba: 0.25, r1: 8, r2: 30, lod0: 12, viento: false, flores: 0.3 } },
+  media: { name: 'Media', pr: 1.25, bloom: true, shadow: 1024, soft: true, mist: true, ext: { sombra: 2048, sombraFar: 1024, hierba: 0.6, r1: 14, r2: 44, lod0: 18, viento: true, flores: 0.7 } },
+  alta: { name: 'Alta', pr: 1.75, bloom: true, shadow: 2048, soft: true, mist: true, ext: { sombra: 4096, sombraFar: 2048, hierba: 1, r1: 20, r2: 56, lod0: 25, viento: true, flores: 1 } }   // ext: parámetros de la escena de la aldea (sombras, densidad de hierba, LOD)
 };
 let qual = coarse ? 'media' : 'alta';
 function resize() {
@@ -601,7 +607,8 @@ scene.add(moonL, moonL.target);
 const fillL = new THREE.PointLight(0x9fb0d8, 0.9, 7, 2); scene.add(fillL);
 
 /* ---------- escenario ---------- */
-const ARENA = 14.2;
+const SCN = { id: 'patio', cur: null, loading: false, camO: null, renderReq: true, saved: null, ready: Promise.resolve() };   // escena activa: patio (por defecto) o aldea
+let ARENA = 14.2;
 /* ---------- colisiones en el plano XZ ----------
    Cuerpos (jugador, enemigos, caballo) = círculos/cápsulas; props = cápsulas (columnas, rocas, fustes caídos) y cajas
    alineadas (basas). Resolución posicional con empuje mínimo y número fijo de pasadas: no depende del dt ni asigna memoria.
@@ -641,6 +648,7 @@ function collideStatic(pos, r, gx, gz) {
       }
     }
   }
+  if (SCN.cur) SCN.cur.limite(pos, r);   // aldea: límites del mapa
   const hl = Math.hypot(pos.x, pos.z), lim = ARENA - r * 0.5;   // muralla
   if (hl > lim) { pos.x *= lim / hl; pos.z *= lim / hl; tot += hl - lim; }
   return tot;
@@ -915,6 +923,7 @@ for (let i = 0; i < 6; i++) {
   m.rotation.x = -Math.PI / 2; m.position.y = 0.12 + i * 0.16; m.renderOrder = 2; scene.add(m);
   mists.push({ m, t, sx: R(-0.006, 0.006), sy: R(-0.006, 0.006) });
 }
+const PATIO_NODES = scene.children.slice();   // todo lo estático del patio (cielo, luces, muralla, antorchas, niebla…): se oculta al entrar en la aldea
 
 /* ---------- partículas (aditivas para fuego/magia, normales para humo y polvo) ---------- */
 function makeParticles(max, blending, size) {
@@ -1408,7 +1417,7 @@ function updateHorse(dt, intent) {
   else if (sp < 5.6) playHorse('caballo_trote', Math.max(0.6, sp / 4.2));
   else playHorse(HZ.acts.caballo_galope ? 'caballo_galope' : 'caballo_trote', Math.min(1.9, sp / 4.6));
   HZ.mixer.update(dt);
-  if (sp > 3) { HZ.dustT -= dt; if (HZ.dustT <= 0) { HZ.dustT = 0.06; smoke(tmp.copy(HZ.pos).setY(0.1).addScaledVector(tmp2.set(Math.sin(HZ.yaw), 0, Math.cos(HZ.yaw)), rr(-1, 0.8)), 1, 0x3a352e, { spd: 1, up: 0.4, life: 1.1, grav: 0.1, spread: 0.4 }); } }
+  if (sp > 3) { HZ.dustT -= dt; if (HZ.dustT <= 0) { HZ.dustT = 0.06; smoke(tmp.copy(HZ.pos).setY(HZ.pos.y + 0.1).addScaledVector(tmp2.set(Math.sin(HZ.yaw), 0, Math.cos(HZ.yaw)), rr(-1, 0.8)), 1, 0x3a352e, { spd: 1, up: 0.4, life: 1.1, grav: 0.1, spread: 0.4 }); } }
 }
 function seatRider(dt) {   // pega la pelvis del caballero al asiento de la silla
   if (!GK || !HZ || !HZ.seat || !GK.pelvis) return;
@@ -2615,11 +2624,12 @@ function updateCamera(dt) {
   } else tmp3.set(0, 0, 0);
   lockOff.lerp(tmp3, 1 - Math.exp(-dt * 4));
   const cp = Math.cos(camPitch), right = tmp2.set(-Math.cos(camYaw), 0, Math.sin(camYaw));
-  camLook.copy(P.pos).setY(1.5 + camMount * 1.0).addScaledVector(right, portrait ? 0 : -0.55).add(lockOff);
+  camLook.copy(P.pos).setY((SCN.cur ? P.pos.y : 0) + 1.5 + camMount * 1.0).addScaledVector(right, portrait ? 0 : -0.55).add(lockOff);
   const want = tmp.set(Math.sin(camYaw) * cp * dist, Math.sin(camPitch) * dist, Math.cos(camYaw) * cp * dist).add(camLook);
-  const hl = Math.hypot(want.x, want.z); if (hl > 15) { want.x *= 15 / hl; want.z *= 15 / hl; }
+  const hl = Math.hypot(want.x, want.z); if (hl > 15 && !SCN.cur) { want.x *= 15 / hl; want.z *= 15 / hl; }
   camAvoid(camLook, want);
   camPos.lerp(want, 1 - Math.exp(-dt * 7));
+  if (SCN.cur) { const gh = SCN.cur.heightAt(camPos.x, camPos.z) + 0.45; if (camPos.y < gh) camPos.y = gh; }   // la cámara no entra en el terreno
   camera.position.copy(camPos);
   if (shakeAmt > 0) { camera.position.x += rr(-1, 1) * shakeAmt * 0.25; camera.position.y += rr(-1, 1) * shakeAmt * 0.25; shakeAmt = Math.max(0, shakeAmt - dt * 2.2); }
   camera.lookAt(camLook);
@@ -2842,6 +2852,7 @@ function startWave(i) {
   showBanner(last ? 'El jefe despierta' : 'Oleada ' + (i + 1), last ? 'Caballero No-muerto · dos fases' : enemyList(WAVES[i]), 2.4);
 }
 function updateWaves(dt) {
+  if (SCN.cur) return;
   if (wState === 'pre') { wTimer -= dt; if (wTimer <= 0) startWave(0); return; }
   if (wState === 'fight') {
     if (queue.length) {
@@ -2861,6 +2872,7 @@ function updateWaves(dt) {
   else if (wState === 'win') { wTimer -= dt; if (wTimer <= 0) resetRun(); }
 }
 function resetRun() {
+  if (SCN.cur) { escenaColocar(); return; }
   if (P.mounted) toggleMount();
   if (HZ) { HZ.pos.copy(HORSE_SPOT); HZ.yaw = HORSE_YAW; HZ.speed = 0; }
   if (VFX && P.castFX) { VFX.castCancel(P.castFX); P.castFX = null; }
@@ -3076,7 +3088,7 @@ function autoMagia(t, dist, alive) {
 }
 function autopilot(dt) {
   const it = { move: new V3(), attack: false, spell: null, weapon: null, dodge: false };
-  if (P.down) return it;
+  if (P.down || SCN.cur) return it;   // en la aldea no hay enemigos: la demo no hace nada
   const alive = enemies.filter((e) => !e.dead && e.spawnT <= 0);
   if (!alive.length) { tmp.set(-P.pos.x, 0, -P.pos.z); if (tmp.length() > 2.5) it.move.copy(tmp.normalize()).multiplyScalar(0.6); if (P.weapon !== 'espada') it.weapon = 'espada'; return it; }
   AP.prefT -= dt; if (AP.prefT <= 0) { AP.prefT = rr(5, 9); AP.prefHammer = !AP.prefHammer; }
@@ -3152,7 +3164,8 @@ function setQual(q) {
   renderer.shadowMap.type = Q.soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
   moonL.shadow.mapSize.set(Q.shadow, Q.shadow);
   if (moonL.shadow.map) { moonL.shadow.map.dispose(); moonL.shadow.map = null; }
-  for (const m of mists) m.m.visible = Q.mist;
+  for (const m of mists) m.m.visible = Q.mist && !SCN.cur;
+  if (SCN.cur) SCN.cur.setQuality(Q.ext);   // aldea: sombras, densidad de hierba, LOD de árboles
   scene.traverse((o) => { if (o.material) [].concat(o.material).forEach((mm) => { mm.needsUpdate = true; }); });
   resize();
 }
@@ -3392,7 +3405,7 @@ function pause(silent) {
   keys.clear(); held.mouseBlock = held.padBlock = held.touchBlock = held.padSprint = false; atkRelease(true);
   MOUNT.holding = false; MOUNT.t = 0; joy.set(0, 0, 0); drag = null;
   pending.attack = false; pending.spell = null; pending.weapon = null; pending.dodge = false; pending.skill = false;   // nada se dispara al reanudar
-  $('#pmWhere').textContent = $('#wave').firstChild ? $('#wave').firstChild.textContent + ' · Patio del castillo' : 'Patio del castillo en ruinas';
+  $('#pmWhere').textContent = SCN.cur ? 'Camino de la Aldea del Vado' : $('#wave').firstChild ? $('#wave').firstChild.textContent + ' · Patio del castillo' : 'Patio del castillo en ruinas';
   $('#pmQualV').textContent = QUAL[qual].name;
   $('#pmDemo').hidden = mode !== 'control';
   pmEl.hidden = !!silent; if (!silent) pmShow('main');
@@ -3610,6 +3623,11 @@ function updateHud(dt) {
   for (const b of spellBtns) { const sp = SPELL[MG.slotKey(+b.dataset.s)]; b.style.setProperty('--cd', sp ? (P.cds[MG.slotKey(+b.dataset.s)] / sp.cd).toFixed(3) : 0); b.classList.toggle('dim', !sp || P.mp < sp.cost); }
   hudT -= dt; if (hudT > 0) return; hudT = 0.15;
   hud.coins.textContent = P.coins;
+  if (SCN.cur) {   // aldea: sin oleadas; texto fijo
+    if (!hud.wave.dataset.scn) { hud.wave.innerHTML = ''; hud.wave.append('Camino de la Aldea del Vado'); const sp = document.createElement('span'); sp.textContent = 'Tarde de verano · a pie o a caballo'; hud.wave.append(sp); hud.wave.dataset.scn = '1'; }
+    hud.boss.hidden = true; return;
+  }
+  if (hud.wave.dataset.scn) delete hud.wave.dataset.scn;
   const alive = enemies.filter((e) => !e.dead).length + queue.length, last = wave === WAVES.length - 1;
   const title = wave < 0 ? 'Preparándose…' : last ? 'Jefe final' : `Oleada ${wave + 1} / ${WAVES.length - 1}`;
   const sub = wState === 'shop' ? 'Tienda de mejoras' : wState === 'win' ? 'Victoria' : wave < 0 ? 'Patio del castillo en ruinas' : alive + (alive === 1 ? ' enemigo restante' : ' enemigos restantes');
@@ -3621,6 +3639,7 @@ function updateHud(dt) {
 /* ---------- bucle ---------- */
 let T = 0, last = performance.now();
 function updateWorld(dt) {
+  if (SCN.cur) { if (Math.random() < dt * 22) { tmp.set(P.pos.x + rr(-9, 9), P.pos.y + rr(0.3, 4), P.pos.z + rr(-9, 9)); ASH.emit(tmp, 1, 0xffe9c0, { spd: 0.12, up: 0.2, life: 7, grav: -0.03, hdr: 0.5, vx: 0.2 }); } return; }   // aldea: solo motas de polvo; el resto es del patio
   for (const t of torches) {
     const f = 0.82 + Math.sin(T * 13 + t.ph) * 0.08 + Math.sin(T * 23.7 + t.ph * 2) * 0.06 + Math.random() * 0.06;
     t.L.intensity = t.base * f;
@@ -3642,12 +3661,12 @@ function simStep(dt, rdt) {
   const intent = mode === 'demo' ? autopilot(dt) : manualIntent();
   updateHorse(dt, intent);
   updateMountUI(rdt);
-  updatePlayer(dt, intent); updateEnemies(dt); MG.update(dt); resolveCollisions(dt); updateLock(dt, rdt); updateProjs(dt); updateCoins(dt); updateWaves(dt);
+  updatePlayer(dt, intent); updateEnemies(dt); MG.update(dt); resolveCollisions(dt); groundSnap(); updateLock(dt, rdt); updateProjs(dt); updateCoins(dt); updateWaves(dt);
   updateFx(dt); updateFlashes(dt); updateWorld(rdt);
   FX.update(dt); SMOKE.update(dt, true); ASH.update(rdt, true);
   if (VFX) VFX.update(dt);
   updateRayos(dt);
-  updateCamera(rdt); dbgCamera(); updateNums(rdt); updateHud(rdt);
+  updateCamera(rdt); dbgCamera(); applyCamO(); if (SCN.cur) SCN.cur.update(rdt, T); updateNums(rdt); updateHud(rdt);
   if (bannerT > 0) { bannerT -= rdt; if (bannerT <= 0) $('#banner').classList.remove('on'); }
   grade.uniforms.time.value = T;
 }
@@ -3658,11 +3677,14 @@ function frame(now) {
   if (!TEST) pollPad(rdt);
   if (toastT > 0) { toastT -= rdt; if (toastT <= 0) $('#toast').classList.remove('on'); }
   if (GRIM.open) grAnim();
+  if (SCN.cur && TEST && !SCN.renderReq) return;   // aldea en modo de prueba: solo se renderiza cuando la prueba lo pide (step / render)
+  SCN.renderReq = false; applyCamO();
   if (PAUSE.on) { composer.render(0); return; }   // simulación, VFX y temporizadores congelados; T no avanza
   if (!TEST) simStep(dt, rdt);
   composer.render(rdt);
 }
 function stepN(n, dt = 1 / 60) {                   // avanza la simulación a paso fijo (para pruebas, con o sin ?test=1)
+  SCN.renderReq = true;
   for (let i = 0; i < n; i++) {
     pollPad(dt);
     if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('#toast').classList.remove('on'); }
@@ -3676,6 +3698,13 @@ function stepN(n, dt = 1 / 60) {                   // avanza la simulación a pa
 window.__GAME__ = { P, SPELL, WEAP, TEST, step: stepN, get GK() { return GK; }, get VFX() { return VFX; }, castSpell, attack, setMode, get device() { return device; }, PAD, SKILL, get HZ() { return HZ; }, MOUNT, toggleMount, get RAYOS() { return RAYOS; }, get paused() { return PAUSE.on; }, pause, resume, enemies, get target() { return lockable(LOCK.t) ? LOCK.t : null; }, lockOn, cycleTarget, unlock, LOCK, lockMark, get T() { return T; }, get mode() { return mode; },
   KB, kbStats: () => ({ vMax1s: Math.max(KBS.cur, KBS.prev), yMax1s: Math.max(KBS.curY, KBS.prevY), vMaxAll: KBS.all, yMaxAll: KBS.allY, impulses: KBS.n }) };   // estado legible para pruebas
 Object.defineProperties(window.__GAME__, { colliders: { get: () => COLL.segs.length + COLL.boxes.length + 1 + (HZ ? 1 : 0) + 1 + enemies.filter(solidEnemy).length, enumerable: true }, COLL: { value: COLL }, DBG: { value: DBG }, showColliders: { value: showColliders }, collCheck: { value: collCheck }, camera: { value: camera }, renderer: { value: renderer } });   // colisiones y depuración
+Object.defineProperties(window.__GAME__, {   // escena exterior (aldea): estado y utilidades para pruebas
+  scene: { value: scene }, setEscena: { value: setEscena }, escenaListo: { get: () => SCN.ready },
+  escena: { get: () => ({ id: SCN.id, cargando: SCN.loading, stats: SCN.cur ? SCN.cur.stats : null, trisMata: SCN.cur ? SCN.cur.stats.trisMata : null }) },
+  aldea: { get: () => SCN.cur }, colocar: { value: escenaColocar },
+  camara: { value: (o) => { SCN.camO = o || null; if (!o) { camera.fov = innerWidth < innerHeight ? 64 : 48; camera.updateProjectionMatrix(); } } },
+  render: { value: () => { applyCamO(); if (SCN.cur) SCN.cur.update(0, T, true); SCN.renderReq = true; } }, bloom: { value: bloom }, grade: { value: grade }, composer: { value: composer }
+});
 window.__GAME__.MAGIA = {
   get ranuras() { return MG.ranuras; }, get pagina() { return MG.pagina; }, set pagina(v) { MG.pagina = v ? 1 : 0; MG.hudSlots(); },
   get codice() { return MG.codice; }, get semilla() { return MG.semilla; }, set semilla(v) { MG.semilla = v >>> 0; simRng = mulberry32(MG.semilla); },
@@ -3693,10 +3722,74 @@ window.__GAME__.MAGIA = {
   limpiarNums, dano: (e, v, c, tag) => MG.dano(e, v, c, tag),
   get lights() { return flashes.length; }
 };
+
+/* ---------- selección de escena: Patio (por defecto) / Aldea del Vado (?escena=aldea) ----------
+   La aldea la crea window.FenixAldea (exterior/src/aldea.js, incrustado con build.py … exterior). Al cambiar se hace dispose() completo
+   de lo que creó (geometrías, materiales, texturas y render targets); el patio solo se oculta. */
+const SCN_LABEL = { patio: 'Patio', aldea: 'Aldea' };
+const hasAldea = () => !!(window.FenixAldea && Object.keys(EXT).length);
+function escenaLabels() { $('#scn').textContent = 'Escena: ' + SCN_LABEL[SCN.id]; $('#pmScnV').textContent = SCN_LABEL[SCN.id]; }
+function groundSnap() { if (!SCN.cur) return; if (HZ && !SCN.hzOk) { SCN.hzOk = true; escenaColocar(); }   // el caballo se carga de forma asíncrona: se coloca en cuanto existe
+  P.pos.y = SCN.cur.heightAt(P.pos.x, P.pos.z); if (HZ) HZ.pos.y = SCN.cur.heightAt(HZ.pos.x, HZ.pos.z); }   // el terreno manda la altura (sin saltos ni gravedad en la maqueta)
+function applyCamO() {
+  const o = SCN.camO; if (!o) return;
+  camera.position.set(o.x, o.y, o.z); camera.lookAt(o.lx, o.ly, o.lz);
+  if (camera.fov !== o.fov) { camera.fov = o.fov; camera.updateProjectionMatrix(); }
+}
+function escenaColocar(s = 6, side = 0.8) {   // jugador y caballo sobre el camino, mirando a la aldea
+  const A = SCN.cur; if (!A) return;
+  if (P.mounted) toggleMount();
+  const a = A.spawnAt(s, side), h = A.spawnAt(s + 0.5, side + 2.6);
+  P.pos.set(a.x, a.y, a.z); P.yaw = a.yaw; K.g.rotation.y = a.yaw; K.g.rotation.x = 0; P.speed = 0;
+  if (HZ) { HZ.pos.set(h.x, h.y, h.z); HZ.yaw = h.yaw; HZ.g.rotation.y = h.yaw; HZ.speed = 0; }
+  camYaw = a.yaw + Math.PI; camPos.set(a.x + Math.sin(camYaw) * 5.2, a.y + 3.2, a.z + Math.cos(camYaw) * 5.2);
+}
+async function setEscena(id) {
+  if (SCN.loading || !SCN_LABEL[id] || (id === SCN.id && (id === 'patio' || SCN.cur))) return SCN.ready;
+  SCN.loading = true;
+  const ld = $('#loading'), t0 = performance.now();
+  SCN.ready = (async () => {
+    try {
+      if (id === 'aldea') {
+        if (!hasAldea()) { toast('La aldea no está incluida en esta compilación (build.py … exterior)', 4); return; }
+        ld.textContent = 'Cargando la aldea…'; ld.classList.remove('off');
+        for (const e of [...enemies]) removeEnemy(e);
+        queue = []; wState = 'idle'; LOCK.t = null;
+        SCN.saved = { segs: COLL.segs, boxes: COLL.boxes, cams: COLL.cams, arena: ARENA, exposure: grade.uniforms.exposure.value, vig: grade.uniforms.vig.value, bloom: [bloom.strength, bloom.radius, bloom.threshold] };
+        COLL.segs = []; COLL.boxes = []; COLL.cams = [];
+        const A = window.FenixAldea({ THREE, scene, camera, renderer, EXT, aniso, b64buf, addSeg, smoke: (p, n, c, o) => smoke(p, n, c, o) });
+        await A.cargar();
+        PATIO_NODES.forEach((n) => { n.visible = false; });
+        SCN.cur = A; SCN.id = 'aldea'; ARENA = 1e6; SCN.hzOk = false;
+        grade.uniforms.exposure.value = 0.95; grade.uniforms.vig.value = 0.3; grade.uniforms.sat.value = 0.93; grade.uniforms.shT.value.set(0.95, 1.0, 1.07); grade.uniforms.liT.value.set(1.04, 1.0, 0.93);
+        bloom.strength = 0.25; bloom.radius = 0.5; bloom.threshold = 0.92;
+        escenaColocar(); setQual(qual); groundSnap();
+        { const u = new URL(location.href); u.searchParams.set('escena', 'aldea'); history.replaceState(null, '', u); }
+      } else {
+        const A = SCN.cur, sv = SCN.saved;
+        if (P.mounted) toggleMount();
+        SCN.cur = null; SCN.id = 'patio'; A.dispose();
+        COLL.segs = sv.segs; COLL.boxes = sv.boxes; COLL.cams = sv.cams; ARENA = sv.arena;
+        grade.uniforms.exposure.value = sv.exposure; grade.uniforms.vig.value = sv.vig; grade.uniforms.sat.value = 0.78; grade.uniforms.shT.value.set(0.84, 0.94, 1.14); grade.uniforms.liT.value.set(1.07, 1.0, 0.9);
+        bloom.strength = sv.bloom[0]; bloom.radius = sv.bloom[1]; bloom.threshold = sv.bloom[2];
+        PATIO_NODES.forEach((n) => { n.visible = true; });
+        SCN.camO = null; camera.fov = innerWidth < innerHeight ? 64 : 48; camera.updateProjectionMatrix();
+        resetRun(); setQual(qual);
+        { const u = new URL(location.href); u.searchParams.delete('escena'); history.replaceState(null, '', u); }
+      }
+    } catch (err) { console.error('Escena', err); SCN.cur = SCN.cur || null; }
+    finally { SCN.loading = false; escenaLabels(); SCN.renderReq = true; setTimeout(() => ld.classList.add('off'), Math.max(0, 500 - (performance.now() - t0))); ld.textContent = 'Cargando el patio…'; }
+  })();
+  return SCN.ready;
+}
+if (!hasAldea()) { $('#scn').hidden = true; $('#pmScn').closest('li').hidden = true; }
+$('#scn').addEventListener('click', () => setEscena(SCN.id === 'patio' ? 'aldea' : 'patio'));
+$('#pmScn').addEventListener('click', () => setEscena(SCN.id === 'patio' ? 'aldea' : 'patio'));
 markSel();
 setMode('demo');
 setQual(qual);
 camPos.set(0, 3.5, -7);
+if (new URLSearchParams(location.search).get('escena') === 'aldea') setEscena('aldea').then(() => { if (SCN.cur) setMode('control'); });
 requestAnimationFrame(frame);
 setTimeout(() => $('#loading').classList.add('off'), 600);
 })();

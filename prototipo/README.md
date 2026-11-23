@@ -31,6 +31,8 @@ Si cambias `maqueta.src.html`, vuelve a generar `maqueta.html` con el comando de
 | `build.py` | Genera el HTML final incrustando texturas, el caballero GLB, `vfx.js` y `magia/magia.js` |
 | `pruebas/*.js` | Pruebas con Playwright: carga sin errores, vista de frente, combate (fuego, luz, martillo, correr atacando), hechizo de luz; `magia.js` verifica los criterios MQ-01..MQ-14 y saca las capturas `vfx/capturas/magia_*.webp` (`node prototipo/pruebas/magia.js prototipo/dist prototipo/.three/package [dirCapturas] [mq\|cap]`) |
 | `capturas/` | Capturas de referencia (render en Blender, poses, combate) |
+| `exterior/` | Escena exterior «Camino de la Aldea del Vado» (ver abajo): `BRIEF.md` (director-arte), `assets/` (CC0 de Poly Haven, `CREDITOS.md`), `src/{terreno,edificios,aldea}.js` (código de la escena), `capturas/*.webp` |
+| `pruebas/exterior.js`, `pruebas/terreno.test.js` | Prueba de la aldea (carga, renderer.info por preset, capturas C1/C2/C3 y jinete, dispose) y prueba en Node del modelo de terreno |
 
 Modelos que incrusta la maqueta (detalle y licencias en `juego/public/assets/CREDITOS.md`):
 | Modelo | Fichero | Cómo se genera |
@@ -51,6 +53,53 @@ python3 prototipo/build.py prototipo/maqueta.src.html prototipo/texturas prototi
 ```
 El 5º argumento `vfx` incrusta `vfx/vfx.js`; sin él se usan los efectos básicos de respaldo. Sin `katana=` y
 `caballo=` la maqueta sale sin la katana ni el caballo.
+
+**Con la escena exterior (Aldea del Vado)**: añade el argumento `exterior` (o `exterior=<dir_assets>`, por defecto `prototipo/exterior/assets`).
+Incrusta los assets como mapa `nombre de fichero → base64` en el marcador `/*__EXTERIOR__*/` (los `.webp` como data URI) y el código de
+`exterior/src/{terreno,edificios,aldea}.js` en `/*__ALDEA__*/`. `maqueta.html` pasa de ≈ 16 MB a ≈ 40 MB (+24,5 MB, brief: ≤ +30 MB):
+```bash
+python3 prototipo/build.py prototipo/maqueta.src.html prototipo/texturas prototipo/maqueta.html \
+  juego/public/assets/personajes/caballero_soldado.glb vfx \
+  katana=juego/public/assets/armas/katana.glb caballo=juego/public/assets/animales/caballo_pinto.glb exterior
+mkdir -p prototipo/dist && cp prototipo/maqueta.html prototipo/dist/
+```
+Sin `exterior` el comando anterior sigue funcionando igual y la maqueta sale sin la opción «Aldea» (el botón se oculta).
+
+## Escena exterior: Camino de la Aldea del Vado
+Por defecto la maqueta abre el **patio** (las pruebas `pruebas/*.js` dependen de él). Para ver la aldea: `?escena=aldea` en la URL, el botón
+**Escena: Patio / Aldea** del HUD o la opción **Escena** del menú de pausa. Al cambiar se hace `dispose()` completo de lo que creó la aldea
+(geometrías, materiales, texturas, render targets del PMREM y mapas de sombra); el patio solo se oculta (`PATIO_NODES`) y se restaura tal cual
+(luces, niebla, entorno, etalonaje y colisiones). En la aldea no hay oleadas ni enemigos: se anda, se monta y se galopa por el camino.
+`__GAME__.escena`, `.aldea`, `.setEscena(id)`, `.escenaListo` (promesa), `.camara({x,y,z,lx,ly,lz,fov})`, `.render()`, `.colocar(s, lado)` sirven a las pruebas;
+en `?test=1` la aldea solo se renderiza con `step(n)` o `render()` (el render por software de las pruebas es lento).
+
+| Parte | Cómo está hecho |
+|---|---|
+| Terreno 120 × 120 m | Malla 160 × 160 con alturas de `exterior/src/terreno.js` (fBm con semilla, espolón de +14 m con la aldea en la meseta, camino Catmull-Rom de 7 puntos en S de 110 m, pendiente máx. del camino 14,6 %), máscara 1024² (R camino, G roca por pendiente, B barro, A oclusión de contacto) y shader por `onBeforeCompile`: hierba / camino / barro / roca triplanar con mezcla por altura (las piedras del camino asoman), anti-repetición por dos escalas y ruido |
+| Muros de piedra seca | ≈ 430 bloques irregulares (8 esquinas con ruido, remate achaflanado, textura `muro_piedra` con desplazamiento de UV por bloque), siguen el terreno, tramos caídos y huecos por ruido, base sucia (≥ 30 cm), musgo en la coronación y cara norte; colisión por cápsulas |
+| Aldea | 5 edificios con primitivas biseladas (`exterior/src/edificios.js`): 2 casas de entramado (vigas extruidas con chaflán, arriostres, piso volado, tejado a dos aguas a 48-52° con alero y cumbrera, lucerna, chimenea), casa de piedra de cuatro aguas con sillares de esquina, almacén y torre cónica de 11 m; 6 materiales compartidos (madera, revoco, teja, piedra, hierro, cristal) = 6 draw calls; puerta de piedra, vallado con cuerda, barriles, cajón, cubo, farol |
+| Vegetación | 25 árboles (3 especies × LOD0/LOD1 instanciados, viento por `onBeforeCompile`), arbustos y helechos, rocas con musgo y guijarros dispersos por máscara con semilla, módulos de `talud_roca_*` en la ladera, **hierba**: ≈ 122 k matas (3 mechones, 36 tris; LOD de 12 tris) en `InstancedMesh` por chunks de 24 m con tinte por `instanceColor` (el atlas sale oliva; se calcula `paleta / color medio del atlas`), viento en el vertex shader, normales hacia arriba; **flores** moradas/naranjas/blancas en parches con ruido, desaturadas y medio ocultas en la hierba |
+| Luz | Sol 30° de elevación y 235° de azimut (suroeste), dos `DirectionalLight` como cascadas (40 m ajustado al texel y 140 m actualizado cada 4 pasos; la suma de intensidades es la del sol, así que lejos las sombras quedan al ≈ 40 %), cielo `cielo_kloofendal_1k.hdr` girado con un shader de cielo propio (y recortado a ≤ 12 para que el PMREM no duplique el sol), PMREM como entorno, `HemisphereLight` de relleno, `FogExp2` de perspectiva aérea; etalonaje: `exposure 0,95`, bloom 0,25 |
+| Calidad | Los presets existentes (`QUAL.*.ext`) ajustan sombras (4096/2048/1024 cerca), densidad de hierba (100/60/25 %), radios de LOD, viento y flores |
+
+**Medida** (`renderer.info` de un render completo con las dos pasadas de sombra, encuadre C1, Chromium + SwiftShader, 1280 × 720; «escena» = sin jugador ni caballo, que el brief no cuenta):
+| Preset | Draw calls (escena / con jugador) | Triángulos (escena / con jugador) | Presupuesto del brief |
+|---|---|---|---|
+| Alta | 119 / 197 | 1,67 M / 1,89 M | ≈ 140 calls, ≤ 2,0 M |
+| Media | 112 / 190 | 1,13 M / 1,35 M | |
+| Baja | 108 / 186 | 0,79 M / 1,01 M | |
+
+No se mide FPS: el entorno de pruebas es render por CPU. Sin SAO/SSAO (la oclusión va pintada en la máscara del terreno, en las
+tonalidades de vértice de muros y edificios y en `instanceColor` de la hierba); sin impostores (los árboles lejanos usan LOD1).
+
+```bash
+bash prototipo/preparar_three.sh                         # three 0.147 local (prototipo/.three/package), si hace falta
+node prototipo/pruebas/terreno.test.js                   # modelo de terreno (Node, sin navegador)
+node prototipo/pruebas/exterior.js                       # aldea: 0 errores, renderer.info por preset, capturas en exterior/capturas/*.webp, galope, dispose
+```
+`exterior.js` usa `dist/maqueta.html` (generado con `exterior`), genera `C1_entrada`, `C2_muro`, `C3_aldea` (encuadres del brief a 1280 × 720, alturas relativas al
+terreno porque el camino sube 13 m) y `C4_jinete` (caballero a caballo en el camino) como `.webp` de calidad 80, y comprueba que patio → aldea → patio devuelve
+`geometries` y `textures` de `renderer.info.memory` al valor inicial.
 
 ## Probar sin acceso a CDN
 ```bash
