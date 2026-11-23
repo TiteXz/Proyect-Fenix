@@ -370,6 +370,10 @@ body.touchctl #pauseBtn { width: 40px; }
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/SAOShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/DepthLimitedBlurShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/UnpackDepthRGBAShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/SAOPass.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/RGBELoader.js"></script>
 <script>/*__VFX__*/</script>
@@ -412,6 +416,52 @@ const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 500);
 const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: isGL2 ? 4 : 0 });
 const composer = new THREE.EffectComposer(renderer, rt);
 composer.addPass(new THREE.RenderPass(scene, camera));
+/* Atmósfera de la aldea (solo Alta): oclusión ambiental SAO de r147 a media resolución + bruma baja en el valle, en una sola pasada.
+   Parte de THREE.SAOPass pero sin su render «beauty» extra: solo profundidad (override, sin sombras ni vegetación de alfa) → SAO → desenfoque → composición con bruma por altura. */
+const ATMO = { sun: new THREE.Vector3(0, 1, 0), hazeCol: new THREE.Vector3(0.8, 0.66, 0.5), hazeK: 0.016, hazeH: 0.42, hazeY: 1.5, hide: null, ao: 1 };
+class AtmoPass extends THREE.SAOPass {
+  constructor(scn, cam) {
+    super(scn, cam, false, false, new THREE.Vector2(256, 256));
+    this.needsSwap = true; this.enabled = false;
+    Object.assign(this.params, { saoBias: 0.18, saoIntensity: 1.1, saoScale: 420, saoKernelRadius: 22, saoBlurRadius: 6, saoBlurStdDev: 3, saoBlurDepthCutoff: 0.015 });
+    this.comp = new THREE.ShaderMaterial({
+      uniforms: { tDiffuse: { value: null }, tAO: { value: null }, tDepth: { value: null }, invP: { value: new THREE.Matrix4() }, camMW: { value: new THREE.Matrix4() }, sunD: { value: new THREE.Vector3() }, hazeCol: { value: new THREE.Vector3() }, hz: { value: new THREE.Vector3() }, aoK: { value: 1 } },
+      vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: `uniform sampler2D tDiffuse, tAO, tDepth; uniform mat4 invP, camMW; uniform vec3 sunD, hazeCol, hz; uniform float aoK; varying vec2 vUv;
+        #include <packing>
+        void main(){
+          vec3 c = texture2D(tDiffuse, vUv).rgb; float d = unpackRGBAToDepth(texture2D(tDepth, vUv));
+          if (d < 0.99995) {
+            c *= mix(1.0, texture2D(tAO, vUv).r, aoK);
+            vec4 v = invP * vec4(vUv * 2.0 - 1.0, d * 2.0 - 1.0, 1.0); v /= v.w; vec3 wp = (camMW * v).xyz, cp = camMW[3].xyz, rd = wp - cp; float L = length(rd); rd /= L;
+            float ya = (wp.y + cp.y) * 0.5, dens = hz.x * exp(-max(ya - hz.z, 0.0) * hz.y);   // bruma densa en el valle, que se aclara con la altura
+            float a = (1.0 - exp(-L * dens)) * 0.85; float sc = pow(max(dot(rd, sunD), 0.0), 3.0);
+            c = mix(c, hazeCol * (0.75 + 0.9 * sc), a);
+          }
+          gl_FragColor = vec4(c, 1.0); }`
+    });
+  }
+  setSize(w, h) { super.setSize(Math.max(2, w >> 1), Math.max(2, h >> 1)); }   // media resolución
+  render(renderer, writeBuffer, readBuffer) {
+    const p = this.params, A = ATMO, oc = new THREE.Color(), oa = renderer.getClearAlpha(), oac = renderer.autoClear, sa = renderer.shadowMap.autoUpdate;
+    renderer.getClearColor(oc); renderer.autoClear = false;
+    const u = this.saoMaterial.uniforms; u.bias.value = p.saoBias; u.intensity.value = p.saoIntensity; u.scale.value = p.saoScale; u.kernelRadius.value = p.saoKernelRadius; u.minResolution.value = p.saoMinResolution; u.cameraNear.value = this.camera.near; u.cameraFar.value = this.camera.far;
+    const cut = p.saoBlurDepthCutoff * (this.camera.far - this.camera.near);
+    for (const m of [this.vBlurMaterial, this.hBlurMaterial]) { m.uniforms.depthCutoff.value = cut; m.uniforms.cameraNear.value = this.camera.near; m.uniforms.cameraFar.value = this.camera.far; }
+    if (this.prevStdDev !== p.saoBlurStdDev || this.prevNumSamples !== p.saoBlurRadius) { THREE.BlurShaderUtils.configure(this.vBlurMaterial, p.saoBlurRadius, p.saoBlurStdDev, new THREE.Vector2(0, 1)); THREE.BlurShaderUtils.configure(this.hBlurMaterial, p.saoBlurRadius, p.saoBlurStdDev, new THREE.Vector2(1, 0)); this.prevStdDev = p.saoBlurStdDev; this.prevNumSamples = p.saoBlurRadius; }
+    if (A.hide) A.hide(true); renderer.shadowMap.autoUpdate = false;
+    this.renderOverride(renderer, this.depthMaterial, this.depthRenderTarget, 0x000000, 1.0);
+    renderer.shadowMap.autoUpdate = sa; if (A.hide) A.hide(false);
+    this.renderPass(renderer, this.saoMaterial, this.saoRenderTarget, 0xffffff, 1.0);
+    this.renderPass(renderer, this.vBlurMaterial, this.blurIntermediateRenderTarget, 0xffffff, 1.0);
+    this.renderPass(renderer, this.hBlurMaterial, this.saoRenderTarget, 0xffffff, 1.0);
+    const cu = this.comp.uniforms; cu.tDiffuse.value = readBuffer.texture; cu.tAO.value = this.saoRenderTarget.texture; cu.tDepth.value = this.depthRenderTarget.texture;
+    cu.invP.value.copy(this.camera.projectionMatrixInverse); cu.camMW.value.copy(this.camera.matrixWorld); cu.sunD.value.copy(A.sun); cu.hazeCol.value.copy(A.hazeCol); cu.hz.value.set(A.hazeK, A.hazeH, A.hazeY); cu.aoK.value = A.ao;
+    this.renderPass(renderer, this.comp, this.renderToScreen ? null : writeBuffer);
+    renderer.setClearColor(oc, oa); renderer.autoClear = oac;
+  }
+}
+const atmo = new AtmoPass(scene, camera); composer.addPass(atmo);
 const bloom = new THREE.UnrealBloomPass(new THREE.Vector2(256, 256), 0.6, 0.55, 0.92);
 composer.addPass(bloom);
 const grade = new THREE.ShaderPass({
@@ -440,7 +490,7 @@ composer.addPass(grade);
 const QUAL = {
   baja: { name: 'Baja', pr: 1, bloom: false, shadow: 1024, soft: false, mist: false, ext: { sombra: 1024, sombraFar: 1024, hierba: 0.25, r1: 8, r2: 30, lod0: 12, viento: false, flores: 0.3 } },
   media: { name: 'Media', pr: 1.25, bloom: true, shadow: 1024, soft: true, mist: true, ext: { sombra: 2048, sombraFar: 1024, hierba: 0.6, r1: 14, r2: 44, lod0: 18, viento: true, flores: 0.7 } },
-  alta: { name: 'Alta', pr: 1.75, bloom: true, shadow: 2048, soft: true, mist: true, ext: { sombra: 4096, sombraFar: 2048, hierba: 1, r1: 20, r2: 56, lod0: 25, viento: true, flores: 1 } }   // ext: parámetros de la escena de la aldea (sombras, densidad de hierba, LOD)
+  alta: { name: 'Alta', pr: 1.75, bloom: true, shadow: 2048, soft: true, mist: true, ao: true, ext: { sombra: 4096, sombraFar: 2048, hierba: 1, r1: 20, r2: 56, lod0: 25, viento: true, flores: 1 } }   // ext: parámetros de la escena de la aldea (sombras, densidad de hierba, LOD)
 };
 let qual = coarse ? 'media' : 'alta';
 function resize() {
@@ -3160,7 +3210,7 @@ function setMode(m) {
 function setQual(q) {
   qual = q; const Q = QUAL[q];
   $('#qual').textContent = 'Calidad: ' + Q.name;
-  bloom.enabled = Q.bloom;
+  bloom.enabled = Q.bloom; atmo.enabled = !!(Q.ao && SCN.cur);
   renderer.shadowMap.type = Q.soft ? THREE.PCFSoftShadowMap : THREE.PCFShadowMap;
   moonL.shadow.mapSize.set(Q.shadow, Q.shadow);
   if (moonL.shadow.map) { moonL.shadow.map.dispose(); moonL.shadow.map = null; }
@@ -3703,7 +3753,7 @@ Object.defineProperties(window.__GAME__, {   // escena exterior (aldea): estado 
   escena: { get: () => ({ id: SCN.id, cargando: SCN.loading, stats: SCN.cur ? SCN.cur.stats : null, trisMata: SCN.cur ? SCN.cur.stats.trisMata : null }) },
   aldea: { get: () => SCN.cur }, colocar: { value: escenaColocar },
   camara: { value: (o) => { SCN.camO = o || null; if (!o) { camera.fov = innerWidth < innerHeight ? 64 : 48; camera.updateProjectionMatrix(); } } },
-  render: { value: () => { applyCamO(); if (SCN.cur) SCN.cur.update(0, T, true); SCN.renderReq = true; } }, bloom: { value: bloom }, grade: { value: grade }, composer: { value: composer }
+  render: { value: () => { applyCamO(); if (SCN.cur) SCN.cur.update(0, T, true); SCN.renderReq = true; } }, bloom: { value: bloom }, grade: { value: grade }, composer: { value: composer }, atmo: { value: atmo }, ATMO: { value: ATMO }
 });
 window.__GAME__.MAGIA = {
   get ranuras() { return MG.ranuras; }, get pagina() { return MG.pagina; }, set pagina(v) { MG.pagina = v ? 1 : 0; MG.hudSlots(); },
@@ -3757,7 +3807,7 @@ async function setEscena(id) {
         queue = []; wState = 'idle'; LOCK.t = null;
         SCN.saved = { segs: COLL.segs, boxes: COLL.boxes, cams: COLL.cams, arena: ARENA, exposure: grade.uniforms.exposure.value, vig: grade.uniforms.vig.value, bloom: [bloom.strength, bloom.radius, bloom.threshold] };
         COLL.segs = []; COLL.boxes = []; COLL.cams = [];
-        const A = window.FenixAldea({ THREE, scene, camera, renderer, EXT, aniso, b64buf, addSeg, smoke: (p, n, c, o) => smoke(p, n, c, o) });
+        const A = window.FenixAldea({ THREE, scene, camera, renderer, atmo: ATMO, EXT, aniso, b64buf, addSeg, smoke: (p, n, c, o) => smoke(p, n, c, o) });
         await A.cargar();
         PATIO_NODES.forEach((n) => { n.visible = false; });
         SCN.cur = A; SCN.id = 'aldea'; ARENA = 1e6; SCN.hzOk = false;
@@ -3768,7 +3818,7 @@ async function setEscena(id) {
       } else {
         const A = SCN.cur, sv = SCN.saved;
         if (P.mounted) toggleMount();
-        SCN.cur = null; SCN.id = 'patio'; A.dispose();
+        SCN.cur = null; SCN.id = 'patio'; A.dispose(); atmo.enabled = false;
         COLL.segs = sv.segs; COLL.boxes = sv.boxes; COLL.cams = sv.cams; ARENA = sv.arena;
         grade.uniforms.exposure.value = sv.exposure; grade.uniforms.vig.value = sv.vig; grade.uniforms.sat.value = 0.78; grade.uniforms.shT.value.set(0.84, 0.94, 1.14); grade.uniforms.liT.value.set(1.07, 1.0, 0.9);
         bloom.strength = sv.bloom[0]; bloom.radius = sv.bloom[1]; bloom.threshold = sv.bloom[2];

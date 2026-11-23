@@ -93,7 +93,7 @@
       h += sstep(36, 60, z) * 1.5;                                                                    // fondo del valle al sur
       return h;
     }
-    function height(x, z) {
+    function baseHeight(x, z) {
       const dR = roadDist(x, z), s = roadS(x, z), w = halfW(s);
       let h = natural(x, z);
       const wp = sstep(-37, -46, z) * (1 - sstep(22, 33, Math.abs(x)));                                // meseta de la aldea (14 m), con flancos de talud
@@ -102,6 +102,19 @@
       const rh = roadH(s) - 0.1 * (1 - Math.min(1, (dR / w) ** 2));
       const wgt = 1 - sstep(w + 0.4, w + 3.6, dR);
       return h + (rh - h) * wgt;
+    }
+    // talud rocoso: donde la pendiente del terreno base es fuerte se añaden estratos escalonados y salientes (ruido «ridged»), nunca sobre el camino ni la meseta
+    function rockiness(x, z) {
+      const e = 0.8, sl = Math.hypot(baseHeight(x + e, z) - baseHeight(x - e, z), baseHeight(x, z + e) - baseHeight(x, z - e)) / (2 * e);
+      return sstep(0.5, 0.95, sl);
+    }
+    function height(x, z) {
+      const h = baseHeight(x, z), m = rockiness(x, z);
+      if (m < 0.001) return h;
+      const t = h * 0.5 + (fbm2(x * 0.22, z * 0.22, seed + 31, 3) - 0.5) * 2.4, f = t - Math.floor(t);
+      const terrace = (Math.floor(t) + sstep(0.5, 0.95, f) - t) * 1.1;                     // repisas de ~2 m con frente casi vertical
+      const rid = (1 - Math.abs(fbm2(x * 0.45, z * 0.45, seed + 47, 3) * 2 - 1)) - 0.55;  // crestas y grietas
+      return h + m * (terrace * 0.55 + rid * 0.9 + (fbm2(x * 1.3, z * 1.3, seed + 53, 2) - 0.5) * 0.35);
     }
     // malla
     const N1 = SEG + 1, hm = new Float32Array(N1 * N1);
