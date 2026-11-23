@@ -27,15 +27,67 @@ PENDIENTE
 
 ## Lenguaje de formas y feedback visual
 
-PENDIENTE
+Resto de la sección PENDIENTE. Apartados ya definidos (origen: `docs/COMBATE.md` §1.1, §1.3):
+
+### Escudo y silueta del jugador (EP / EE)
+- Con escudo la silueta debe seguir leyéndose: el escudo es la mayor masa nueva del jugador, así que lleva un **acento de paleta** propio (borde o emblema en el color de acento del jugador, [SUPUESTO] hex al definir la Paleta) y no se confunde con el escudo del esqueleto guerrero (enemigo: metal deslucido, óxido, sin emblema luminoso).
+- Estilo: **fantasía realista luminosa**, no oscura ni cartoon. Escudo heráldico redondo u oval [SUPUESTO] de madera reforzada con cuero y borde/umbo de acero, desgaste creíble (arañazos, pintura gastada), sin picos ni calaveras. Diámetro ≈ 0,6 m [SUPUESTO]; debe cubrir los 4 sectores de guardia sin atravesar el cuerpo.
+- Colgado a la espalda/cadera con EP (visible, mismo modelo, sin duplicar geometría) y en el antebrazo izquierdo con EE; el gesto de colgar/descolgar dura 0,6 s [SUPUESTO] (COMBATE).
+
+### Poses legibles de guardia y dirección (sin HUD)
+- Guardia en bucle, 4 direcciones + neutra: EP con hoja cruzada, EE con escudo alzado. Arriba = arma/escudo sobre la cabeza; abajo = bajo y adelantado; izq./der. = cruzado a ese lado. Las cuatro poses deben distinguirse en silueta a distancia de cámara de juego (comprobar en vista de silueta plana).
+- Feedback: chispa metálica en bloqueo normal; destello más grande y frío + onda corta en parada perfecta; golpe de escudo del contraataque con onda de empuje. El escudo nunca tapa la vista del jugador (cámara por encima del hombro) [SUPUESTO].
+
+### Telegrafiado de la dirección enemiga (pauta para `interfaz-ui` y `programador-motor`)
+- **Animación primero:** la anticipación lleva el arma claramente al lado de origen (≥ 0,55 s; jefe fase 2 ≥ 0,5 s); el modelado exagera la pose de anticipación (rotación de torso y cadera) para que se lea en silueta.
+- **Chevrón de ataque entrante:** en el lado de entrada, alrededor del enemigo fijado (o en el borde de pantalla si está fuera de cuadro). Forma distinta por dirección (no solo color): punta hacia el centro, con muescas distintas arriba / abajo / izq. / der. [SUPUESTO]. Blanco cálido con borde oscuro fino para contraste sobre día y noche; opacidad tenue al aparecer y **destello** al abrirse la ventana (200 ms EE / 250 ms EP). El destello respeta la opción de movimiento reducido (sin parpadeo, solo subida de brillo).
+- **Imparable (jefe):** chevrón **rojo** con forma propia (doble/relleno, no hueco) [SUPUESTO]; además brillo rojizo en el arma.
+- **Arco de escudo (guardia enemiga):** arco fijo y tenue en el lado protegido, forma y color distintos del chevrón (azul-acero frío, trazo fino), el chevrón siempre tiene prioridad visual. Se desliza al cambiar de lado (0,30 s esqueleto).
+- **Finta del jefe (fase 2):** destello frío en filo y yelmo en el giro, chevrón del lado falso **hueco** que se desliza y se rellena al fijarse la dirección real (≥ 0,40 s antes del activo).
+- Accesibilidad: indicador ampliado opcional; nunca depender solo del color (forma + posición + animación).
 
 ## Presupuesto por asset y por preset
 
-PENDIENTE
+Resto de la sección PENDIENTE (presupuesto general por preset Bajo/Medio/Alto/Ultra). `docs/ARQUITECTURA.md` aún no existe: valores [SUPUESTO] hasta que fije presupuestos globales.
+
+### Escudo del jugador [SUPUESTO]
+| Concepto | Presupuesto |
+|---|---|
+| Triángulos | LOD0 ≈ 3 000, LOD1 ≈ 1 200, LOD2 ≈ 400 (sin LOD en preset Bajo: se usa LOD1) |
+| Material | 1 material PBR compartido de la biblioteca (`juego/src/render/`), texturas 1024² (Bajo/Medio) / 2048² (Alto/Ultra): albedo, normal, ORM |
+| Draw calls | 1 (malla única, sin submallas); el mismo modelo sirve para colgado (EP) y en mano (EE) |
+| Peso | ≤ 0,5 MB en disco tras meshopt + KTX2 |
+| Esqueleto | Rígido, sin huesos propios: se parenta al hueso de antebrazo izquierdo (EE) o al de espalda/cadera (EP), con un socket de ajuste por configuración |
+| Variante enemiga | El escudo del esqueleto guerrero reutiliza el material y se reestiliza por textura/tinte, no por geometría nueva |
+
+### Animaciones del jugador
+- Un solo esqueleto humanoide, sin duplicar el modelo. Presupuesto de clips [SUPUESTO]: ≤ 40 clips por set, muestreo a 30 fps, curvas simplificadas (gltf-transform `resample`/`prune`), **≤ 1,5 MB** por set tras compresión; solo huesos de animación del jugador (≈ 65 [SUPUESTO]).
 
 ## Pipeline de assets (Blender, glTF/GLB, gltf-transform, KTX2)
 
-PENDIENTE
+Resto de la sección PENDIENTE. Requisitos ya definidos para el escudo y los sets de animación (C-18):
+
+### Modelo de escudo (para `artista-3d`)
+1. Blender: modelado high-poly + bake a LOD0/1/2 con la cuenta de triángulos de «Presupuesto». Unidades en metros, origen en el centro del asa/agarre, eje +Y arriba. Texeles consistentes con el resto del equipo.
+2. Materiales: usar la biblioteca PBR compartida (madera, cuero, acero) con ORM empaquetado; sin materiales sueltos por objeto.
+3. Exportar GLB → `gltf-transform` (meshopt + KTX2) → `juego/public/assets/`. Nombre propuesto: `escudo_jugador.glb`; registrar licencia/origen en `CREDITOS.md` (CC0 o creación procedural/propia).
+4. Empties/sockets nombrados: `socket_escudo_mano` y `socket_escudo_espalda`.
+
+### Sets de animaciones del jugador (EP y EE, referencia C-18)
+- **Esqueleto único:** los dos sets (`EP` solo espada; `EE` espada + escudo) se **retargetean al mismo esqueleto** del jugador (mismos nombres de huesos y misma pose T/A). Se entregan como GLB de animaciones por set (`jugador_anim_EP.glb`, `jugador_anim_EE.glb`) o como un solo GLB con prefijo `EP_` / `EE_` en cada clip [SUPUESTO: lo decide el arquitecto, ver ADR]. El motor elige el set por el identificador de configuración (`'espada' | 'espadaEscudo'`).
+- **Lista mínima por set** (nombre de clip → direcciones; duraciones y fases en `docs/COMBATE.md` «Animaciones mínimas», no se repiten aquí):
+  - `ataque_ligero` × 4 (izq., der., arriba, abajo)
+  - `guardia` en bucle × 5 (4 direcciones + neutra), con transición de entrada
+  - `parada_perfecta` × 4
+  - `bloqueo_impacto` × 4
+  - `defensa_proyectil` × 1 (EP: desvío de flecha con la hoja; EE: bloqueo con el escudo)
+  - `contraataque` × 1 (EE incluye golpe de escudo + tajo)
+  - `habilidad` × 1 (EP: Estocada de quiebre; EE: Embestida)
+  - `remate_humanoide` y `remate_jefe` (sincronizados con las animaciones de víctima «recibir remate» de cada enemigo, una variante por set)
+  - `guardia_rota` y `tambaleo`
+  - Solo EP/EE respectivamente: `colgar_escudo` / `descolgar_escudo` (0,6 s).
+- **Requisitos técnicos:** las fases (anticipación/activo/recuperación) se marcan con eventos o marcadores en el clip para que el motor las lea (frames exactos coherentes con COMBATE); movimiento de raíz sin deriva y con raíz alineable para remates (encaje ≤ 0,15 s); las 4 direcciones deben diferenciarse en silueta; los clips de enemigo (esqueleto, jefe, cultista, goblin) se retargetean igual a su esqueleto y se entregan con las dos variantes de «recibir remate».
+- **Verificación visual:** revisión de silueta plana en las 4 direcciones y de que el escudo no atraviesa el cuerpo ni la espada en guardia ni en ataque (visualizar con la maya de colisión del escudo en Blender).
 
 ---
 
