@@ -55,6 +55,8 @@ def main():
     bpy.context.view_layer.update()
     # (comprobado: con rotación 0 el soldado mira a -Y de Blender)
     tgt.animation_data_create()
+    for t_ in list(tgt.animation_data.nla_tracks):
+        tgt.animation_data.nla_tracks.remove(t_)
     for a in list(bpy.data.actions):
         bpy.data.actions.remove(a)
     tmw = tgt.matrix_world.copy()
@@ -85,50 +87,53 @@ def main():
         k = (tmw @ tgt.data.bones["pelvis"].head_local).z / (smw @ src.data.bones["pelvis"].head_local).z
         src.animation_data_create()
         for c in clips:
-            act = acts.get(c["clip"])
-            if act is None:
-                print("RETARGET: falta", c["clip"], list(acts)[:5]); continue
             mir = c.get("espejo", False)
-            src.animation_data.action = act
             out_act = bpy.data.actions.new(c["nombre"])
             tgt.animation_data.action = out_act
             for pb in tgt.pose.bones:
                 pb.rotation_mode = "QUATERNION"
                 pb.matrix_basis = Matrix.Identity(4)
-            f0, f1 = (int(round(x)) for x in act.frame_range)
-            if c.get("frames"):
-                f0, f1 = c["frames"]
             prev = {}
-            # reposo del origen para pelvis (traslación relativa al inicio en el espejo no hace falta)
-            for f in range(f0, f1 + 1):
-                sc.frame_set(f)
-                for lv in levels:
+            fo = 0
+            # partes: lista de {"clip", "t0", "t1"} (segundos relativos al inicio) que se encadenan; si no hay, el clip entero
+            partes = c.get("partes") or [{"clip": c["clip"]}]
+            for part in partes:
+                act = acts.get(part["clip"])
+                if act is None:
+                    print("RETARGET: falta", part["clip"], list(acts)[:5]); continue
+                src.animation_data.action = act
+                a0, a1 = (int(round(x)) for x in act.frame_range)
+                f0 = a0 + int(round(part.get("t0", 0) * FPS))
+                f1 = a1 if part.get("t1") is None else a0 + int(round(part["t1"] * FPS))
+                for f in range(f0, f1 + 1):
+                    sc.frame_set(f)
+                    for lv in levels:
+                        for s, t, d in pairs:
+                            if d != lv: continue
+                            ss = mirror_name(s) if mir else s
+                            spb, tpb = src.pose.bones[ss], tgt.pose.bones[t]
+                            delta = (smw @ spb.matrix).to_quaternion() @ s_rest[ss].inverted()
+                            if mir: delta = mq(delta)
+                            rot = tmw_q_inv @ (delta @ t_rest[t])
+                            loc = tpb.matrix.to_translation()
+                            if t == "pelvis":
+                                sp = (smw @ spb.matrix).to_translation()
+                                x = -sp.x if mir else sp.x
+                                loc = tmw_inv @ Vector((x * k, sp.y * k, sp.z * k))
+                            tpb.matrix = Matrix.LocRotScale(loc, rot, Vector((1, 1, 1)))
+                        bpy.context.view_layer.update()
+                    fo += 1
                     for s, t, d in pairs:
-                        if d != lv: continue
-                        ss = mirror_name(s) if mir else s
-                        spb, tpb = src.pose.bones[ss], tgt.pose.bones[t]
-                        delta = (smw @ spb.matrix).to_quaternion() @ s_rest[ss].inverted()
-                        if mir: delta = mq(delta)
-                        rot = tmw_q_inv @ (delta @ t_rest[t])
-                        loc = tpb.matrix.to_translation()
+                        tpb = tgt.pose.bones[t]
+                        q = tpb.rotation_quaternion.copy()
+                        if t in prev and prev[t].dot(q) < 0:
+                            q.negate(); tpb.rotation_quaternion = q
+                        prev[t] = q
+                        tpb.keyframe_insert("rotation_quaternion", frame=fo)
                         if t == "pelvis":
-                            sp = (smw @ spb.matrix).to_translation()
-                            x = -sp.x if mir else sp.x
-                            loc = tmw_inv @ Vector((x * k, sp.y * k, sp.z * k))
-                        tpb.matrix = Matrix.LocRotScale(loc, rot, Vector((1, 1, 1)))
-                    bpy.context.view_layer.update()
-                fo = f - f0 + 1
-                for s, t, d in pairs:
-                    tpb = tgt.pose.bones[t]
-                    q = tpb.rotation_quaternion.copy()
-                    if t in prev and prev[t].dot(q) < 0:
-                        q.negate(); tpb.rotation_quaternion = q
-                    prev[t] = q
-                    tpb.keyframe_insert("rotation_quaternion", frame=fo)
-                    if t == "pelvis":
-                        tpb.keyframe_insert("location", frame=fo)
+                            tpb.keyframe_insert("location", frame=fo)
             out_act.use_fake_user = True
-            made.append((c["nombre"], (f1 - f0) / FPS))
+            made.append((c["nombre"], (fo - 1) / FPS))
         tgt.animation_data.action = None
         for pb in tgt.pose.bones:
             pb.matrix_basis = Matrix.Identity(4)
