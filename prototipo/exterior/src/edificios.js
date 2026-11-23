@@ -467,7 +467,7 @@
       o.col.push({ circle: true, x: 0, z: 0, r: 2.95 });
     }
 
-    return { rot, Builder, carro, huerto, mata, FLOWERS, casaEntramado, casaPiedra, almacen, torre, bar, boxM, xf, mul, COL, TILE };
+    return { rot, Builder, carro, huerto, lenia, mata, FLOWERS, casaEntramado, casaPiedra, almacen, torre, bar, boxM, xf, mul, COL, TILE };
   }
   if (typeof module !== 'undefined' && module.exports) module.exports = { crear }; else root.FenixEdificios = { crear };
 })(typeof window !== 'undefined' ? window : globalThis);

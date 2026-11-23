@@ -227,6 +227,8 @@ body.touchctl #pauseBtn { width: 40px; }
 .pm-keys { margin: 4px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; text-align: left; font-size: 13.5px; line-height: 1.3; color: var(--parch-dim); max-height: min(46vh, 340px); overflow: auto; padding: 0 4px; }
 .pm-keys dt { color: var(--parch); font-weight: 700; white-space: nowrap; text-align: right; }
 .pm-keys dd { margin: 0; }
+.pm-cred { max-height: min(46vh, 340px); overflow: auto; padding: 0 6px; text-align: left; font-size: 13px; line-height: 1.35; color: var(--parch-dim); }
+.pm-cred p { margin: 0 0 9px; } .pm-cred b { color: var(--parch); font-weight: 700; } .pm-cred a { color: var(--gilt-hi); word-break: break-all; } .pm-cred .pm-cr-h { color: var(--gilt); letter-spacing: .08em; text-transform: uppercase; font-size: 11.5px; margin: 0 0 8px; }
 .pm-foot { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid rgba(184,146,79,.16); font-size: 12px; letter-spacing: .06em; color: rgba(166,157,138,.8); }
 .pm-foot kbd { font: 700 11px var(--f-body); color: var(--parch); padding: 1px 5px; margin-right: 3px; border: 1px solid var(--gilt-dim); border-radius: 2px; }
 .pm-foot span + span { margin-left: 14px; }
@@ -328,6 +330,7 @@ body.touchctl #pauseBtn { width: 40px; }
         <li><button class="pm-item primary" type="button" data-testid="pause-resume" id="pmResume">Volver a la batalla</button></li>
         <li><button class="pm-item" type="button" data-testid="pause-grimorio" id="pmGrim">Grimorio</button></li>
         <li><button class="pm-item" type="button" data-testid="pause-controls" id="pmCtl">Controles</button></li>
+        <li><button class="pm-item" type="button" data-testid="pause-credits" id="pmCred">Créditos</button></li>
         <li><button class="pm-item" type="button" data-testid="pause-quality" id="pmQual">Calidad <small id="pmQualV">Alta</small></button></li>
         <li><button class="pm-item" type="button" data-testid="pause-scene" id="pmScn">Escena <small id="pmScnV">Patio</small></button></li>
         <li><button class="pm-item" type="button" data-testid="pause-demo" id="pmDemo">Salir a la demo</button></li>
@@ -337,6 +340,11 @@ body.touchctl #pauseBtn { width: 40px; }
       <dl class="pm-keys" id="pmKeysList"></dl>
       <div class="pm-sep" aria-hidden="true"></div>
       <ul class="pm-list"><li><button class="pm-item" type="button" data-testid="pause-controls-back" id="pmBack">Volver</button></li></ul>
+    </div>
+    <div id="pmCredV" hidden>
+      <div class="pm-cred" id="pmCredList" data-testid="credits-list" tabindex="0"></div>
+      <div class="pm-sep" aria-hidden="true"></div>
+      <ul class="pm-list"><li><button class="pm-item" type="button" data-testid="pause-credits-back" id="pmCredBack">Volver</button></li></ul>
     </div>
     <p class="pm-foot" id="pmFoot"></p>
   </div>
@@ -395,6 +403,8 @@ try {
 const TEX = /*__TEX__*/{};
 /* Assets de la escena exterior (Aldea del Vado): nombre de fichero → data URI (webp) o base64 (glb, hdr). Los incrusta build.py con el argumento «exterior» */
 const EXT = /*__EXTERIOR__*/{};
+/* Atribuciones CC-BY 4.0 de los modelos de Sketchfab de la aldea (build.py las lee de prototipo/exterior/assets/CREDITOS.md); vacío si la compilación no lleva la aldea */
+const CREDITOS = /*__CREDITOS__*/[];
 
 const V3 = THREE.Vector3;
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -3428,7 +3438,7 @@ const PM_KEYS = {
     ['Ranuras', 'Armas y hechizos'], ['Habilidad · Esquivar', 'Habilidad del arma · rodar'], ['❚❚', 'Pausa']]
 };
 const pmDev = () => (device === 'pad' ? 'pad' : coarse ? 'touch' : 'kb');
-const pmItems = () => [...pmEl.querySelectorAll(PAUSE.view === 'main' ? '#pmMain .pm-item' : '#pmKeys .pm-item')].filter((b) => !b.closest('[hidden]') && !b.hidden);
+const pmItems = () => [...pmEl.querySelectorAll(PAUSE.view === 'main' ? '#pmMain .pm-item' : PAUSE.view === 'cred' ? '#pmCredV .pm-item' : '#pmKeys .pm-item')].filter((b) => !b.closest('[hidden]') && !b.hidden);
 function pmFoot() {
   const d = pmDev(), f = $('#pmFoot'), back = PAUSE.view === 'main' ? 'Reanudar' : 'Volver';
   f.hidden = d === 'touch';
@@ -3436,10 +3446,22 @@ function pmFoot() {
     ? `<span><kbd>▲▼</kbd>Elegir</span><span><kbd>✕</kbd>Aceptar</span><span><kbd>○</kbd>${back}</span>`
     : `<span><kbd>↑↓</kbd>Elegir</span><span><kbd>Intro</kbd>Aceptar</span><span><kbd>Esc</kbd>${back}</span>`;
 }
+function pmCreditos() {   // atribuciones obligatorias (CC BY 4.0) de los modelos de Sketchfab; se construyen con textContent (sin HTML de terceros)
+  const box = $('#pmCredList'); if (box.childElementCount) return;
+  const h = document.createElement('p'); h.className = 'pm-cr-h'; h.textContent = 'Modelos de la Aldea del Vado · licencia CC BY 4.0 (Sketchfab)'; box.append(h);
+  for (const c of CREDITOS) {
+    const p = document.createElement('p'), b = document.createElement('b'), a = document.createElement('a'), l = document.createElement('a');
+    b.textContent = '«' + c.titulo + '»'; a.href = c.url; a.textContent = c.url.replace(/^https?:\/\//, ''); a.target = '_blank'; a.rel = 'noopener noreferrer';
+    l.href = c.licenciaUrl; l.textContent = c.licencia; l.target = '_blank'; l.rel = 'noopener noreferrer';
+    p.append(b, ' de ' + c.autor + ' · ', l, document.createElement('br'), a); box.append(p);
+  }
+  const n = document.createElement('p'); n.textContent = 'Los modelos se han decimado, reescalado y recortado para la maqueta. El resto de assets exteriores son CC0 (Poly Haven); ver CREDITOS.md.'; box.append(n);
+}
 function pmShow(view) {
   PAUSE.view = view;
-  $('#pmMain').hidden = view !== 'main'; $('#pmKeys').hidden = view !== 'keys';
-  $('#pmTitle').textContent = view === 'main' ? 'Pausa' : 'Controles';
+  $('#pmMain').hidden = view !== 'main'; $('#pmKeys').hidden = view !== 'keys'; $('#pmCredV').hidden = view !== 'cred';
+  $('#pmTitle').textContent = view === 'main' ? 'Pausa' : view === 'cred' ? 'Créditos' : 'Controles';
+  if (view === 'cred') pmCreditos();
   if (view === 'keys') {
     const dl = $('#pmKeysList'); dl.textContent = '';
     for (const [k, v] of PM_KEYS[pmDev()]) { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = k; dd.textContent = v; dl.append(dt, dd); }
@@ -3478,6 +3500,8 @@ $('#pmResume').addEventListener('click', resume);
 $('#pmCtl').addEventListener('click', () => pmShow('keys'));
 $('#pmGrim').addEventListener('click', () => openGrim(true));
 $('#pmBack').addEventListener('click', () => pmShow('main'));
+$('#pmCred').addEventListener('click', () => pmShow('cred')); $('#pmCredBack').addEventListener('click', () => pmShow('main'));
+if (!CREDITOS.length) $('#pmCred').closest('li').hidden = true;
 $('#pmQual').addEventListener('click', () => { $('#qual').click(); $('#pmQualV').textContent = QUAL[qual].name; });
 $('#pmDemo').addEventListener('click', () => { PAUSE.relock = false; resume(); setMode('demo'); });
 $('#pauseBtn').addEventListener('click', () => pause());

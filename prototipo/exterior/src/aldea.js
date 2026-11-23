@@ -74,7 +74,8 @@
       w = Math.max(w, 1e-3); const lin = (v) => Math.pow(v / 255, 2.2); return [lin(r / w), lin(g / w), lin(b / w)];
     }
     const GLBS = ['arbol_isla1_lod0', 'arbol_isla1_lod1', 'arbol_isla2_lod0', 'arbol_isla2_lod1', 'arbol_jacaranda_lod0', 'arbol_jacaranda_lod1', 'arbusto_02', 'helecho_02', 'hierba_briznas', 'hierba_lod', 'flores_prado',
-      'roca_musgo_set', 'roca_09', 'piedra_01', 'barriles', 'cajon', 'cubo', 'farol', 'tocon', 'tronco_caido', 'acantilado_01', 'acantilado_02'];
+      'roca_musgo_set', 'roca_09', 'piedra_01', 'barriles', 'cajon', 'cubo', 'farol', 'tocon', 'tronco_caido', 'acantilado_01', 'acantilado_02',
+      'casa_entramado_c', 'casa_tudor', 'casa_piedra', 'casa_rustica', 'granero', 'torre_piedra', 'pozo_piedra', 'carro'];   // los 8 últimos: edificios y props de Sketchfab (CC-BY 4.0)
     const TEXN = [['hierba', 1, 1, 1], ['camino', 1, 1, 1], ['barro', 1, 1, 0], ['roca_talud', 1, 1, 1], ['muro_piedra', 1, 1, 1], ['madera', 1, 1, 1], ['revoco', 1, 1, 1], ['teja', 1, 1, 1]];
     let skyTex = null;
     async function cargarAssets(prog) {
@@ -108,7 +109,7 @@
     let terrainMesh = null, splatTex = null;
     const wallCells = new Map();   // celdas de 1 m ocupadas por muros / edificios / rocas (para no poner hierba encima) → radio
     const stamps = [];             // {x,z,r,ao,mud} marcas de contacto que se pintan en la máscara
-    function stamp(x, z, r, ao, mud) { stamps.push([x, z, r, ao, mud]); }
+    function stamp(x, z, r, ao, mud, path) { stamps.push([x, z, r, ao, mud, path || 0]); }   // path: tierra pisada (canal «camino» del splat) y hierba corta/rala
     const foot = [];               // huellas de edificios (OBB) para excluir hierba/árboles
     function inFoot(x, z, m) {
       for (let i = 0; i < foot.length; i++) {
@@ -123,13 +124,13 @@
     function buildSplat() {
       const N = 1024, d = new Uint8Array(N * N * 4), k = 120 / N;
       // marcas de contacto: se rasterizan en mapas auxiliares
-      const ao = new Float32Array(N * N).fill(1), mud = new Float32Array(N * N);
-      for (const [x, z, r, a, m] of stamps) {
+      const ao = new Float32Array(N * N).fill(1), mud = new Float32Array(N * N), path = new Float32Array(N * N);
+      for (const [x, z, r, a, m, pa] of stamps) {
         const i0 = Math.max(0, Math.floor((x - r + 60) / k)), i1 = Math.min(N - 1, Math.ceil((x + r + 60) / k)), j0 = Math.max(0, Math.floor((z - r + 60) / k)), j1 = Math.min(N - 1, Math.ceil((z + r + 60) / k));
         for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
           const dd = Math.hypot(-60 + (i + 0.5) * k - x, -60 + (j + 0.5) * k - z) / r; if (dd >= 1) continue;
           const f = 1 - dd * dd; const id = j * N + i;
-          ao[id] = Math.min(ao[id], 1 - a * f); mud[id] = Math.max(mud[id], m * f);
+          ao[id] = Math.min(ao[id], 1 - a * f); mud[id] = Math.max(mud[id], m * f); if (pa) path[id] = Math.max(path[id], pa * Math.min(1, f * 1.6));
         }
       }
       for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
@@ -137,7 +138,7 @@
         const dR = ter.roadDist(x, z), s = ter.roadS(x, z), w = ter.halfW(s);
         const n1 = ter.fbm2(x * 0.7, z * 0.7, 21, 3) - 0.5, n2 = ter.fbm2(x * 0.13, z * 0.13, 5, 3);
         // camino: núcleo sólido, borde irregular con ruido (nunca una línea recta de corte)
-        const road = 1 - sstep(w * 0.78 + n1 * 0.9, w + 0.55 + n1 * 1.5, dR);
+        const road = Math.max(1 - sstep(w * 0.78 + n1 * 0.9, w + 0.55 + n1 * 1.5, dR), clamp(path[id] * (1.15 + n1 * 1.2) - 0.1, 0, 1) * 0.92);
         // roca: pendiente fuerte y meseta rocosa
         const sl = ter.slopeAt(x, z), rock = sstep(0.65 + n1 * 0.25, 1.15, sl);
         // barro: franja en el borde del camino + charcos en zonas bajas húmedas
@@ -386,9 +387,166 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       for (const ch of o.chim) { const v = new V3(ch[0], ch[1], ch[2]).applyMatrix4(m); chimneys.push(v); }
       return y;
     }
+    /* ---------- edificios y props: modelos GLB de Sketchfab (CC-BY 4.0, ver CREDITOS.md) ----------
+       Por defecto se usan estos modelos; los procedurales (edificios.js) quedan tras la bandera `?edificios=proc` (o ctx.procedural).
+       Cada modelo se normaliza al construirlo: giro previo `pre` (la fachada con puerta mira a +Z), escala `s` (puerta ≈ 2-2,2 m, medida en vistas ortogonales),
+       `sink` (m de zócalo enterrados: la puerta queda a ~0,2 m sobre el suelo) y `skirt` (prolonga la base hacia abajo: nunca flota en un desnivel).
+       `door` = centro de la puerta en el modelo sin escalar (x, z) tras `pre`; `drop` = materiales descartados (plantas, suelo, geometría fina que no compensa una llamada de dibujo). */
+    const PROC = !!ctx.procedural || (typeof location !== 'undefined' && /[?&]edificios=proc/.test(location.search));
+    const MODELOS = {
+      casa_entramado_c: { s: 1.16, pre: 0, sink: 1.15, skirt: 0.6, door: [-1.46, 5.12], drop: /flowers|Glass/i, tint: [0.8, 0.74, 0.95] },
+      casa_tudor: { s: 1.03, pre: 0, sink: 0.06, skirt: 0.7, door: [0.97, 3.15], tint: [0.88, 0.8, 0.74] },
+      casa_piedra: { s: 1.04, pre: -Math.PI / 2, sink: 0.08, skirt: 0.7, door: [0, 3.48], tint: [0.88, 0.84, 0.8], mats: { roof: [0.78, 0.68, 0.6] } },
+      casa_rustica: { s: 0.95, pre: 0, sink: 0.1, skirt: 0.7, door: [0.29, 4.4], drop: /^(Ground|Chairs)$/, tint: [0.93, 0.88, 0.82] },
+      granero: { s: 0.92, pre: 0, sink: 0.55, skirt: 0.5, door: [0, 2.84], tint: [0.92, 0.88, 0.82] },
+      torre_piedra: { s: 0.88, pre: -Math.PI / 2, sink: 0.3, skirt: 1.6, door: [0, 2.3], round: true, tint: [0.92, 0.88, 0.82], flat: 0.6 },
+      pozo_piedra: { s: 1.0, pre: 0, sink: 0.06, skirt: 0.35, door: [0, 0], round: true, drop: /^Wire$/ },
+      carro: { s: 0.9, pre: 0, sink: 0.04, skirt: 0, door: [0, 0], grime: false }
+    };
+    const MOD_INFO = {};   // medidas finales por modelo (escala, alto, huella, apoyo) para estadísticas y pruebas
+    const MPARTS = [];     // piezas de todos los modelos ya en coordenadas de mundo: {geo, mat, tiled, flat}
+    function flattenBaked(img, k) {   // reduce el sombreado horneado (luz de la captura de origen): divide por la luminancia de baja frecuencia elevada a k. Devuelve un canvas
+      const W = img.width, H = img.height, cv = document.createElement('canvas'); cv.width = W; cv.height = H; const cx = cv.getContext('2d', { willReadFrequently: true }); cx.drawImage(img, 0, 0);
+      const sm = document.createElement('canvas'); sm.width = 24; sm.height = 24; const sx = sm.getContext('2d', { willReadFrequently: true }); sx.imageSmoothingQuality = 'high'; sx.drawImage(cv, 0, 0, 24, 24);
+      const bl = document.createElement('canvas'); bl.width = W; bl.height = H; const bx = bl.getContext('2d', { willReadFrequently: true }); bx.imageSmoothingQuality = 'high'; bx.drawImage(sm, 0, 0, W, H);
+      const d = cx.getImageData(0, 0, W, H), b = bx.getImageData(0, 0, W, H).data, sd = sx.getImageData(0, 0, 24, 24).data; let mean = 0; for (let i = 0; i < sd.length; i += 4) mean += sd[i] * 0.3 + sd[i + 1] * 0.59 + sd[i + 2] * 0.11;
+      mean /= sd.length / 4; const a = d.data;
+      for (let i = 0; i < a.length; i += 4) { const l = Math.max(30, b[i] * 0.3 + b[i + 1] * 0.59 + b[i + 2] * 0.11), f = clamp(Math.pow(mean / l, k), 0.72, 1.45); a[i] = Math.min(255, a[i] * f); a[i + 1] = Math.min(255, a[i + 1] * f); a[i + 2] = Math.min(255, a[i + 2] * f); }
+      cx.putImageData(d, 0, 0); return cv;
+    }
+    function mergeIdx(list) {   // fusiona geometrías indexadas (position, normal, uv, uv2, color) en una
+      let nv = 0, ni = 0; for (const g of list) { nv += g.attributes.position.count; ni += g.index ? g.index.count : g.attributes.position.count; }
+      const out = new THREE.BufferGeometry(), idx = new Uint32Array(ni);
+      for (const [nm, sz] of [['position', 3], ['normal', 3], ['uv', 2], ['uv2', 2], ['color', 3]]) {
+        if (!list[0].attributes[nm]) continue; const arr = new Float32Array(nv * sz); let o = 0;   // getX/Y/Z: los atributos de un GLB pueden venir entrelazados
+        for (const g of list) { const at = g.attributes[nm]; for (let i = 0; i < at.count; i++) { arr[(o + i) * sz] = at.getX(i); arr[(o + i) * sz + 1] = at.getY(i); if (sz > 2) arr[(o + i) * sz + 2] = at.getZ(i); } o += at.count; }
+        out.setAttribute(nm, new THREE.BufferAttribute(arr, sz));
+      }
+      let vo = 0, io = 0; for (const g of list) { const c = g.attributes.position.count; if (g.index) for (let i = 0; i < g.index.count; i++) idx[io++] = g.index.array[i] + vo; else for (let i = 0; i < c; i++) idx[io++] = vo + i; vo += c; }
+      out.setIndex(new THREE.BufferAttribute(idx, 1)); out.computeBoundingSphere(); out.computeBoundingBox(); return out;
+    }
+    const trodList = [];   // parches de tierra pisada [x, z, r, k]: sin hierba alta
+    function trodAt(x, z) { let t = 0; for (let i = 0; i < trodList.length; i++) { const p = trodList[i], dx = x - p[0], dz = z - p[1], r = p[2]; if (dx * dx + dz * dz >= r * r) continue; t = Math.max(t, p[3] * Math.min(1, (1 - Math.hypot(dx, dz) / r) * 1.8)); } return t; }
+    function trodStamp(x, z, r, k) { stamp(x, z, r, 0.28, 0.45, k); trodList.push([x, z, r * 0.92, k]); }
+    function modelo(name, x, z, yaw, o) {
+      o = o || {}; const sp = MODELOS[name], g = GLB[name]; if (!sp || !g) return null;
+      const ps = parts(g).filter((p) => !(sp.drop && sp.drop.test(p.mat.name)));
+      const M = new M4().makeScale(sp.s, sp.s, sp.s).multiply(new M4().makeRotationY(sp.pre)); for (const p of ps) p.geo.applyMatrix4(M);
+      const bb = boxOf(ps.map((p) => p.geo)), cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2; for (const p of ps) p.geo.translate(-cx, -bb.min.y, -cz);
+      const H = bb.max.y - bb.min.y, W = bb.max.x - bb.min.x, D = bb.max.z - bb.min.z;
+      // huella del cuerpo (vértices entre 0,35 y 2,1 m de altura: sin tejado ni voladizos) para las colisiones
+      let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+      for (const p of ps) { const P = p.geo.attributes.position; for (let i = 0; i < P.count; i++) { const yy = P.getY(i); if (yy < 0.35 || yy > 2.1) continue; x0 = Math.min(x0, P.getX(i)); x1 = Math.max(x1, P.getX(i)); z0 = Math.min(z0, P.getZ(i)); z1 = Math.max(z1, P.getZ(i)); } }
+      if (x0 > x1) { x0 = -W / 2; x1 = W / 2; z0 = -D / 2; z1 = D / 2; }
+      const body = { x0: x0 + 0.1, x1: x1 - 0.1, z0: z0 + 0.1, z1: z1 - 0.1 };
+      const c = Math.cos(yaw), sn = Math.sin(yaw), wx = (lx, lz) => x + lx * c + lz * sn, wz = (lx, lz) => z - lx * sn + lz * c;
+      // altura de apoyo: la más alta del terreno bajo la huella (lo que queda más bajo lo tapa la falda)
+      let hy = -1e9, hLo = 1e9; for (const [a, b] of [[-1, -1], [1, -1], [1, 1], [-1, 1], [0, 0], [0, -1], [0, 1], [-1, 0], [1, 0]]) { const hh = ter.hAt(wx(a * W / 2, b * D / 2), wz(a * W / 2, b * D / 2)); hy = Math.max(hy, hh); hLo = Math.min(hLo, hh); }
+      const y0 = hy - sp.sink + (o.dy || 0), tint = sp.tint || [1, 1, 1], WM = new M4().compose(new V3(x, y0, z), new Q4().setFromAxisAngle(new V3(0, 1, 0), yaw), new V3(1, 1, 1));
+      let tris = 0;
+      for (const p of ps) {
+        const P = p.geo.attributes.position, n = P.count, col = new Float32Array(n * 3), grime = sp.grime !== false, tt = (sp.mats && sp.mats[p.mat.name]) || tint;
+        for (let i = 0; i < n; i++) {   // suciedad de contacto: oscurece y enfría el pie del muro (0-1,1 m) y la falda enterrada; el tinte del modelo va en el color de vértice
+          const yy = P.getY(i), k = grime ? lerp(0.58, 1, sstep(0, 1.1, yy)) : 1; let r = k * tt[0], gg = k * 0.97 * tt[1], b = k * 0.92 * tt[2];
+          if (sp.skirt) { const f = clamp(1 - yy / 0.25, 0, 1); if (f > 0) { P.setY(i, yy - sp.skirt * f); r *= 1 - 0.3 * f; gg *= 1 - 0.3 * f; b *= 1 - 0.3 * f; } }
+          col[i * 3] = r; col[i * 3 + 1] = gg; col[i * 3 + 2] = b;
+        }
+        p.geo.setAttribute('color', new THREE.BufferAttribute(col, 3)); p.geo.applyMatrix4(WM);
+        const U = p.geo.attributes.uv; let tiled = false; for (let i = 0; i < U.count && !tiled; i++) { const u = U.getX(i), v = U.getY(i); if (u < -0.02 || u > 1.02 || v < -0.02 || v > 1.02) tiled = true; }
+        tris += (p.geo.index ? p.geo.index.count : n) / 3; MPARTS.push({ geo: p.geo, mat: p.mat, tiled, flat: sp.flat, name });
+      }
+      // colisiones simples: caja (4 segmentos con radio 0,3) o círculo; huella completa (con tejado) para que no crezca hierba ni árboles
+      const bcx = (body.x0 + body.x1) / 2, bcz = (body.z0 + body.z1) / 2, bw = body.x1 - body.x0, bd = body.z1 - body.z0;
+      if (sp.round) { const r = Math.min(bw, bd) / 2; ctx.addSeg(wx(bcx, bcz), wz(bcx, bcz), wx(bcx, bcz), wz(bcx, bcz), r); foot.push({ x: wx(bcx, bcz), z: wz(bcx, bcz), r: Math.max(r, Math.min(W, D) / 2 * 0.9), yaw: 0 }); }
+      else {
+        foot.push({ x: wx(0, 0), z: wz(0, 0), w: W, d: D, yaw });
+        const cn = [[body.x0, body.z0], [body.x1, body.z0], [body.x1, body.z1], [body.x0, body.z1]].map(([a, b]) => [wx(a, b), wz(a, b)]);
+        for (let i = 0; i < 4; i++) { const a = cn[i], b = cn[(i + 1) % 4]; ctx.addSeg(a[0], a[1], b[0], b[1], 0.3); }
+      }
+      // oscurecimiento de contacto en el terreno: marcas a lo largo del perímetro de la huella
+      if (o.contact !== false) {
+        const ex = W / 2 + 0.1, ez = D / 2 + 0.1, step = 1.6;
+        if (sp.round) { const r = Math.min(W, D) / 2; for (let a = 0; a < 6.283; a += 0.9) stamp(wx(0, 0) + Math.cos(a) * r, wz(0, 0) + Math.sin(a) * r, 1.4, 0.5, 0.3); }
+        else for (const [ax, az, bx, bz] of [[-ex, -ez, ex, -ez], [ex, -ez, ex, ez], [ex, ez, -ex, ez], [-ex, ez, -ex, -ez]]) { const L = Math.hypot(bx - ax, bz - az), n = Math.max(1, Math.round(L / step)); for (let i = 0; i <= n; i++) { const t = i / n, lx = lerp(ax, bx, t), lz = lerp(az, bz, t); stamp(wx(lx * 0.92, lz * 0.92), wz(lx * 0.92, lz * 0.92), 1.5, 0.5, 0.3); } }
+      }
+      // puerta: tierra pisada y hierba corta delante
+      const dxl = sp.door[0] * sp.s, dzl = sp.door[1] * sp.s;
+      if (!o.nodoor) { trodStamp(wx(dxl, dzl + 0.8), wz(dxl, dzl + 0.8), o.trod || 2.4, 0.9); trodStamp(wx(dxl, dzl + 2.2), wz(dxl, dzl + 2.2), 1.7, 0.6); }
+      MOD_INFO[name] = { s: sp.s, alto: +H.toFixed(2), ancho: +W.toFixed(2), fondo: +D.toFixed(2), hundido: sp.sink, falda: sp.skirt, x, z, yaw: +yaw.toFixed(2), y0: +y0.toFixed(2), hMax: +hy.toFixed(2), hMin: +hLo.toFixed(2), tris };
+      return { body, W, D, H, wx, wz, y: y0, yaw };
+    }
+    // atlas de todos los modelos sin UV repetidas (una sola textura base 4096 + normales y ORM a mitad de resolución) fusionados en UNA malla: 1 llamada de dibujo en vez de ~30.
+    // El granero repite sus texturas 10 veces (UV fuera de 0-1): no es atlasable y va aparte, fusionado por material.
+    function finModelos() {
+      if (!MPARTS.length) return;
+      const matFix = (m) => { m.vertexColors = true; m.metalness = 0; m.roughness = Math.max(m.roughness === undefined ? 1 : m.roughness, 0.9); m.envMapIntensity = 0.5; m.side = THREE.FrontSide; if (m.normalScale) m.normalScale.multiplyScalar(1.1); m.needsUpdate = true; };
+      const byMat = new Map(); for (const p of MPARTS) if (p.tiled) { if (!byMat.has(p.mat)) byMat.set(p.mat, []); byMat.get(p.mat).push(p.geo); }
+      for (const [m, gs] of byMat) {
+        const mg = G(mergeIdx(gs)); gs.forEach((x) => x.dispose()); matFix(m);
+        const mesh = new THREE.Mesh(mg, m); mesh.castShadow = true; mesh.receiveShadow = true; mesh.name = 'edificio_' + m.name; group.add(mesh);
+      }
+      const at = MPARTS.filter((p) => !p.tiled); if (!at.length) return;
+      // empaquetado por estantes (de mayor a menor alto) con margen de 12 px que replica la textura (como RepeatWrapping): sin sangrado entre teselas ni con los mips bajos
+      const GT = 12, AW = 4096, tiles = [], by = new Map();
+      for (const p of at) { if (!by.has(p.mat)) { const im = p.mat.map.image, t = { mat: p.mat, w: im.width, h: im.height, flat: p.flat, img: im }; by.set(p.mat, t); tiles.push(t); } p.tile = by.get(p.mat); }
+      const pack = (sc) => {
+        const it = tiles.map((t) => { t.dw = Math.max(8, Math.round(t.w * sc / 4) * 4); t.dh = Math.max(8, Math.round(t.h * sc / 4) * 4); return t; }).sort((a, b) => b.dh - a.dh); let x = 0, y = 0, rh = 0;
+        for (const t of it) { if (x + t.dw + 2 * GT > AW) { x = 0; y += rh; rh = 0; } t.x = x + GT; t.y = y + GT; x += t.dw + 2 * GT; rh = Math.max(rh, t.dh + 2 * GT); } return y + rh;
+      };
+      let sc = 1, used; while ((used = pack(sc)) > 4096) sc *= 0.93;
+      let AH = 1024; while (AH < used) AH *= 2; if (AH < used) AH = 4096;
+      const mkc = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high'; return [c, x]; };
+      const draw = (cx, src, x, y, w, h, gt) => { cx.save(); cx.beginPath(); cx.rect(x - gt, y - gt, w + 2 * gt, h + 2 * gt); cx.clip(); for (let oy = -1; oy <= 1; oy++) for (let ox = -1; ox <= 1; ox++) cx.drawImage(src, x + ox * w, y + oy * h, w, h); cx.restore(); };
+      const fill = (cx, col, x, y, w, h, gt) => { cx.fillStyle = col; cx.fillRect(x - gt, y - gt, w + 2 * gt, h + 2 * gt); };
+      const [cB, xB] = mkc(AW, AH), [cN, xN] = mkc(AW / 2, AH / 2), [cO, xO] = mkc(AW / 2, AH / 2);
+      for (const t of tiles) {
+        const m = t.mat; draw(xB, t.flat ? flattenBaked(t.img, t.flat) : t.img, t.x, t.y, t.dw, t.dh, GT);
+        const h2 = (v) => v / 2, nm = m.normalMap && m.normalMap.image, orm = (m.roughnessMap || m.aoMap || m.metalnessMap), oi = orm && orm.image;
+        if (nm) draw(xN, nm, h2(t.x), h2(t.y), h2(t.dw), h2(t.dh), GT / 2); else fill(xN, 'rgb(128,128,255)', h2(t.x), h2(t.y), h2(t.dw), h2(t.dh), GT / 2);
+        if (oi) draw(xO, oi, h2(t.x), h2(t.y), h2(t.dw), h2(t.dh), GT / 2); else fill(xO, 'rgb(255,230,0)', h2(t.x), h2(t.y), h2(t.dw), h2(t.dh), GT / 2);
+      }
+      xO.globalCompositeOperation = 'lighten'; xO.fillStyle = 'rgb(0,205,0)'; xO.fillRect(0, 0, AW / 2, AH / 2);   // rugosidad mínima ≈ 0,8 (G de ORM): materiales mates; R (AO) y B (metal) no cambian
+      const T = (c, srgb) => { const t = new THREE.CanvasTexture(c); t.flipY = false; if (srgb) t.encoding = THREE.sRGBEncoding; t.anisotropy = aniso; t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; return TX(t); };
+      const tB = T(cB, true), tN = T(cN, false), tO = T(cO, false);
+      const am = MT(new THREE.MeshStandardMaterial({ map: tB, normalMap: tN, normalScale: new THREE.Vector2(1.1, -1.1), aoMap: tO, aoMapIntensity: 0.9, roughnessMap: tO, vertexColors: true, roughness: 1, metalness: 0, envMapIntensity: 0.5 }));
+      for (const p of at) {   // UV de cada pieza → su tesela
+        const t = p.tile, U = p.geo.attributes.uv, uv2 = new Float32Array(U.count * 2);
+        for (let i = 0; i < U.count; i++) { const u = (t.x + clamp(U.getX(i), 0, 1) * t.dw) / AW, v = (t.y + clamp(U.getY(i), 0, 1) * t.dh) / AH; U.setXY(i, u, v); uv2[i * 2] = u; uv2[i * 2 + 1] = v; }
+        p.geo.setAttribute('uv2', new THREE.BufferAttribute(uv2, 2));
+      }
+      const mg = G(mergeIdx(at.map((p) => p.geo))); at.forEach((p) => p.geo.dispose());
+      const mesh = new THREE.Mesh(mg, am); mesh.castShadow = true; mesh.receiveShadow = true; mesh.name = 'edificios_atlas'; group.add(mesh);
+      S.atlas = { w: AW, h: AH, tiles: tiles.length, escala: +sc.toFixed(2), tris: mg.index.count / 3 };
+      MPARTS.length = 0;
+    }
+    // montón de leña apoyado en un muro lateral (side: '+x' | '-x' | '+z' | '-z' del edificio; t: -1..1 a lo largo del muro)
+    function lenaEn(b, side, t, w, h) {
+      if (!b) return; const bd = b.body; let lx, lz, ry;
+      if (side === '+x') { lx = bd.x1 + 0.1; lz = lerp(bd.z0, bd.z1, (t + 1) / 2); ry = Math.PI / 2; } else if (side === '-x') { lx = bd.x0 - 0.1; lz = lerp(bd.z0, bd.z1, (t + 1) / 2); ry = -Math.PI / 2; }
+      else if (side === '+z') { lx = lerp(bd.x0, bd.x1, (t + 1) / 2); lz = bd.z1 + 0.1; ry = 0; } else { lx = lerp(bd.x0, bd.x1, (t + 1) / 2); lz = bd.z0 - 0.1; ry = Math.PI; }
+      const X = b.wx(lx, lz), Z = b.wz(lx, lz); E_.lenia(BB, E_.xf(X, ter.hAt(X, Z) - 0.02, Z, 0, b.yaw + ry, 0), w, h);
+      const ex = b.wx(lx + Math.sin(ry) * 0.5, lz + Math.cos(ry) * 0.5), ez = b.wz(lx + Math.sin(ry) * 0.5, lz + Math.cos(ry) * 0.5); ctx.addSeg(ex, ez, ex, ez, 0.45); stamp(ex, ez, 1.4, 0.45, 0.4);
+    }
+    function buildModelos() {
+      // aldea sobre la meseta (z < -46, x ∈ [-22, 22]); calle central (x ≈ 0) que acaba en la casa rústica; plazuela con pozo junto a la calle
+      modelo('torre_piedra', -22.5, -56.5, 0.55);                              // hito en el borde de la meseta, puerta hacia la plaza
+      const C = modelo('casa_entramado_c', -12, -54, 0.28);                    // casa grande, a la izquierda de la calle
+      modelo('casa_rustica', -0.5, -60, 0.04);                                 // cierra la calle
+      const U = modelo('casa_tudor', 8.4, -53.5, -0.42);                       // derecha de la calle
+      modelo('casa_piedra', 15.8, -58.5, -0.55);                               // detrás, más a la derecha
+      const A = modelo('granero', 22, -52, -1.0, { trod: 3 });                // hacia el borde de la meseta
+      const W = modelo('pozo_piedra', -3.6, -53, 0.3, { nodoor: true });       // plazuela
+      if (W) { trodStamp(-3.6, -53, 3.6, 0.95); trodStamp(-1.0, -52, 2.6, 0.7); stamp(-3.6, -53, 2.2, 0.35, 0.55); }
+      const K = modelo('carro', 3.4, -49.5, 1.4, { nodoor: true, contact: false });   // junto al camino, a la izquierda de la casa Tudor
+      if (K) trodStamp(3.4, -49.5, 2.6, 0.8);
+      lenaEn(C, '+x', 0.5, 1.8, 0.95); lenaEn(U, '-x', -0.3, 1.4, 0.8); lenaEn(A, '-x', 0.2, 1.8, 0.9);
+      finModelos();
+    }
     function buildAldea() {
       E_ = EDI.crear(THREE, rng); BB = new E_.Builder();
       const C = E_.COL;
+      if (!PROC && ['casa_entramado_c', 'casa_tudor', 'casa_piedra', 'casa_rustica', 'granero', 'torre_piedra', 'pozo_piedra', 'carro'].every((n) => GLB[n])) buildModelos();
+      else {
       // aldea sobre la meseta (z < -46); calle central que termina en la plaza
       // disposición irregular (no en fila): orientaciones, retranqueos y tamaños distintos alrededor de una plaza con carro, huerto y leña
       placeBuilding('casaEntramado', -13.5, -50.5, 0.42, { w: 6.4, d: 4.8, pisos: 2, ang: 52, revoco: C.revoco[0], madera: C.madera[0], teja: [1.0, 0.9, 0.82], lucerna: false });
@@ -397,10 +555,10 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       placeBuilding('almacen', 23.5, -53, -0.55, { w: 8.0, d: 5.0, teja: [0.9, 0.86, 0.8], revoco: C.revoco[2] });
       placeBuilding('torre', -26, -56, 0, {});
       placeBuilding('casaEntramado', -3.5, -51.5, 0.1, { w: 4.2, d: 3.6, pisos: 1, ang: 46, revoco: C.revoco[2], madera: C.madera[1], teja: [0.9, 0.84, 0.78], lucerna: false });
-      {   // carro en la plaza, huerto con vallado y leña
-        const cy = (x, z) => ter.hAt(x, z);
-        E_.carro(BB, E_.xf(7.5, cy(7.5, -55) + 0.02, -55, 0, 0.5, 0)); ctx.addSeg(7.0, -55.3, 8.0, -54.7, 0.8); foot.push({ x: 7.5, z: -55, w: 2.6, d: 1.6, yaw: 0.5 }); stamp(7.5, -55, 2.2, 0.5, 0.4);
-        const hx = 17, hz = -45.5, hy = Math.max(cy(hx - 3, hz - 2), cy(hx + 3, hz + 2)) + 0.02;
+      E_.carro(BB, E_.xf(7.5, ter.hAt(7.5, -55) + 0.02, -55, 0, 0.5, 0)); ctx.addSeg(7.0, -55.3, 8.0, -54.7, 0.8); foot.push({ x: 7.5, z: -55, w: 2.6, d: 1.6, yaw: 0.5 }); stamp(7.5, -55, 2.2, 0.5, 0.4);   // carro procedural en la plaza
+      }
+      {   // huerto con vallado (en ambos modos)
+        const cy = (x, z) => ter.hAt(x, z), hx = 17, hz = -45.5, hy = Math.max(cy(hx - 3, hz - 2), cy(hx + 3, hz + 2)) + 0.02;
         E_.huerto(BB, E_.xf(hx, hy, hz, 0, 0.12, 0), 6, 4); foot.push({ x: hx, z: hz, w: 6.6, d: 4.6, yaw: 0.12 }); stamp(hx, hz, 4, 0.3, 0.5);
       }
       // puerta de la aldea: dos pilares de piedra, dintel y tejadillo
@@ -457,7 +615,7 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       const g = geo.clone(); g.applyMatrix4(m);
       for (const k of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(k)) g.deleteAttribute(k);
       const ng = g.index ? g.toNonIndexed() : g; if (ng !== g) g.dispose();
-      const key = mat.uuid + '|' + Math.floor((m.elements[12] + 60) / 60) + ',' + Math.floor((m.elements[14] + 60) / 60) + (nocast ? 'n' : '');
+      const cs = nocast ? 120 : 60, key = mat.uuid + '|' + Math.floor((m.elements[12] + 60) / cs) + ',' + Math.floor((m.elements[14] + 60) / cs) + (nocast ? 'n' : '');   // la vegetación (sin sombra) en celdas de 120 m: menos llamadas de dibujo
       /* celdas de 60 m (4): el frustum culling descarta lo que no se ve */ let e = statics.get(key); if (!e) { e = { mat, list: [], nocast: !!nocast }; statics.set(key, e); } e.list.push(ng);
     }
     function sFlush() {
@@ -573,8 +731,8 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       };
       veg('arbusto_02', 18, (x, z) => { const d = ter.roadDist(x, z) - sd(x, z); return ((d > 2.6 && d < 14) || (z < -44 && d > 6)) && free(x, z, 1.2) && ter.slopeAt(x, z) < 0.6; }, 0.8, 1.35, 0.03);
       veg('helecho_02', 16, (x, z) => { const d = ter.roadDist(x, z) - sd(x, z); return d > 1.9 && free(x, z, 0.8) && ter.slopeAt(x, z) < 0.7 && (d < 12 || ter.fbm2(x * 0.1, z * 0.1, 8, 3) > 0.55); }, 0.9, 1.7, 0.02);
-      veg('arbusto_02', 8, (x, z) => inFoot(x, z, 2.4) && !inFoot(x, z, 1.0) && z < -44 && free(x, z, 0), 0.5, 0.9, 0.03);
-      veg('helecho_02', 10, (x, z) => inFoot(x, z, 2.0) && !inFoot(x, z, 0.8) && z < -44, 0.7, 1.2, 0.02);
+      veg('arbusto_02', 14, (x, z) => inFoot(x, z, 2.4) && !inFoot(x, z, 1.0) && z < -44 && free(x, z, 0), 0.5, 0.9, 0.03);
+      veg('helecho_02', 14, (x, z) => inFoot(x, z, 2.0) && !inFoot(x, z, 0.8) && z < -44, 0.7, 1.2, 0.02);
       // ----- talud de la loma: rocas grandes encastradas (medio enterradas, ejes alineados con la pendiente, escala no uniforme), repisas, detritos al pie y vegetación en grietas -----
       const slopeRocks = [];   // variantes: {geo, mat, w, h}
       const addVar = (geo, mat, nm) => { geo.computeBoundingBox(); const b = geo.boundingBox; slopeRocks.push({ geo, mat, w: Math.max(b.max.x - b.min.x, b.max.z - b.min.z), h: b.max.y - b.min.y, nm }); mat.roughness = 0.95; mat.metalness = 0; mat.envMapIntensity = 0.45; mat.color.setRGB(0.7, 0.64, 0.6); };
@@ -622,8 +780,8 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       };
       const bar = place('barriles', /barrel0[12]$/, -4.6, -44.2, 0.4, 1, -0.02); ctx.addSeg(-4.6, -44.2, -4.6, -44.2, 0.5); stamp(-4.6, -44.2, 1.4, 0.5, 0.4);
       place('barriles', /barrel01$/, -6.6, -49.6, 1.0, 1, 0); ctx.addSeg(-6.6, -49.6, -6.6, -49.6, 0.4);
-      place('cajon', null, 7.4, -49.2, 0.3, 1.2, 0); ctx.addSeg(7.4, -49.2, 7.4, -49.2, 0.6); stamp(7.4, -49.2, 1.2, 0.5, 0.3);
-      place('cubo', null, 8.2, -48.6, 0.8, 1.2, 0.0);
+      place('cajon', null, 3.7, -44.2, 0.3, 1.2, 0); ctx.addSeg(3.7, -44.2, 3.7, -44.2, 0.6); stamp(3.7, -44.2, 1.2, 0.5, 0.3);   // junto al camino, bajo el farol (la puerta de la casa Tudor queda libre)
+      place('cubo', null, 4.5, -43.7, 0.8, 1.2, 0.0);
       pointAt(30, PA); const lx = PA.x + 6.6, lz = PA.z; place('tronco_caido', null, lx, lz, 0.5, 1, 0.0); ctx.addSeg(lx - 0.9, lz - 0.4, lx + 0.9, lz + 0.4, 0.45); stamp(lx, lz, 2, 0.5, 0.3);
       pointAt(62, PA); place('tocon', null, PA.x - 6.8, PA.z, 0.2, 1, 0.0); ctx.addSeg(PA.x - 6.8, PA.z, PA.x - 6.8, PA.z, 0.55); stamp(PA.x - 6.8, PA.z, 1.2, 0.5, 0.3);
       // farol colgado de un poste junto a la puerta
@@ -678,7 +836,7 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
         const dR = ter.roadDist(x, z), w = ter.halfW(ter.roadS(x, z));
         if (dR < w + 0.12 + (ter.fbm2(x * 1.7, z * 1.7, 4, 2) - 0.5) * 0.7) return 0;
         const sl = ter.slopeAt(x, z); if (sl > 1.0 || wg(x, z) || inFoot(x, z, 0.4)) return 0;
-        const k = lerp(0.6, 1, sstep(w + 0.1, w + 2.4, dR)) * (1 - 0.85 * sstep(0.6, 1.0, sl));
+        const tr = trodAt(x, z), k = lerp(0.6, 1, sstep(w + 0.1, w + 2.4, dR)) * (1 - 0.85 * sstep(0.6, 1.0, sl)) * (1 - 0.97 * tr * tr);   // tr: tierra pisada junto a puertas y pozo
         return k * (ter.hAt(x, z) > 13 ? 0.7 : 1);   // en la aldea la hierba es más baja/rala (suelo pisado)
       };
       const cap = Math.floor(CH * CH * DENS * 1.05), bufM = GROUPS.map(() => new Float32Array(cap * 16)), bufC = GROUPS.map(() => new Float32Array(cap * 3)), cnt = GROUPS.map(() => 0);
@@ -690,7 +848,7 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
           const dR = ter.roadDist(x, z), w = ter.halfW(ter.roadS(x, z)), e = dR - w, y = ter.hAt(x, z);
           let g; if (e < 2.4 && rng() < 0.3 * (1 - sstep(0.3, 2.4, e) * 0.7)) g = 3; else { const r = rng(); g = 0; while (g < 2 && r > WT[g]) g++; }
           const edge = sstep(w + 0.1, w + 2.6, dR), tallN = ter.fbm2(x * 0.08 + 5, z * 0.08, 12, 3);
-          const sc = lerp(0.85, 1.3, rng()), hs = sc * (0.5 + 0.5 * edge) * (0.9 + 0.35 * sstep(0.4, 0.75, tallN)) * (g > 2 ? 0.8 : 1);   // más corta y rala sobre el borde del camino
+          const sc = lerp(0.85, 1.3, rng()), hs = sc * (0.5 + 0.5 * edge) * (1 - 0.45 * trodAt(x, z)) * (0.9 + 0.35 * sstep(0.4, 0.75, tallN)) * (g > 2 ? 0.8 : 1);   // más corta y rala sobre el borde del camino
           compose(x, y - 0.02, z, rng() * 6.28, sc, hs, sc, (rng() - 0.5) * 0.2, (rng() - 0.5) * 0.2);
           const n = cnt[g]++; Mt.toArray(bufM[g], n * 16);
           // tinte casi blanco con variación de gran escala ±8 %: verde vivo en zonas húmedas/bajas, pajizo en las secas (~1/4), más seco junto al camino
@@ -815,13 +973,13 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       group.traverse((o) => { if (o.isInstancedMesh && o.dispose) o.dispose(); });
       own.geo.forEach((g) => g.dispose()); own.mat.forEach((m) => m.dispose()); own.tex.forEach((t) => t.dispose()); own.rt.forEach((r) => r.dispose());
       for (const l of [sunN, sunF]) if (l && l.shadow.map) { l.shadow.map.dispose(); l.shadow.map = null; l.dispose && l.dispose(); }
-      own.geo.clear(); own.mat.clear(); own.tex.clear(); own.rt.clear(); chunks.length = 0; lodChunks.length = 0; trees.length = 0; treeMeshes.length = 0; chimneys.length = 0; foot.length = 0; stamps.length = 0;
+      own.geo.clear(); own.mat.clear(); own.tex.clear(); own.rt.clear(); chunks.length = 0; lodChunks.length = 0; trees.length = 0; treeMeshes.length = 0; chimneys.length = 0; foot.length = 0; stamps.length = 0; trodList.length = 0;
     }
     function spawnAt(s, side) {   // punto del camino (con desplazamiento lateral) y rumbo hacia la aldea
       pointAt(s, PA); const x = PA.x - PA.tz * side, z = PA.z + PA.tx * side; return { x, z, yaw: Math.atan2(PA.tx, PA.tz), y: ter.hAt(x, z) };
     }
     const api = {
-      cargar, dispose, update, setQuality, spawnAt, S, group, get muros() { return S.runs; },
+      cargar, dispose, update, setQuality, spawnAt, S, group, get muros() { return S.runs; }, get modelos() { return MOD_INFO; }, get procedural() { return PROC; },
       get listo() { return S.listo; }, get ter() { return ter; }, heightAt: (x, z) => ter.hAt(x, z), sunDir, get sunN() { return sunN; }, get sunF() { return sunF; }, get trees() { return trees; },
       get stats() { return { bloques: S.blocks, trisAldea: S.trisAldea, trisEstaticos: S.trisStatic, taludes: S.talud, arboles: trees.length, chunks: chunks.length, chunksVisibles: S.chunksVis, matas: chunks.reduce((a, c) => a + (c.flor ? 0 : c.n.reduce((x, y) => x + y, 0)), 0), floresInst: chunks.reduce((a, c) => a + (c.flor ? c.n[0] : 0), 0), trisMata: grassTris }; },
       limite: (pos, r) => { const L = 57 - r; if (pos.x > L) pos.x = L; else if (pos.x < -L) pos.x = -L; if (pos.z > 60 - r) pos.z = 60 - r; else if (pos.z < -L) pos.z = -L; }

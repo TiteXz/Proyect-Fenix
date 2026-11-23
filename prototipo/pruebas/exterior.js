@@ -3,7 +3,8 @@
    Por defecto: prototipo/dist, prototipo/.three/package, prototipo/exterior/capturas.
    1) carga ?escena=aldea&test=1, exige 0 errores de consola, mide renderer.info (draw calls, triángulos) por preset de calidad
    2) captura C1/C2/C3 del brief (1280x720, deviceScaleFactor 1, sin HUD) + caballero a caballo en el camino → .webp (calidad 80), borra los png
-   3) comprueba el dispose(): patio → aldea → patio devuelve geometries/textures al valor inicial */
+   3) comprueba el dispose(): patio → aldea → patio devuelve geometries/textures al valor inicial
+   4) edificios de Sketchfab (CC-BY): 8 modelos, medidas finales y apartado «Créditos» del menú de pausa con las 8 atribuciones */
 const { chromium } = require('playwright'); const fs = require('fs'); const path = require('path'); const { execFileSync } = require('child_process');
 const root = path.resolve(__dirname, '..');
 const dir = path.resolve(process.argv[2] || path.join(root, 'dist')), pkg = path.resolve(process.argv[3] || path.join(root, '.three/package')), cap = path.resolve(process.argv[4] || path.join(root, 'exterior/capturas'));
@@ -42,7 +43,7 @@ const info = (p, soloEscena) => p.evaluate((solo) => {   // renderer.info de un 
     C2: { rs: 26, rside: 1.9, ry: 1.2, ls: 35, lside: 3.5, ly: 0.7, fov: 35 },          // plano medio del muro (tramo con muro, hierba y flores en primer plano)
     C3: { x: 0, y: 3, z: -10, lx: 0, ly: 4, lz: -45, fov: 50, rel: true },
     C5: { x: -20, y: 7, z: -30, lx: -2, ly: 4, lz: -54, fov: 50, rel: true },        // aldea desde la loma, más alta que C3 (para ver el afloramiento y las casas de lado)
-    C6: { x: 3, y: 2, z: -42, lx: -11, ly: 3, lz: -52, fov: 50, rel: true }           // fachadas de cerca
+    C6: { x: 5.5, y: 2, z: -40, lx: -9, ly: 3.5, lz: -53, fov: 50, rel: true }         // fachadas de cerca (casa grande, pozo y casa rústica)
   };
   const poner = (c, mount) => p.evaluate(({ c, mount }) => {
     const G = window.__GAME__, A = G.aldea; let o = Object.assign({}, c);
@@ -58,6 +59,7 @@ const info = (p, soloEscena) => p.evaluate((solo) => {   // renderer.info de un 
     presets[q] = await info(p, true); const tot = await info(p, false); presets[q].total = tot; console.log('renderer.info C1 ' + q + ' (solo escena | con jugador y caballo):', JSON.stringify(presets[q]));
   }
   ok(presets.alta.calls <= 160 && presets.alta.tris <= 2.0e6, 'Alta dentro del presupuesto de escena (≤ 160 draw calls, ≤ 2 M tris): ' + presets.alta.calls + ' / ' + (presets.alta.tris / 1e6).toFixed(2) + ' M');
+  ok(presets.alta.tris >= 0.9e6, 'la escena sigue completa (≥ 0,9 M tris en Alta: terreno, hierba, árboles y edificios)');
   ok(presets.baja.tris < presets.media.tris && presets.media.tris < presets.alta.tris, 'los presets reducen la densidad de hierba (tris baja < media < alta)');
   for (let i = 0; i < 3 && (await p.evaluate(() => document.querySelector('#qual').textContent)) !== 'Calidad: Alta'; i++) await p.evaluate(() => document.querySelector('#qual').click());
   // ---------- 2) capturas ----------
@@ -80,6 +82,16 @@ const info = (p, soloEscena) => p.evaluate((solo) => {   // renderer.info de un 
   await p.keyboard.up('KeyW'); await p.keyboard.up('ShiftLeft');
   ok(g1.z < g0.z - 20 && g1.y > g0.y + 0.5, 'galope: avanza ' + (g0.z - g1.z).toFixed(0) + ' m hacia la aldea y sube ' + (g1.y - g0.y).toFixed(1) + ' m (v=' + g1.v.toFixed(1) + ' m/s)');
   ok(Math.abs(g1.x) < 58 && g1.z > -58, 'el jinete no sale del mapa');
+  // edificios de Sketchfab: 8 modelos en escena, escala con puerta ≈ 2-2,2 m, apoyados en el terreno y con el parche de tierra pisada
+  const mod = await p.evaluate(() => { const A = window.__GAME__.aldea; return { proc: A.procedural, m: A.modelos, atlas: A.S.atlas, h: Object.fromEntries(Object.entries(A.modelos).map(([k, v]) => [k, A.heightAt(v.x, v.z)])) }; });
+  const ESCALA = { casa_entramado_c: 1.16, casa_tudor: 1.03, casa_piedra: 1.04, casa_rustica: 0.95, granero: 0.92, torre_piedra: 0.88, pozo_piedra: 1.0, carro: 0.9 };
+  ok(!mod.proc && Object.keys(mod.m).length === 8 && Object.keys(ESCALA).every((k) => mod.m[k] && mod.m[k].s === ESCALA[k]), 'edificios: 8 modelos GLB (casa_entramado_c, tudor, piedra, rustica, granero, torre, pozo, carro) con las escalas fijadas: ' + JSON.stringify(Object.fromEntries(Object.entries(mod.m).map(([k, v]) => [k, v.s + ' x ' + v.alto + ' m']))));
+  ok(Object.values(mod.m).every((v) => v.y0 <= v.hMax + 1e-6 && v.y0 - v.falda <= v.hMin + 0.1), 'edificios asentados: la base nunca queda por encima del punto más alto del terreno bajo la huella y la falda llega por debajo del más bajo (no flotan)');
+  ok(mod.atlas && mod.atlas.tiles >= 20 && mod.atlas.h <= 4096, 'atlas de edificios: ' + JSON.stringify(mod.atlas));
+  await p.keyboard.press('KeyP'); await p.waitForTimeout(400);
+  const cr = await p.evaluate(() => { const b = document.querySelector('#pmCred'); if (!b || b.closest('li').hidden) return null; b.click(); const l = document.querySelector('#pmCredList'); return { n: l.querySelectorAll('a[href*="sketchfab.com"]').length, lic: l.querySelectorAll('a[href*="creativecommons.org/licenses/by/4.0"]').length, txt: l.textContent, vis: !document.querySelector('#pmCredV').hidden }; });
+  ok(cr && cr.vis && cr.n === 8 && cr.lic === 8 && /local\.yany/.test(cr.txt) && /Mutasim_/.test(cr.txt) && /Lyskilde/.test(cr.txt) && /CC BY 4\.0/.test(cr.txt), 'Créditos en el menú de pausa: 8 modelos con título, autor, licencia CC BY 4.0 y enlace');
+  if (cr && cr.vis) { await p.waitForTimeout(500); const png = path.join(cap, 'creditos.png'); await p.screenshot({ path: png }); execFileSync('python3', ['-I', '-c', 'import sys;from PIL import Image;Image.open(sys.argv[1]).convert("RGB").save(sys.argv[2],"WEBP",quality=80)', png, path.join(cap, 'creditos.webp')]); fs.unlinkSync(png); }
   ok(realErrs(errs).length === 0, 'sin errores ni avisos de consola: ' + JSON.stringify(realErrs(errs)));
   await p.close();
   // ---------- 3) dispose: patio → aldea → patio ----------
