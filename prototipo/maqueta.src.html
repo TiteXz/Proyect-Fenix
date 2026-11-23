@@ -490,7 +490,7 @@ composer.addPass(grade);
 const QUAL = {
   baja: { name: 'Baja', pr: 1, bloom: false, shadow: 1024, soft: false, mist: false, ext: { sombra: 1024, sombraFar: 1024, hierba: 0.3, r1: 8, r2: 30, lod0: 12, viento: false, flores: 0.3 } },
   media: { name: 'Media', pr: 1.25, bloom: true, shadow: 1024, soft: true, mist: true, ext: { sombra: 2048, sombraFar: 1024, hierba: 0.6, r1: 12, r2: 42, lod0: 18, viento: true, flores: 0.7 } },
-  alta: { name: 'Alta', pr: 1.75, bloom: true, shadow: 2048, soft: true, mist: true, ao: true, ext: { sombra: 4096, sombraFar: 2048, hierba: 1, r1: 16, r2: 52, lod0: 25, viento: true, flores: 1 } }   // ext: parámetros de la escena de la aldea (sombras, densidad de hierba, LOD)
+  alta: { name: 'Alta', pr: 1.75, bloom: true, shadow: 2048, soft: true, mist: true, ao: true, ext: { sombra: 4096, sombraFar: 2048, hierba: 1, r1: 14, r2: 52, lod0: 25, viento: true, flores: 1 } }   // ext: parámetros de la escena de la aldea (sombras, densidad de hierba, LOD)
 };
 let qual = coarse ? 'media' : 'alta';
 function resize() {
