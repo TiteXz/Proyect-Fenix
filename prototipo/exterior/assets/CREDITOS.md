@@ -46,3 +46,18 @@ Atlas generados (procedurales, semilla fija; `crear_atlas.py` + `herramientas/cr
 - No existen vallado ni carro CC0 en Poly Haven: se entregan cajón, cubo, barriles, farol, tocón y tronco; poste/cuerda/carro deben hacerse con primitivas + `madera`.
 - Edificios: sin modelos (el brief los construye con primitivas + las texturas `muro_piedra`, `revoco`, `madera`, `teja`).
 - Nubes/humo: no se descargó nada (sprites de vfx.js).
+
+## Ronda 2 (2026-11-23): hierba fina, flores, cielo 4K, acantilados
+Todo **CC0** de Poly Haven (https://polyhaven.com/license), descargado de la API publica (sin claves). Script: `fetch_ronda2.py <cache>`; atlas: `crear_atlas_ronda2.py <cache> <out>`; GLB: `herramientas/crear_cartas_ronda2.mjs <atlas> <out>`, `herramientas/procesar_acantilados.mjs <cache> <out>`; cielo: `crear_cielo.py`. Hoja de prueba: `herramientas/sheet_ronda2.js`.
+| Fichero | Origen (slug) | Autor | Tris | KB | Cambios |
+|---|---|---|---|---|---|
+| hierba_briznas.glb | `grass_medium_01` y `grass_medium_02` (diffuse+alpha 4K y `dry_diff`), `dandelion_01` (hojas) + dibujo procedural (treboles) | Rob Tuytel, Rico Cilliers (modelado); Poly Haven | 16 nodos `briznas_<i>_<nombre>` x 24 | 650 | Atlas 2048x1024 WebP, 16 teselas de 256x512: 12 de hierba (macollas finas reales + briznas largas curvadas + espigas + tallos secos) y 4 de hoja ancha (treboles, trebol con flor, hojas de diente de leon). Color desaturado, base oscurecida (AO falso). 3 tarjetas cruzadas x 2 segmentos, cara delantera y trasera como geometria propia (sin DoubleSide: three voltea la normal y la cara trasera se veia negra), normales mezcladas 85 % hacia arriba, v del UV = altura |
+| hierba_lod.glb | mismo atlas (a 1024x512) | idem | 16 nodos `lod_<i>_<nombre>` x 4 | 212 | 1 tarjeta por variante (2 caras), 15 % mas ancha |
+| flores_prado.glb | atlas procedural propio (sin fotos) | CC0 propio | 12 nodos `flor_<morada\|blanca\|amarilla\|naranja>_<n>` x 24 | 168 | Atlas 2048x1536 WebP, 12 teselas 512x512 (1 px = 0,6 mm; tarjeta 0,31 m): petalos con gradiente centro oscuro -> punta clara, venas, centro oscuro/estambres, tallos finos (2-3 mm), hojas basales, capullos; cabezas de 2,2-4 cm. Colores suaves (sat x0,8) |
+| cielo_4k.webp | `kloofendal_48d_partly_cloudy_puresky` 4K .hdr | Greg Zaal, Jarod Guest | - | 275 | Equirectangular 4096x2048 LDR sRGB (curva Reinhard extendida, sol recortado). Sol en azimut ~216 deg desde u=0,6, elevacion ~49 deg. Es el mismo cielo que `cielo_kloofendal_1k.hdr`, que sigue siendo la luz/PMREM |
+| acantilado_01 | `mountainside` | Dario Barresi (foto), Rico Cilliers | 5,8 k | 1687 | Simplificado (meshopt) de 288 k tris, 6 x 6,2 x 3,1 m; diffuse/normal 2K, ARM 1K (WebP). Origen en la base, centrado |
+| acantilado_02 | `namaqualand_cliff_01` | Jenelle van Heerden (foto), Rico Cilliers | 5,8 k | 1022 | de 177 k tris, 5 x 3 x 2,65 m; resto igual |
+| acantilado_03 | `boulder_01` | Rico Cilliers | 5,0 k | 1595 | de 124 k tris, 4 x 3,2 x 5,8 m (penasco con liquen) |
+| acantilado_04 | `namaqualand_boulder_02` | Greg Zaal (foto), Rico Cilliers | 5,2 k | 1530 | de 184 k tris, 3,6 x 1,3 x 1,75 m (peñasco bajo) |
+Nota: no hay textura `roca_talud` nueva (`rock_face` 2K sigue siendo adecuada para triplanar). Ronda 2 anade 6,9 MB netos a `assets/`.
+**Obsoletos (siguen en la carpeta para no romper la escena en curso; borrar al migrar, -1,3 MB):** `hierba_mechones.glb`, `flores_matas.glb`, `talud_roca_01.glb`, `talud_roca_02.glb`.
