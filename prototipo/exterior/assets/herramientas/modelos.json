@@ -1,0 +1,351 @@
+{
+ "arbol_isla2_lod0": {
+  "src": "island_tree_02",
+  "tex": 1024,
+  "q": 68,
+  "altura": 7.0,
+  "mats": {
+   "leaves": {
+    "mode": "crown",
+    "tris": 0,
+    "K": 1100,
+    "size": 0.34,
+    "atlas": "/tmp/claude-0/-home-user-Proyect-Fenix/c5d81203-c039-550a-b991-9318a84a78d2/scratchpad/exterior/atlas/follaje_isla.png"
+   },
+   "branches": {
+    "mode": "simplify",
+    "tris": 1800,
+    "error": 0.15
+   },
+   ".*": {
+    "mode": "simplify",
+    "tris": 1500,
+    "error": 0.05
+   }
+  }
+ },
+ "arbol_isla2_lod1": {
+  "src": "island_tree_02",
+  "tex": 256,
+  "q": 68,
+  "altura": 7.0,
+  "mats": {
+   "leaves": {
+    "mode": "crown",
+    "tris": 0,
+    "K": 330,
+    "size": 0.62,
+    "atlas": "/tmp/claude-0/-home-user-Proyect-Fenix/c5d81203-c039-550a-b991-9318a84a78d2/scratchpad/exterior/atlas/follaje_isla.png"
+   },
+   "branches": {
+    "mode": "simplify",
+    "tris": 500,
+    "error": 0.15
+   },
+   ".*": {
+    "mode": "simplify",
+    "tris": 400,
+    "error": 0.05
+   }
+  }
+ },
+ "arbol_jacaranda_lod0": {
+  "src": "jacaranda_tree",
+  "tex": 1024,
+  "q": 68,
+  "altura": 13.0,
+  "mats": {
+   "leaves": {
+    "mode": "crown",
+    "tris": 0,
+    "K": 1500,
+    "size": 3.2,
+    "atlas": "/tmp/claude-0/-home-user-Proyect-Fenix/c5d81203-c039-550a-b991-9318a84a78d2/scratchpad/exterior/atlas/follaje_jacaranda.png"
+   },
+   "branches": {
+    "mode": "simplify",
+    "tris": 2200,
+    "error": 0.6
+   },
+   ".*": {
+    "mode": "simplify",
+    "tris": 1500,
+    "error": 0.05
+   }
+  }
+ },
+ "arbol_jacaranda_lod1": {
+  "src": "jacaranda_tree",
+  "tex": 256,
+  "q": 68,
+  "altura": 13.0,
+  "mats": {
+   "leaves": {
+    "mode": "crown",
+    "tris": 0,
+    "K": 480,
+    "size": 5.0,
+    "atlas": "/tmp/claude-0/-home-user-Proyect-Fenix/c5d81203-c039-550a-b991-9318a84a78d2/scratchpad/exterior/atlas/follaje_jacaranda.png"
+   },
+   "branches": {
+    "mode": "simplify",
+    "tris": 500,
+    "error": 0.6
+   },
+   ".*": {
+    "mode": "simplify",
+    "tris": 400,
+    "error": 0.05
+   }
+  }
+ },
+ "arbol_isla1_lod0": {
+  "src": "island_tree_01",
+  "tex": 1024,
+  "q": 68,
+  "altura": 8.5,
+  "mats": {
+   "leaves": {
+    "mode": "crown",
+    "tris": 0,
+    "K": 1200,
+    "size": 0.4,
+    "atlas": "/tmp/claude-0/-home-user-Proyect-Fenix/c5d81203-c039-550a-b991-9318a84a78d2/scratchpad/exterior/atlas/follaje_isla.png"
+   },
+   "branches": {
+    "mode": "simplify",
+    "tris": 1800,
+    "error": 0.15
+   },
+   ".*": {
+    "mode": "simplify",
+    "tris": 1500,
+    "error": 0.05
+   }
+  }
+ },
+ "arbol_isla1_lod1": {
+  "src": "island_tree_01",
+  "tex": 256,
+  "q": 68,
+  "altura": 8.5,
+  "mats": {
+   "leaves": {
+    "mode": "crown",
+    "tris": 0,
+    "K": 360,
+    "size": 0.72,
+    "atlas": "/tmp/claude-0/-home-user-Proyect-Fenix/c5d81203-c039-550a-b991-9318a84a78d2/scratchpad/exterior/atlas/follaje_isla.png"
+   },
+   "branches": {
+    "mode": "simplify",
+    "tris": 500,
+    "error": 0.15
+   },
+   ".*": {
+    "mode": "simplify",
+    "tris": 400,
+    "error": 0.05
+   }
+  }
+ },
+ "arbusto_02": {
+  "src": "shrub_02",
+  "tex": 1024,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "cards",
+    "tris": 1600,
+    "perPrim": true,
+    "maxScale": 2.0
+   }
+  },
+  "centrar": true
+ },
+ "arbusto_03": {
+  "src": "shrub_03",
+  "tex": 1024,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "cards",
+    "tris": 1600,
+    "perPrim": true,
+    "maxScale": 2.0
+   }
+  },
+  "centrar": true
+ },
+ "helecho_02": {
+  "src": "fern_02",
+  "tex": 1024,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "cards",
+    "tris": 1500,
+    "perPrim": true,
+    "maxScale": 2.0
+   }
+  },
+  "centrar": true
+ },
+ "roca_musgo_set": {
+  "src": "rock_moss_set_01",
+  "tex": 512,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 900,
+    "perPrim": true,
+    "error": 0.4
+   }
+  },
+  "centrar": true
+ },
+ "roca_07": {
+  "src": "rock_07",
+  "tex": 512,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 1200,
+    "perPrim": true,
+    "error": 0.4
+   }
+  }
+ },
+ "roca_09": {
+  "src": "rock_09",
+  "tex": 1024,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 1200,
+    "perPrim": true,
+    "error": 0.4
+   }
+  }
+ },
+ "piedra_01": {
+  "src": "stone_01",
+  "tex": 512,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 400,
+    "perPrim": true,
+    "error": 0.4
+   }
+  }
+ },
+ "talud_roca_01": {
+  "src": "rock_face_01",
+  "tex": 1024,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 3000,
+    "perPrim": true,
+    "error": 0.4
+   }
+  }
+ },
+ "talud_roca_02": {
+  "src": "rock_face_02",
+  "tex": 1024,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 3000,
+    "perPrim": true,
+    "error": 0.4
+   }
+  }
+ },
+ "barriles": {
+  "src": "wooden_barrels_01",
+  "tex": 512,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 3000,
+    "perPrim": false,
+    "error": 0.05
+   }
+  }
+ },
+ "cajon": {
+  "src": "wooden_crate_01",
+  "tex": 512,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 1500,
+    "perPrim": false,
+    "error": 0.05
+   }
+  }
+ },
+ "cubo": {
+  "src": "wooden_bucket_01",
+  "tex": 512,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 1000,
+    "perPrim": false,
+    "error": 0.05
+   }
+  }
+ },
+ "farol": {
+  "src": "wooden_lantern_01",
+  "tex": 512,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 1800,
+    "perPrim": false,
+    "error": 0.05
+   }
+  }
+ },
+ "tronco_caido": {
+  "src": "dead_tree_trunk_02",
+  "tex": 512,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 2500,
+    "perPrim": false,
+    "error": 0.05
+   }
+  }
+ },
+ "tocon": {
+  "src": "tree_stump_01",
+  "tex": 512,
+  "q": 68,
+  "mats": {
+   ".*": {
+    "mode": "simplify",
+    "tris": 1500,
+    "perPrim": false,
+    "error": 0.05
+   }
+  }
+ }
+}
