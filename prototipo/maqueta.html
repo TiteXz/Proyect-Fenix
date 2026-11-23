@@ -4191,16 +4191,16 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
     }
     function buildModelos() {
       // aldea sobre la meseta (z < -46, x ∈ [-22, 22]); calle central (x ≈ 0) que acaba en la casa rústica; plazuela con pozo junto a la calle
-      modelo('torre_piedra', -22.5, -56.5, 0.55);                              // hito en el borde de la meseta, puerta hacia la plaza
-      const C = modelo('casa_entramado_c', -12, -54, 0.28);                    // casa grande, a la izquierda de la calle
+      modelo('torre_piedra', -21, -56.5, 0.55);                                // hito en el borde de la meseta, puerta hacia la plaza
+      const C = modelo('casa_entramado_c', -11.5, -54, 0.28);                  // casa grande, a la izquierda de la calle
       modelo('casa_rustica', -0.5, -60, 0.04);                                 // cierra la calle
-      const U = modelo('casa_tudor', 8.4, -53.5, -0.42);                       // derecha de la calle
-      modelo('casa_piedra', 15.8, -58.5, -0.55);                               // detrás, más a la derecha
-      const A = modelo('granero', 22, -52, -1.0, { trod: 3 });                // hacia el borde de la meseta
-      const W = modelo('pozo_piedra', -3.6, -53, 0.3, { nodoor: true });       // plazuela
-      if (W) { trodStamp(-3.6, -53, 3.6, 0.95); trodStamp(-1.0, -52, 2.6, 0.7); stamp(-3.6, -53, 2.2, 0.35, 0.55); }
-      const K = modelo('carro', 3.4, -49.5, 1.4, { nodoor: true, contact: false });   // junto al camino, a la izquierda de la casa Tudor
-      if (K) trodStamp(3.4, -49.5, 2.6, 0.8);
+      const U = modelo('casa_tudor', 10.0, -52.8, -0.35);                       // derecha de la calle
+      modelo('casa_piedra', 15.4, -60.4, -0.5);                                // detrás, más a la derecha
+      const A = modelo('granero', 19.8, -53.3, -0.9, { trod: 3 });             // hacia el borde de la meseta
+      const W = modelo('pozo_piedra', -2.9, -53.2, 0.3, { nodoor: true });     // plazuela
+      if (W) { trodStamp(-2.9, -53.2, 3.6, 0.95); trodStamp(-0.6, -51.6, 2.6, 0.7); stamp(-2.9, -53.2, 2.2, 0.35, 0.55); }
+      const K = modelo('carro', 5.4, -46.8, 1.5, { nodoor: true, contact: false });   // junto al camino, a la izquierda de la casa Tudor
+      if (K) trodStamp(5.4, -46.8, 2.6, 0.8);
       lenaEn(C, '+x', 0.5, 1.8, 0.95); lenaEn(U, '-x', -0.3, 1.4, 0.8); lenaEn(A, '-x', 0.2, 1.8, 0.9);
       finModelos();
     }
@@ -4442,8 +4442,8 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       };
       const bar = place('barriles', /barrel0[12]$/, -4.6, -44.2, 0.4, 1, -0.02); ctx.addSeg(-4.6, -44.2, -4.6, -44.2, 0.5); stamp(-4.6, -44.2, 1.4, 0.5, 0.4);
       place('barriles', /barrel01$/, -6.6, -49.6, 1.0, 1, 0); ctx.addSeg(-6.6, -49.6, -6.6, -49.6, 0.4);
-      place('cajon', null, 3.7, -44.2, 0.3, 1.2, 0); ctx.addSeg(3.7, -44.2, 3.7, -44.2, 0.6); stamp(3.7, -44.2, 1.2, 0.5, 0.3);   // junto al camino, bajo el farol (la puerta de la casa Tudor queda libre)
-      place('cubo', null, 4.5, -43.7, 0.8, 1.2, 0.0);
+      place('cajon', null, 8.3, -44.2, 0.3, 1.2, 0); ctx.addSeg(8.3, -44.2, 8.3, -44.2, 0.6); stamp(8.3, -44.2, 1.2, 0.5, 0.3);   // junto al camino, bajo el farol (la puerta de la casa Tudor queda libre)
+      place('cubo', null, 9.1, -43.8, 0.8, 1.2, 0.0);
       pointAt(30, PA); const lx = PA.x + 6.6, lz = PA.z; place('tronco_caido', null, lx, lz, 0.5, 1, 0.0); ctx.addSeg(lx - 0.9, lz - 0.4, lx + 0.9, lz + 0.4, 0.45); stamp(lx, lz, 2, 0.5, 0.3);
       pointAt(62, PA); place('tocon', null, PA.x - 6.8, PA.z, 0.2, 1, 0.0); ctx.addSeg(PA.x - 6.8, PA.z, PA.x - 6.8, PA.z, 0.55); stamp(PA.x - 6.8, PA.z, 1.2, 0.5, 0.3);
       // farol colgado de un poste junto a la puerta
