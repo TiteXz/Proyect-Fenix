@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Visor de animaciones de combate</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;background:#12151c;color:#e8ecf4;font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-text-size-adjust:100%}
+body{overflow-x:hidden}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:#232a38;border:1px solid #38425a;border-radius:8px;padding:8px 12px;min-height:40px;cursor:pointer}
+button:hover{background:#2c3548}
+button[aria-pressed=true]{background:#3b5fa8;border-color:#6d92e0}
+:focus-visible{outline:2px solid #ffd27a;outline-offset:2px}
+#app{display:grid;grid-template-columns:minmax(0,1fr) 400px;height:100vh;height:100dvh}
+#stage{position:relative;background:radial-gradient(120% 90% at 50% 20%,#4a5a7a 0%,#27304a 45%,#10131c 100%);min-height:0}
+#cv{display:block;width:100%;height:100%;touch-action:none}
+#hud{position:absolute;left:10px;top:8px;font-size:12px;opacity:.85;pointer-events:none;text-shadow:0 1px 2px #000}
+#msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;background:#12151cdd}
+#panel{overflow-y:auto;padding:12px 16px 24px;border-left:1px solid #2a3142;background:#161a24}
+h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#9fb0d0;margin:18px 0 8px}
+h2:first-child{margin-top:0}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:6px 0}
+.row>.grow{flex:1;min-width:0}
+input[type=range]{width:100%;accent-color:#6d92e0;min-height:28px}
+input[type=search],select,textarea{width:100%;background:#0f121a;border:1px solid #38425a;border-radius:8px;padding:8px}
+textarea{min-height:96px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+label{display:inline-flex;align-items:center;gap:6px}
+#bar{position:relative;height:34px;border-radius:8px;overflow:hidden;display:flex;touch-action:none;cursor:pointer;margin:8px 0;border:1px solid #38425a}
+#bar>i,#strip>i{display:block;height:100%}
+.p1{background:#d98b2b}.p2{background:#d44b4b}.p3{background:#3f86c9}
+#head{position:absolute;top:0;bottom:0;width:3px;margin-left:-1px;background:#fff;box-shadow:0 0 4px #000;pointer-events:none}
+#strip{position:relative;height:30px;display:flex;border-radius:6px;margin:14px 0 10px;touch-action:none;opacity:.9}
+.mk{position:absolute;top:-8px;bottom:-8px;width:22px;margin-left:-11px;cursor:ew-resize;touch-action:none;display:flex;justify-content:center}
+.mk::after{content:"";width:4px;background:#fff;border-radius:2px;box-shadow:0 0 3px #000}
+.mk:focus-visible{outline-offset:-2px}
+.leg{display:flex;gap:12px;font-size:12px;color:#b8c4dc;flex-wrap:wrap}
+.leg b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+.ph{display:grid;grid-template-columns:96px 1fr 56px;gap:8px;align-items:center;margin:4px 0}
+.ph output{text-align:right;font-variant-numeric:tabular-nums}
+#clips{max-height:340px;overflow-y:auto;border:1px solid #2a3142;border-radius:8px;padding:4px}
+#clips h3{margin:8px 6px 4px;font-size:12px;color:#ffd27a;text-transform:uppercase;letter-spacing:.05em}
+#clips button{display:block;width:100%;text-align:left;border:0;background:transparent;border-radius:6px;padding:6px 8px;min-height:36px;font-size:13px;word-break:break-all}
+#clips button[aria-pressed=true]{background:#3b5fa8}
+#clips .v{float:right;margin-left:8px}
+.mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
+.small{font-size:12px;color:#9fb0d0}
+@media (max-width:820px){
+  #app{display:block;height:auto}
+  #stage{position:sticky;top:0;z-index:5;height:46vh;height:46dvh}
+  #panel{border-left:0;overflow:visible;padding:12px 16px 40px}
+  #clips{max-height:280px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="cv" aria-label="Vista 3D del personaje"></canvas>
+    <div id="hud" class="mono"></div>
+    <div id="msg">Cargando modelo…</div>
+  </div>
+  <div id="panel">
+    <h2>Reproducción</h2>
+    <div class="row">
+      <button id="bPrev" aria-label="Fotograma anterior" title="Fotograma anterior (←)">⏮ −1f</button>
+      <button id="bPlay" aria-label="Reproducir o pausar" title="Reproducir / pausar (Espacio)">⏸ Pausa</button>
+      <button id="bNext" aria-label="Fotograma siguiente" title="Fotograma siguiente (→)">+1f ⏭</button>
+      <label><input type="checkbox" id="cLoop" checked> Bucle</label>
+    </div>
+    <div id="bar" role="slider" tabindex="0" aria-label="Barra de tiempo" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0"><i class="p1"></i><i class="p2"></i><i class="p3"></i><div id="head"></div></div>
+    <div class="row small mono"><span id="tTxt">0.00 / 0.00 s</span><span style="margin-left:auto" id="fTxt">f 0</span></div>
+    <div class="ph"><span>Velocidad</span><input type="range" id="rSpeed" min="0.1" max="2" step="0.05" value="1" aria-label="Velocidad"><output id="oSpeed">1.0×</output></div>
+
+    <h2>Cámara y ayudas</h2>
+    <div class="row" id="views">
+      <button data-v="front">Frente</button><button data-v="side">Lateral</button><button data-v="back">Espalda</button><button data-v="top">Cenital</button><button data-v="game">Vista de juego</button>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="cSkel"> Esqueleto</label>
+      <label><input type="checkbox" id="cTrail"> Trayectoria mano der.</label>
+    </div>
+    <div class="row">
+      <button id="bCmp" aria-pressed="false">Comparar</button>
+      <select id="sB" aria-label="Clip B para comparar" class="grow" hidden></select>
+    </div>
+
+    <h2>Clips <span class="small" id="nClips"></span></h2>
+    <div class="row">
+      <input type="search" id="q" placeholder="Buscar clip…" aria-label="Buscar clip" class="grow">
+    </div>
+    <div class="row">
+      <select id="fCfg" aria-label="Filtrar por configuración" class="grow"><option value="">Config: todas</option><option>EP</option><option>EE</option></select>
+      <select id="fDir" aria-label="Filtrar por dirección" class="grow"><option value="">Dirección: todas</option></select>
+    </div>
+    <div id="clips" role="list"></div>
+
+    <h2>Ajuste de fases <span class="small" id="clipName"></span></h2>
+    <div class="leg"><span><b class="p1"></b>Anticipación</span><span><b class="p2"></b>Activo</span><span><b class="p3"></b>Recuperación</span></div>
+    <div class="small" style="margin-top:8px">Clip original: arrastra los dos marcadores para marcar los puntos de corte.</div>
+    <div id="strip"><i class="p1"></i><i class="p2"></i><i class="p3"></i>
+      <div class="mk" id="m1" role="slider" tabindex="0" aria-label="Corte anticipación a activo"></div>
+      <div class="mk" id="m2" role="slider" tabindex="0" aria-label="Corte activo a recuperación"></div>
+    </div>
+    <div class="small mono" id="cutTxt"></div>
+    <div class="ph"><span>Anticipación</span><input type="range" id="d0" min="0.02" max="2" step="0.01" aria-label="Duración anticipación"><output id="o0"></output></div>
+    <div class="ph"><span>Activo</span><input type="range" id="d1" min="0.02" max="2" step="0.01" aria-label="Duración activo"><output id="o1"></output></div>
+    <div class="ph"><span>Recuperación</span><input type="range" id="d2" min="0.02" max="2" step="0.01" aria-label="Duración recuperación"><output id="o2"></output></div>
+    <div class="row small"><span id="refTxt" class="grow"></span><button id="bReset">Restablecer</button></div>
+
+    <h2>Feedback</h2>
+    <div class="row">
+      <button id="vOk" aria-pressed="false">👍 Me gusta</button><button id="vNo" aria-pressed="false">👎 No</button>
+      <button id="bCopy">Copiar valores</button>
+    </div>
+    <textarea id="out" readonly aria-label="Valores para pegar en el chat" placeholder="Aquí aparecen los valores a copiar"></textarea>
+    <div class="small" id="copyMsg" role="status"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+'use strict';
+const GLB_B64 = /*__GLB__*/'';
+const GLB_NAME = /*__GLBNAME__*/'';
+const FPS = 30, FRAME = 1 / FPS, MIN_D = 0.02;
+const $ = id => document.getElementById(id);
+
+/* ---------- tabla de COMBATE.md §1.1 «Animaciones mínimas» (dur, fases) ---------- */
+const T = (a, b, c) => [a, b, c];
+const TABLA = {
+  'ataque|izq|EP': T(.25, .10, .25), 'ataque|izq|EE': T(.30, .10, .30),
+  'ataque|der|EP': T(.25, .10, .25), 'ataque|der|EE': T(.30, .10, .30),
+  'ataque|arr|EP': T(.30, .10, .28), 'ataque|arr|EE': T(.35, .10, .35),
+  'ataque|aba|EP': T(.26, .12, .26), 'ataque|aba|EE': T(.30, .12, .33),
+  'parada|*|EP': T(.05, .10, .20), 'parada|*|EE': T(.05, .10, .25),
+  'bloqueo|*|EP': T(.10, .10, .10), 'bloqueo|*|EE': T(.25 / 3, .25 / 3, .25 / 3),
+  'defproy|*|EP': T(.04, .08, .18), 'defproy|*|EE': T(.25 / 3, .25 / 3, .25 / 3),
+  'contraataque|*|EP': T(.12, .10, .38), 'contraataque|*|EE': T(.15, .10, .45),
+  'habilidad|*|EP': T(.20, .15, .40), 'habilidad|*|EE': T(.25, .45, .40),
+  'remate|*|EP': T(.25, .55, .50), 'remate|*|EE': T(.30, .60, .50),
+};
+const ACC_ALIAS = { ataque: 'ataque', ligero: 'ataque', ataqueligero: 'ataque', parada: 'parada', paradaperfecta: 'parada',
+  bloqueo: 'bloqueo', defensa: 'defproy', desvio: 'defproy', defproy: 'defproy', defensaproyectil: 'defproy', bloqueoproyectil: 'defproy',
+  contraataque: 'contraataque', contra: 'contraataque', habilidad: 'habilidad', estocada: 'habilidad', embestida: 'habilidad', remate: 'remate' };
+const DIR_ALIAS = { izq: 'izq', izquierda: 'izq', der: 'der', derecha: 'der', arr: 'arr', arriba: 'arr', aba: 'aba', abajo: 'aba',
+  fro: 'fro', frontal: 'fro', neutra: 'neu', neu: 'neu', n: 'neu' };
+
+function parseName(name) {
+  const toks = name.split('_');
+  let cfg = '', dir = '', end = toks.length;
+  toks.forEach((t, i) => {
+    const u = t.toUpperCase();
+    if ((u === 'EP' || u === 'EE') && !cfg) { cfg = u; end = Math.min(end, i); }
+    else if (DIR_ALIAS[t.toLowerCase()] && i > 0 && !dir) { dir = DIR_ALIAS[t.toLowerCase()]; end = Math.min(end, i); }
+  });
+  const accion = toks.slice(0, Math.max(1, end)).join('_');
+  return { accion, dir, cfg };
+}
+function tablaFases(name) {
+  const p = parseName(name);
+  const a = ACC_ALIAS[p.accion.toLowerCase().replace(/_/g, '')];
+  if (!a || !p.cfg) return null;
+  return TABLA[a + '|' + p.dir + '|' + p.cfg] || TABLA[a + '|*|' + p.cfg] || null;
+}
+
+/* ---------- time-warp por tramos (puro) ---------- */
+function srcTime(t, c1, c2, dur, d) {
+  const tot = d[0] + d[1] + d[2];
+  if (t <= 0) return 0;
+  if (t >= tot) return dur;
+  if (t < d[0]) return c1 * t / d[0];
+  t -= d[0];
+  if (t < d[1]) return c1 + (c2 - c1) * t / d[1];
+  t -= d[1];
+  return c2 + (dur - c2) * t / d[2];
+}
+
+/* ---------- estado persistente ---------- */
+const LS_KEY = 'fenix_visor_anim_v1';
+let store = { clip: '', loop: true, skel: false, trail: false, fCfg: '', fDir: '', set: {} };
+try { const s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (s && typeof s === 'object') store = Object.assign(store, s); } catch (e) {}
+if (!store.set || typeof store.set !== 'object') store.set = {};
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) {} }
+
+/* ---------- escena ---------- */
+const cv = $('cv'), stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setClearColor(0x000000, 0);
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 60);
+const controls = new THREE.OrbitControls(camera, cv);
+controls.enableDamping = true; controls.dampingFactor = 0.12; controls.maxPolarAngle = Math.PI * 0.499; controls.minDistance = 0.8; controls.maxDistance = 14;
+controls.addEventListener('change', () => { dirty = true; });
+let dirty = true;
+
+const touchDev = matchMedia('(pointer:coarse)').matches;
+scene.add(new THREE.HemisphereLight(0xbfd0ff, 0x30343e, 0.55));
+const key = new THREE.DirectionalLight(0xfff0dc, 2.4);
+key.position.set(3, 5, 4); key.castShadow = true;
+key.shadow.mapSize.set(touchDev ? 1024 : 2048, touchDev ? 1024 : 2048);
+Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3.5, bottom: -2.5, near: 1, far: 14 });
+key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02;
+scene.add(key);
+const fill = new THREE.DirectionalLight(0x8fb0ff, 0.8); fill.position.set(-4, 2.5, 2); scene.add(fill);
+const rim = new THREE.DirectionalLight(0xffc9a0, 1.6); rim.position.set(-1, 3.5, -5); scene.add(rim);
+
+(function floor() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 8, 64, 64, 64);
+  gr.addColorStop(0, '#fff'); gr.addColorStop(0.6, '#bbb'); gr.addColorStop(1, '#000');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(c);
+  const m = new THREE.Mesh(new THREE.CircleGeometry(7, 48), new THREE.MeshStandardMaterial({ color: 0x2b3144, roughness: 0.95, metalness: 0, transparent: true, alphaMap: tex }));
+  m.rotation.x = -Math.PI / 2; m.receiveShadow = true; scene.add(m);
+  const grid = new THREE.GridHelper(10, 20, 0x8aa0cc, 0x8aa0cc);
+  grid.material.transparent = true; grid.material.opacity = 0.14; grid.material.depthWrite = false; grid.position.y = 0.002; scene.add(grid);
+})();
+
+/* ---------- personajes ---------- */
+const loader = new THREE.GLTFLoader();
+let glbBuf = null, clips = [], H = 1.8;
+const chars = [];           // {root, mixer, action, clip, skel, hand}
+function b64ToBuf(b) { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; }
+function parseGlb() { return new Promise((res, rej) => loader.parse(glbBuf.slice(0), '', res, rej)); }
+function makeChar(gltf, x) {
+  const root = gltf.scene; root.position.x = x;
+  root.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.castShadow = true; o.frustumCulled = false; } });
+  scene.add(root);
+  let hand = null;
+  root.traverse(o => { if (o.isBone && !hand && /(^|[_.\-])hand[_.\-]?r(ight)?$|mano.*(der|_r)$|hand[_.]?r\b/i.test(o.name)) hand = o; });
+  const skel = new THREE.SkeletonHelper(root); skel.visible = store.skel; skel.material.depthTest = false; skel.material.linewidth = 2; skel.renderOrder = 10; scene.add(skel);
+  return { root, mixer: new THREE.AnimationMixer(root), action: null, clip: null, skel, hand, tmp: new THREE.Vector3() };
+}
+function playOn(ch, clip) {
+  if (ch.action) ch.action.stop();
+  ch.clip = clip; ch.action = ch.mixer.clipAction(clip); ch.action.setLoop(THREE.LoopOnce, 1); ch.action.clampWhenFinished = true; ch.action.play(); ch.action.paused = false;
+}
+
+/* ---------- ajustes por clip ---------- */
+function defaults(clip) {
+  const dur = clip.duration, tb = tablaFases(clip.name);
+  if (tb) { const s = tb[0] + tb[1] + tb[2]; return { c: [dur * tb[0] / s, dur * (tb[0] + tb[1]) / s], d: tb.slice(), sp: 1, vote: '', tabla: true }; }
+  return { c: [dur / 3, dur * 2 / 3], d: [dur / 3, dur / 3, dur / 3], sp: 1, vote: '', tabla: false };
+}
+function cfgOf(clip) {
+  const df = defaults(clip), s = store.set[clip.name];
+  const o = { c: df.c, d: df.d, sp: 1, vote: '', tabla: df.tabla, def: df };
+  if (s) { if (Array.isArray(s.c) && s.c.length === 2) o.c = s.c.slice(); if (Array.isArray(s.d) && s.d.length === 3) o.d = s.d.slice(); if (typeof s.sp === 'number') o.sp = s.sp; if (s.vote) o.vote = s.vote; }
+  o.c[0] = Math.min(Math.max(o.c[0], 0.001), clip.duration - 0.002); o.c[1] = Math.min(Math.max(o.c[1], o.c[0] + 0.001), clip.duration - 0.001);
+  return o;
+}
+function commit(clip, o) { store.set[clip.name] = { c: o.c, d: o.d, sp: o.sp, vote: o.vote }; save(); }
+const same = (a, b) => a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) < 5e-4);
+function modified(clip, o) { return o.vote || !same(o.c, o.def.c) || !same(o.d, o.def.d) || Math.abs(o.sp - 1) > 1e-6; }
+
+/* ---------- estado de reproducción ---------- */
+let A = null, B = null;           // clips activos {clip, cfg}
+let playing = true, t = 0, compare = false;
+const total = x => x ? x.cfg.d[0] + x.cfg.d[1] + x.cfg.d[2] : 0;
+const span = () => compare && B ? Math.max(total(A), total(B)) : total(A);
+
+function applyPose() {
+  const set = (ch, x) => {
+    if (!ch || !x) return; const tt = total(x);
+    const lt = loopOn() ? (tt > 0 ? t % tt : 0) : Math.min(t, tt);
+    ch.action.time = Math.min(srcTime(lt, x.cfg.c[0], x.cfg.c[1], x.clip.duration, x.cfg.d), x.clip.duration - 1e-4); ch.mixer.update(0);
+  };
+  set(chars[0], A); if (compare) set(chars[1], B);
+  dirty = true;
+}
+const loopOn = () => $('cLoop').checked;
+
+/* ---------- trayectoria ---------- */
+const TR_N = 48;
+const trailGeo = new THREE.BufferGeometry();
+trailGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(TR_N * 3), 3));
+trailGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(TR_N * 3), 3));
+const trail = new THREE.Line(trailGeo, new THREE.LineBasicMaterial({ vertexColors: true, depthTest: false, transparent: true }));
+trail.renderOrder = 11; trail.frustumCulled = false; trail.visible = false; scene.add(trail);
+const PC = [[0.85, 0.55, 0.17], [0.85, 0.29, 0.29], [0.25, 0.53, 0.8]].map(a => new THREE.Color().fromArray(a).convertSRGBToLinear());
+function rebuildTrail() {
+  const ch = chars[0];
+  if (!ch || !ch.hand || !A) { trail.visible = false; return; }
+  trail.visible = store.trail;
+  if (!store.trail) return;
+  const p = trailGeo.attributes.position, col = trailGeo.attributes.color, tot = total(A), saveT = ch.action.time;
+  for (let i = 0; i < TR_N; i++) {
+    const tt = tot * i / (TR_N - 1);
+    ch.action.time = Math.min(srcTime(tt, A.cfg.c[0], A.cfg.c[1], A.clip.duration, A.cfg.d), A.clip.duration - 1e-4);
+    ch.mixer.update(0); ch.root.updateMatrixWorld(true);
+    ch.hand.getWorldPosition(ch.tmp); p.setXYZ(i, ch.tmp.x, ch.tmp.y, ch.tmp.z);
+    const ph = tt < A.cfg.d[0] ? 0 : tt < A.cfg.d[0] + A.cfg.d[1] ? 1 : 2; col.setXYZ(i, PC[ph].r, PC[ph].g, PC[ph].b);
+  }
+  p.needsUpdate = col.needsUpdate = true; ch.action.time = saveT; applyPose();
+}
+
+/* ---------- selección de clip ---------- */
+function selectA(clip, keepT) {
+  A = { clip, cfg: cfgOf(clip) }; playOn(chars[0], clip);
+  if (!keepT) t = 0;
+  store.clip = clip.name; save();
+  refreshUI(); rebuildTrail(); applyPose();
+}
+function selectB(clip) {
+  B = { clip, cfg: cfgOf(clip) };
+  if (chars[1]) playOn(chars[1], clip);
+  applyPose(); refreshUI();
+}
+
+/* ---------- UI ---------- */
+const sl = [$('d0'), $('d1'), $('d2')], ol = [$('o0'), $('o1'), $('o2')];
+const fmt = v => v.toFixed(2);
+function refreshUI() {
+  if (!A) return;
+  const o = A.cfg, tot = total(A), dur = A.clip.duration;
+  $('clipName').textContent = '· ' + A.clip.name;
+  sl.forEach((s, i) => { s.max = Math.max(2, Math.ceil(dur * 2 * 10) / 10); s.value = o.d[i]; ol[i].textContent = fmt(o.d[i]) + ' s'; });
+  const bar = $('bar').children;
+  for (let i = 0; i < 3; i++) bar[i].style.width = (o.d[i] / tot * 100) + '%';
+  const st = $('strip').children;
+  st[0].style.width = (o.c[0] / dur * 100) + '%'; st[1].style.width = ((o.c[1] - o.c[0]) / dur * 100) + '%'; st[2].style.width = ((dur - o.c[1]) / dur * 100) + '%';
+  $('m1').style.left = (o.c[0] / dur * 100) + '%'; $('m2').style.left = (o.c[1] / dur * 100) + '%';
+  $('m1').setAttribute('aria-valuenow', fmt(o.c[0])); $('m2').setAttribute('aria-valuenow', fmt(o.c[1]));
+  $('cutTxt').textContent = `original ${fmt(dur)} s · corte ${fmt(o.c[0])} / ${fmt(o.c[1])} s · retemporizado ${fmt(tot)} s`;
+  $('refTxt').textContent = o.tabla ? 'Valores iniciales: tabla de COMBATE §1.1' : 'Sin fila en la tabla: tercios';
+  $('rSpeed').value = o.sp; $('oSpeed').textContent = o.sp.toFixed(1) + '×';
+  $('vOk').setAttribute('aria-pressed', o.vote === 'ok'); $('vNo').setAttribute('aria-pressed', o.vote === 'no');
+  document.querySelectorAll('#clips button').forEach(b => { b.setAttribute('aria-pressed', b.dataset.n === A.clip.name); const c = clips.find(c => c.name === b.dataset.n); const v = store.set[b.dataset.n]; b.querySelector('.v').textContent = v && v.vote === 'ok' ? '👍' : v && v.vote === 'no' ? '👎' : ''; });
+  $('bar').setAttribute('aria-valuemax', fmt(span()));
+  buildBlock(); updateTime();
+}
+function updateTime() {
+  const s = span();
+  $('head').style.left = (s ? Math.min(t / s, 1) * 100 : 0) + '%';
+  $('tTxt').textContent = `${fmt(Math.min(t, s))} / ${fmt(s)} s`;
+  $('fTxt').textContent = 'f ' + Math.round(Math.min(t, s) * FPS) + '/' + Math.round(s * FPS);
+  $('bar').setAttribute('aria-valuenow', fmt(Math.min(t, s)));
+}
+function buildBlock() {
+  const lines = [];
+  for (const c of clips) {
+    const o = cfgOf(c);
+    if (c === (A && A.clip) || modified(c, o)) lines.push(`${c.name}: corte ${fmt(o.c[0])}/${fmt(o.c[1])} → fases ${fmt(o.d[0])}/${fmt(o.d[1])}/${fmt(o.d[2])}; velocidad ${o.sp.toFixed(1)}; ${o.vote || 'sin voto'}`);
+  }
+  $('out').value = lines.join('\n');
+}
+function commitA() { commit(A.clip, A.cfg); const ch = chars[0]; refreshUI(); schedTrail(); applyPose(); }
+let trTimer = 0; function schedTrail() { cancelAnimationFrame(trTimer); trTimer = requestAnimationFrame(rebuildTrail); }
+
+/* lista de clips con filtros */
+function buildList() {
+  const dirs = new Set(); clips.forEach(c => { const p = parseName(c.name); if (p.dir) dirs.add(p.dir); });
+  const fd = $('fDir'); fd.length = 1; [...dirs].sort().forEach(d => fd.add(new Option(d, d)));
+  fd.value = dirs.has(store.fDir) ? store.fDir : ''; $('fCfg').value = store.fCfg || '';
+  renderList();
+}
+function renderList() {
+  const q = $('q').value.trim().toLowerCase(), fc = $('fCfg').value, fdv = $('fDir').value;
+  const box = $('clips'); box.textContent = ''; let n = 0, last = null;
+  const sorted = clips.slice().sort((a, b) => a.name.localeCompare(b.name));
+  for (const c of sorted) {
+    const p = parseName(c.name);
+    if (q && !c.name.toLowerCase().includes(q)) continue;
+    if (fc && p.cfg !== fc) continue; if (fdv && p.dir !== fdv) continue;
+    if (p.accion !== last) { const h = document.createElement('h3'); h.textContent = p.accion; box.appendChild(h); last = p.accion; }
+    const b = document.createElement('button'); b.dataset.n = c.name; b.setAttribute('role', 'listitem'); b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = '<span class="v"></span>'; b.appendChild(document.createTextNode(c.name + '  '));
+    const s = document.createElement('span'); s.className = 'small'; s.textContent = fmt(c.duration) + ' s'; b.appendChild(s);
+    b.onclick = () => selectA(c); box.appendChild(b); n++;
+  }
+  $('nClips').textContent = `(${n}/${clips.length})`;
+  if (!n) box.textContent = 'Ningún clip coincide.';
+  else if (A) refreshUI();
+}
+$('q').oninput = renderList;
+$('fCfg').onchange = () => { store.fCfg = $('fCfg').value; save(); renderList(); };
+$('fDir').onchange = () => { store.fDir = $('fDir').value; save(); renderList(); };
+
+/* transporte */
+function setPlay(v) { playing = v; $('bPlay').textContent = v ? '⏸ Pausa' : '▶ Reproducir'; }
+$('bPlay').onclick = () => setPlay(!playing);
+function stepFrames(n) { setPlay(false); const s = span(); t = Math.min(Math.max(t + n * FRAME, 0), s); applyPose(); updateTime(); }
+$('bPrev').onclick = () => stepFrames(-1); $('bNext').onclick = () => stepFrames(1);
+$('cLoop').checked = store.loop !== false;
+$('cLoop').onchange = () => { store.loop = $('cLoop').checked; save(); };
+$('rSpeed').oninput = e => { A.cfg.sp = +e.target.value; $('oSpeed').textContent = A.cfg.sp.toFixed(1) + '×'; commit(A.clip, A.cfg); buildBlock(); };
+function dragOn(el, fn) {
+  el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); fn(e); e.preventDefault(); });
+  el.addEventListener('pointermove', e => { if (el.hasPointerCapture(e.pointerId)) fn(e); });
+}
+dragOn($('bar'), e => { const r = $('bar').getBoundingClientRect(); setPlay(false); t = Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1) * span(); applyPose(); updateTime(); });
+$('bar').addEventListener('keydown', e => { if (e.key === 'ArrowLeft') { stepFrames(-1); e.preventDefault(); } else if (e.key === 'ArrowRight') { stepFrames(1); e.preventDefault(); } });
+/* marcadores de corte (tiempo original) */
+function markerDrag(idx) {
+  const el = $(idx ? 'm2' : 'm1');
+  const move = x => { const r = $('strip').getBoundingClientRect(), dur = A.clip.duration; let v = Math.min(Math.max((x - r.left) / r.width, 0), 1) * dur;
+    const c = A.cfg.c, g = FRAME; v = idx ? Math.min(Math.max(v, c[0] + g), dur - g) : Math.min(Math.max(v, g), c[1] - g); c[idx] = v; commitA(); };
+  dragOn(el, e => move(e.clientX));
+  el.addEventListener('keydown', e => { const k = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0; if (!k) return; const r = $('strip').getBoundingClientRect();
+    move(r.left + (A.cfg.c[idx] + k * FRAME) / A.clip.duration * r.width); e.preventDefault(); });
+}
+markerDrag(0); markerDrag(1);
+sl.forEach((s, i) => s.oninput = () => { A.cfg.d[i] = Math.max(MIN_D, +s.value); const m = span(); if (t > m) t = m; commitA(); });
+$('bReset').onclick = () => { const df = defaults(A.clip); A.cfg.c = df.c; A.cfg.d = df.d; A.cfg.sp = 1; commitA(); };
+
+/* cámara */
+function frameDist() { return H * (compare ? 3.0 : 2.1) * (camera.aspect < 0.9 ? 1.5 : 1); }
+function setView(v) {
+  const tg = new THREE.Vector3(0, H * 0.52, 0), d = frameDist(); let dir;
+  if (v === 'front') dir = [0, 0.08, 1]; else if (v === 'side') dir = [1, 0.08, 0]; else if (v === 'back') dir = [0, 0.1, -1];
+  else if (v === 'top') dir = [0, 1, 0.001]; else { dir = [0.42, 0.28, -1]; tg.set(0, H * 0.58, 0.4); }
+  const n = new THREE.Vector3().fromArray(dir).normalize();
+  controls.target.copy(tg); camera.position.copy(tg).addScaledVector(n, v === 'game' ? d * 0.95 : d); camera.up.set(0, 1, 0); controls.update(); dirty = true;
+}
+document.querySelectorAll('#views button').forEach(b => b.onclick = () => setView(b.dataset.v));
+$('cSkel').checked = !!store.skel; $('cTrail').checked = !!store.trail;
+$('cSkel').onchange = () => { store.skel = $('cSkel').checked; chars.forEach(c => c.skel.visible = store.skel); save(); dirty = true; };
+$('cTrail').onchange = () => { store.trail = $('cTrail').checked; save(); trail.visible = store.trail; rebuildTrail(); dirty = true; };
+
+/* comparar */
+$('bCmp').onclick = async () => {
+  compare = !compare; $('bCmp').setAttribute('aria-pressed', compare); $('sB').hidden = !compare;
+  if (compare) {
+    if (!chars[1]) { chars.push(makeChar(await parseGlb(), 0.9)); chars[1].skel.visible = store.skel; }
+    chars[0].root.position.x = -0.9; chars[0].skel.visible = store.skel; chars[1].root.visible = true; chars[1].skel.visible = store.skel;
+    const i = clips.indexOf(A.clip); selectB($('sB').value ? clips.find(c => c.name === $('sB').value) || clips[(i + 1) % clips.length] : clips[(i + 1) % clips.length]);
+    $('sB').value = B.clip.name; trail.position.x = -0.9;
+  } else { chars[0].root.position.x = 0; trail.position.x = 0; if (chars[1]) { chars[1].root.visible = false; chars[1].skel.visible = false; } }
+  t = 0; setView('front'); refreshUI(); applyPose();
+};
+$('sB').onchange = () => selectB(clips.find(c => c.name === $('sB').value));
+
+/* votos y copia */
+function vote(v) { A.cfg.vote = A.cfg.vote === v ? '' : v; commit(A.clip, A.cfg); refreshUI(); }
+$('vOk').onclick = () => vote('ok'); $('vNo').onclick = () => vote('no');
+$('bCopy').onclick = async () => {
+  buildBlock(); const ta = $('out'); let ok = false;
+  try { await navigator.clipboard.writeText(ta.value); ok = true; } catch (e) {}
+  ta.focus(); ta.select();
+  if (!ok) { try { ok = document.execCommand('copy'); } catch (e) {} }
+  $('copyMsg').textContent = ok ? 'Copiado al portapapeles.' : 'No se pudo copiar: el texto está seleccionado, cópialo a mano.';
+};
+
+/* atajos */
+addEventListener('keydown', e => {
+  const tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT' || e.target.getAttribute('role') === 'slider') return;
+  if (e.key === ' ' && tg !== 'BUTTON') { setPlay(!playing); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft') stepFrames(-1); else if (e.key === 'ArrowRight') stepFrames(1);
+});
+
+/* ---------- bucle ---------- */
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight; if (!w || !h) return;
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.fov = w / h < 0.9 ? 52 : 38; camera.updateProjectionMatrix(); dirty = true;
+}
+new ResizeObserver(resize).observe(stage);
+let last = performance.now(), fpsAcc = 0, fpsN = 0;
+function loop(now) {
+  requestAnimationFrame(loop);
+  const dt = Math.min((now - last) / 1000, 0.1); last = now;
+  if (A && playing) {
+    const s = span(); t += dt * A.cfg.sp;
+    if (t >= s) { if (loopOn()) t = s > 0 ? t % s : 0; else { t = s; setPlay(false); } }
+    applyPose(); updateTime();
+  }
+  controls.update();
+  if (dirty) { renderer.render(scene, camera); dirty = false; }
+  fpsAcc += dt; fpsN++; if (fpsAcc > 1) { $('hud').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = fpsN = 0; }
+}
+
+/* ---------- arranque ---------- */
+(async function init() {
+  try {
+    if (!GLB_B64) throw new Error('visor sin GLB incrustado');
+    glbBuf = b64ToBuf(GLB_B64);
+    const g = await parseGlb(); clips = g.animations.slice();
+    if (!clips.length) throw new Error('el GLB no tiene clips');
+    const ch = makeChar(g, 0); chars.push(ch);
+    const bb = new THREE.Box3().setFromObject(ch.root); H = Math.max(bb.max.y - bb.min.y, 0.5);
+    $('sB').innerHTML = ''; clips.slice().sort((a, b) => a.name.localeCompare(b.name)).forEach(c => $('sB').add(new Option(c.name, c.name)));
+    buildList(); resize(); setView('game');
+    selectA(clips.find(c => c.name === store.clip) || clips.slice().sort((a, b) => a.name.localeCompare(b.name))[0]);
+    $('msg').remove();
+    const q = new URLSearchParams(location.search); if (q.get('test') === '1') setPlay(false);
+    requestAnimationFrame(loop);
+  } catch (e) { $('msg').textContent = 'Error: ' + e.message; console.error(e); }
+})();
+
+window.__VISOR__ = {
+  srcTime,
+  state: () => ({ glb: GLB_NAME, clips: clips.length, clip: A && A.clip.name, clipB: compare && B ? B.clip.name : null, playing, loop: loopOn(), compare, t,
+    dur: A && A.clip.duration, total: total(A), cuts: A && A.cfg.c.slice(), d: A && A.cfg.d.slice(), speed: A && A.cfg.sp, vote: A && A.cfg.vote,
+    srcAtEnd: A && srcTime(total(A), A.cfg.c[0], A.cfg.c[1], A.clip.duration, A.cfg.d), handBone: !!(chars[0] && chars[0].hand), tabla: A && A.cfg.tabla }),
+  step: n => stepFrames(n),
+  pose: () => { const ch = chars[0]; return ch ? ch.action.time : 0; },
+};
+</script>
+</body>
+</html>
