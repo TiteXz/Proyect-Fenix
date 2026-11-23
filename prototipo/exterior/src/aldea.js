@@ -57,7 +57,7 @@
       for (let i = 0; i < d.length; i += 4) { const a = d[i + 3] / 255; if (a < 0.4) continue; r += d[i] * a; g += d[i + 1] * a; b += d[i + 2] * a; w += a; }
       w = Math.max(w, 1e-3); const lin = (v) => Math.pow(v / 255, 2.2); return [lin(r / w), lin(g / w), lin(b / w)];
     }
-    const GLBS = ['arbol_isla1_lod0', 'arbol_isla1_lod1', 'arbol_isla2_lod0', 'arbol_isla2_lod1', 'arbol_jacaranda_lod0', 'arbol_jacaranda_lod1', 'arbusto_02', 'helecho_02', 'hierba_mechones', 'flores_matas',
+    const GLBS = ['arbol_isla1_lod0', 'arbol_isla1_lod1', 'arbol_isla2_lod0', 'arbol_isla2_lod1', 'arbol_jacaranda_lod0', 'arbol_jacaranda_lod1', 'arbusto_02', 'helecho_02', 'hierba_briznas', 'hierba_lod', 'flores_prado',
       'roca_musgo_set', 'roca_09', 'roca_07', 'piedra_01', 'barriles', 'cajon', 'cubo', 'farol', 'tocon', 'tronco_caido', 'acantilado_01', 'acantilado_02', 'acantilado_03', 'acantilado_04'];
     const TEXN = [['hierba', 1, 1, 1], ['camino', 1, 1, 1], ['barro', 1, 1, 0], ['roca_talud', 1, 1, 1], ['muro_piedra', 1, 1, 1], ['madera', 1, 1, 1], ['revoco', 1, 1, 1], ['teja', 1, 1, 1]];
     let skyTex = null;
@@ -69,6 +69,7 @@
         if (nm) jobs.push(add(loadTex(n + '_nor_gl.webp', false)));
         if (arm) jobs.push(add(loadTex(n + '_arm.webp', false)));
       }
+      if (EXT['cielo_4k.webp']) jobs.push(add(loadTex('cielo_4k.webp', true)));
       for (const n of GLBS) if (EXT[n + '.glb']) jobs.push(add(loadGlb(n).then((g) => { GLB[n] = g; })));
       jobs.push(add(new Promise((res) => {   // HDRI: se recorta el disco solar (≤ 12) para que el PMREM no duplique el sol direccional
         const url = URL.createObjectURL(new Blob([ctx.b64buf(EXT['cielo_kloofendal_1k.hdr'])]));
@@ -223,15 +224,16 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
     const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
     const SUN_EL = 17 * Math.PI / 180, SUN_AZ = 245 * Math.PI / 180;   // sol de tarde bajo (17°) desde el suroeste: luz rasante y sombras largas
     const sunDir = new V3(Math.sin(SUN_AZ) * Math.cos(SUN_EL), Math.sin(SUN_EL), -Math.cos(SUN_AZ) * Math.cos(SUN_EL));   // hacia el sol: suroeste (x<0, z>0)
+    const SKY4_ROT = 2.16;   // el sol de cielo_4k.webp (u = 0,586) cae en el azimut de nuestro sol (a la espalda de la cámara en C1)
     const SKY_ROT = Math.PI;   // gira el HDRI para que las nubes grandes caigan hacia la aldea (el sol queda a la espalda del jugador y no se ve)   // el sol del HDRI está en atan2(z,x)=34°; se gira para que caiga en 145° (= sunDir)
     const HOR = new V3(0.74, 0.62, 0.48);   // color del horizonte = color de la niebla (lineal)
     let sky = null, sunN = null, sunF = null, envRT = null, prevEnv = null, prevFog = null, prevBg = null;
-    function skyMaterial() {
-      return MT(new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { tSky: { value: skyTex }, uRot: { value: SKY_ROT }, uGain: { value: 1.0 }, uHor: { value: HOR }, uSun: { value: sunDir }, uBand: { value: 1.0 }, uGlow: { value: 1.0 } },
+    function skyMaterial(tex, rot, plain) {
+      return MT(new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { tSky: { value: tex || skyTex }, uRot: { value: rot === undefined ? SKY_ROT : rot }, uVS: { value: plain ? 1.0 : 1.2 }, uVO: { value: plain ? 0.0 : 0.07 }, uGain: { value: 1.0 }, uHor: { value: HOR }, uSun: { value: sunDir }, uBand: { value: 1.0 }, uGlow: { value: 1.0 } },
         vertexShader: 'varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }',
-        fragmentShader: `uniform sampler2D tSky; uniform float uRot, uGain, uBand, uGlow; uniform vec3 uHor, uSun; varying vec3 vDir;
+        fragmentShader: `uniform sampler2D tSky; uniform float uRot, uGain, uBand, uGlow, uVS, uVO; uniform vec3 uHor, uSun; varying vec3 vDir;
           void main(){ vec3 d = normalize(vDir); float c = cos(uRot), s = sin(uRot); d = vec3(d.x * c + d.z * s, d.y, -d.x * s + d.z * c);
-            vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5, clamp(asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 * 1.2 + 0.5 + 0.07, 0.0, 0.995));
+            vec2 uv = vec2(atan(d.z, d.x) * 0.15915494 + 0.5, clamp(asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 * uVS + 0.5 + uVO, 0.0, 0.995));
             vec3 col = texture2D(tSky, uv).rgb * uGain;
             vec3 v = normalize(vDir); float el = max(v.y, 0.0), sd = max(dot(v, uSun), 0.0);
             // gradiente cálido hacia el horizonte (mismo color que la niebla) y resplandor del sol bajo
@@ -240,7 +242,8 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
             gl_FragColor = vec4(col, 1.0); }` }));
     }
     function buildSky() {
-      sky = new THREE.Mesh(G(new THREE.SphereGeometry(420, 48, 32)), skyMaterial()); sky.material.uniforms.uGain.value = 1.5; sky.frustumCulled = false; sky.renderOrder = -10; sky.name = 'cielo'; group.add(sky);
+      const t4 = T$('cielo_4k'); if (t4) { t4.wrapS = THREE.RepeatWrapping; t4.wrapT = THREE.ClampToEdgeWrapping; }
+      sky = new THREE.Mesh(G(new THREE.SphereGeometry(420, 48, 32)), t4 ? skyMaterial(t4, SKY4_ROT, true) : skyMaterial()); sky.material.uniforms.uGain.value = t4 ? 2.3 : 1.5; sky.frustumCulled = false; sky.renderOrder = -10; sky.name = 'cielo'; group.add(sky);
       // entorno: el mismo cielo + suelo verde-tierra para el rebote (PMREM)
       const es = new THREE.Scene(), em = skyMaterial(); em.uniforms.uBand.value = 0.6; em.uniforms.uGlow.value = 0; const eg = G(new THREE.SphereGeometry(60, 32, 16));
       es.add(new THREE.Mesh(eg, em));
@@ -515,7 +518,7 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       for (let s = 0; s < 3; s++) for (let l = 0; l < 2; l++) for (const im of treeMeshes[s][l]) { im.count = n[s][l]; im.instanceMatrix.needsUpdate = true; }
     }
     // ----- rocas, arbustos, helechos y piedras: se fusionan por material (props estáticos) -----
-    const Q_ = { big: 90, ledge: 28, mid: 130, scree: 170, fern: 26, shrub: 8 };
+    const Q_ = { dens: 20, big: 90, ledge: 28, mid: 130, scree: 170, fern: 26, shrub: 8 };
     function buildClutter() {
       const rocks = parts(GLB.roca_musgo_set).map((p) => ({ geo: centered(p.geo), mat: p.mat }));
       const r9 = parts(GLB.roca_09)[0]; centered(r9.geo); const peb = parts(GLB.piedra_01)[0]; centered(peb.geo);
@@ -601,93 +604,102 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       ctx.addSeg(px, pz, px, pz, 0.15);
     }
 
-    /* ---------- hierba y flores: InstancedMesh por chunk, 2 LOD, viento en el vertex shader ---------- */
-    const chunks = [];   // {box, full, lod, flor:boolean}
-    let grassMat = null, flowerMat = null, grassTris = [0, 0];
-    function tuftMaterial(flower, atlasTex) {
-      const m = new THREE.MeshStandardMaterial({ map: atlasTex, alphaTest: flower ? 0.5 : 0.45, side: THREE.DoubleSide, roughness: 0.85, metalness: 0, envMapIntensity: 0.45 });
+    /* ---------- hierba y flores: briznas finas (tarjetas de 24 tris) instanciadas por chunk de 10 m, LOD de 4 tris, viento en el vertex shader ---------- */
+    const chunks = [];   // {box, full:[meshes], lod:[meshes], n:[por grupo]}
+    let grassMat = null, grassLodMat = null, flowerMat = null, grassTris = [0, 0];
+    function tuftMaterial(flower, atlasTex, hRef) {
+      // material de una cara con alphaTest 0,4 (el GLB trae cara delantera y trasera como geometría; DoubleSide las dejaría negras); v de las UV = altura (1 base, 0 punta)
+      const m = new THREE.MeshStandardMaterial({ map: atlasTex, alphaTest: 0.4, side: THREE.FrontSide, roughness: 0.8, metalness: 0, envMapIntensity: 0.5 });
       m.onBeforeCompile = (sh) => {
         sh.uniforms.uTime = S.time; sh.uniforms.uWind = S.wind;
         sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime, uWind; varying float vHt;')
           .replace('#include <beginnormal_vertex>', 'vec3 objectNormal = normalize(mix(vec3(normal), vec3(0.0, 1.0, 0.0), 0.7));')
           .replace('#include <begin_vertex>', `#include <begin_vertex>
-          vHt = clamp(position.y / ${flower ? '0.32' : '0.55'}, 0.0, 1.0);
+          vHt = clamp(1.0 - uv.y, 0.0, 1.0);
           { float hh = vHt * vHt; vec2 ip = instanceMatrix[3].xz; float ph = dot(ip, vec2(0.13, 0.07)) * 1.4;
-            float w = sin(uTime * 1.6 + ph) + 0.35 * sin(uTime * 4.1 + ip.x * 2.3);
+            float w = sin(uTime * 1.6 + ph) + 0.35 * sin(uTime * 4.1 + ip.x * 2.3 + position.y * 3.0);
             transformed.x += 0.07 * uWind * hh * w * ${flower ? '0.8' : '1.0'}; transformed.z += 0.045 * uWind * hh * cos(uTime * 1.3 + ph * 1.1); }`);
         sh.fragmentShader = sh.fragmentShader.replace('#include <common>', '#include <common>\nvarying float vHt;')
-          .replace('#include <normal_fragment_begin>', THREE.ShaderChunk.normal_fragment_begin.replace('normal = normal * faceDirection;', ''))
           .replace('#include <color_fragment>', `#include <color_fragment>
-          diffuseColor.rgb *= mix(0.22, 1.05, smoothstep(0.0, 0.9, vHt));
-          ${flower ? 'float lu = dot(diffuseColor.rgb, vec3(0.3, 0.59, 0.11)); diffuseColor.rgb = mix(vec3(lu), diffuseColor.rgb, 0.5) * 0.85;' : ''}`);
+          diffuseColor.rgb *= mix(0.3, 1.05, smoothstep(0.0, 0.8, vHt));`);
       };
-      m.customProgramCacheKey = () => 'aldea-tuft-' + flower;
+      m.customProgramCacheKey = () => 'aldea-tuft2-' + flower;
       return MT(m);
     }
-    function clumpGeo(nodes, lod, offs) {   // varios mechones fusionados en una "mata" (menos instancias, más variedad)
-      const ps = parts(GLB[nodes.glb]), list = [];
-      nodes.names.forEach((nm, i) => {
-        const p = ps.find((q) => q.name === nm); if (!p) return; const g = p.geo.clone(); const o = offs[i % offs.length];
-        g.rotateY(o[2]); g.translate(o[0], 0, o[1]); list.push(g);
-      });
-      const g = mergeGeos(list); list.forEach((x) => x.dispose()); return G(g);
+    function pairGeo(glb, prefix, i0, i1, o1, lodScale) {   // dos variantes fusionadas en una mata (una instancia = 2 tarjetas de briznas)
+      const ps = parts(GLB[glb]), list = [];
+      for (const [i, o] of [[i0, [0, 0, 0.3]], [i1, o1 || [0.13, 0.09, 2.2]]]) {
+        const p = ps.find((q) => q.name.indexOf(prefix + i + '_') === 0 || q.name === prefix + i); if (!p) continue;
+        const g = p.geo.clone(); g.rotateY(o[2]); g.translate(o[0], 0, o[1]); list.push(g);
+      }
+      const g = mergeGeos(list); list.forEach((x) => x.dispose()); if (lodScale) g.scale(lodScale, lodScale, lodScale); return G(g);
     }
     function buildGrass() {
-      const hm = parts(GLB.hierba_mechones)[0];
-      grassMat = tuftMaterial(false, hm.mat.map); const aAvg = avgColor(hm.mat.map);
-      const offs = [[0, 0, 0.3], [0.2, 0.12, 2.1], [-0.16, 0.17, 4.0]];
-      const full = clumpGeo({ glb: 'hierba_mechones', names: ['mechon_0', 'mechon_5'] }, 0, offs);
-      const lodG = clumpGeo({ glb: 'hierba_mechones', names: ['mechon_lod_1', 'mechon_lod_4'] }, 1, offs); lodG.scale(1.25, 1.25, 1.25);
-      grassTris = [full.attributes.position.count / 3, lodG.attributes.position.count / 3];
-      const pal = [lin(0x4f7a32), lin(0x5f8a3c), lin(0x6c9440), lin(0x587f30)], dry = lin(0x9a9650);
-      const CH = 24, NC = 5, DENS = 17, c = new THREE.Color(), nrm = (v, a) => clamp(v / Math.max(a, 1e-3), 0.25, 3.2);
+      const hm = parts(GLB.hierba_briznas)[0], hl = parts(GLB.hierba_lod)[0];
+      grassMat = tuftMaterial(false, hm.mat.map); grassLodMat = tuftMaterial(false, hl.mat.map);
+      const PAIRS = [[0, 1], [2, 3], [4, 9], [6, 10], [11, 8], [12, 14], [13, 15]];   // 0-4 prado; 5-6 solo bordes de camino (trébol / hojas anchas)
+      const full = PAIRS.map(([a, b]) => pairGeo('hierba_briznas', 'briznas_', a, b)), lodG = PAIRS.map(([a, b]) => pairGeo('hierba_lod', 'lod_', a, b, null, 1.18));
+      grassTris = [full[0].attributes.position.count / 3, lodG[0].attributes.position.count / 3];
+      const WT = [0.3, 0.58, 0.72, 0.9, 1.0];
+      const CH = 10, NC = 12, DENS = Q_.dens, c = [1, 1, 1];
       const grassOK = (x, z) => {
         const dR = ter.roadDist(x, z), w = ter.halfW(ter.roadS(x, z));
-        if (dR < w + 0.25 + (ter.fbm2(x * 1.7, z * 1.7, 4, 2) - 0.5) * 0.8) return 0;
+        if (dR < w + 0.12 + (ter.fbm2(x * 1.7, z * 1.7, 4, 2) - 0.5) * 0.7) return 0;
         const sl = ter.slopeAt(x, z); if (sl > 1.0 || wg(x, z) || inFoot(x, z, 0.4)) return 0;
-        const k = lerp(0.25, 1, sstep(w + 0.3, w + 2.6, dR)) * (1 - 0.85 * sstep(0.6, 1.0, sl));
-        const dz = z + 46; const pl = ter.hAt(x, z) > 13 ? 0.65 : 1;   // en la aldea la hierba es más baja/rala (suelo pisado)
-        return k * pl;
+        const k = lerp(0.3, 1, sstep(w + 0.1, w + 2.4, dR)) * (1 - 0.85 * sstep(0.6, 1.0, sl));
+        return k * (ter.hAt(x, z) > 13 ? 0.7 : 1);   // en la aldea la hierba es más baja/rala (suelo pisado)
       };
+      const cap = Math.floor(CH * CH * DENS * 1.05), bufM = PAIRS.map(() => new Float32Array(cap * 16)), bufC = PAIRS.map(() => new Float32Array(cap * 3)), cnt = PAIRS.map(() => 0);
       for (let cj = 0; cj < NC; cj++) for (let ci = 0; ci < NC; ci++) {
-        const x0 = -60 + ci * CH, z0 = -60 + cj * CH, maxN = Math.floor(CH * CH * DENS), mats = new Float32Array(maxN * 16), cols = new Float32Array(maxN * 3); let n = 0, minH = 1e9, maxH = -1e9;
-        for (let t = 0; t < maxN; t++) {
+        const x0 = -60 + ci * CH, z0 = -60 + cj * CH, tries = Math.floor(CH * CH * DENS); cnt.fill(0); let minH = 1e9, maxH = -1e9;
+        for (let t = 0; t < tries; t++) {
           const x = x0 + rng() * CH, z = z0 + rng() * CH, k = grassOK(x, z); if (!k || rng() > k) continue;
-          const y = ter.hAt(x, z), tall = 0.85 + 0.9 * sstep(0.35, 0.75, ter.fbm2(x * 0.08 + 5, z * 0.08, 12, 3)), sc = lerp(0.8, 1.25, rng());
-          compose(x, y - 0.03, z, rng() * 6.28, sc * (0.9 + 0.2 * rng()), sc * tall * (0.7 + 0.6 * rng() * rng() * 1.6), sc, (rng() - 0.5) * 0.18, (rng() - 0.5) * 0.18);
-          Mt.toArray(mats, n * 16);
-          // color: paleta verde con tinte de gran escala (verde ↔ amarillo), variación ±12 % y oscurecimiento junto a muros/rocas
-          const big = ter.fbm2(x * 0.017 + 3, z * 0.017, 6, 3), v = rng();
-          c.copy(pal[Math.floor(v * 4) % 4]).lerp(dry, sstep(0.5, 0.75, big) * 0.5 + (rng() < 0.12 ? 0.35 + rng() * 0.3 : 0)).lerp(new THREE.Color(0.1, 0.1, 0.09), 0.15).multiplyScalar(lerp(0.7, 1.15, rng()));
+          const dR = ter.roadDist(x, z), w = ter.halfW(ter.roadS(x, z)), e = dR - w, y = ter.hAt(x, z);
+          let g; if (e < 2.4 && rng() < 0.3 * (1 - sstep(0.3, 2.4, e) * 0.7)) g = 5 + (rng() < 0.5 ? 0 : 1); else { const r = rng(); g = 0; while (g < 4 && r > WT[g]) g++; }
+          const edge = sstep(w + 0.1, w + 2.6, dR), tallN = ter.fbm2(x * 0.08 + 5, z * 0.08, 12, 3);
+          const sc = lerp(0.85, 1.3, rng()), hs = sc * (0.5 + 0.5 * edge) * (0.9 + 0.35 * sstep(0.4, 0.75, tallN)) * (g > 4 ? 0.8 : 1);   // más corta y rala sobre el borde del camino
+          compose(x, y - 0.02, z, rng() * 6.28, sc, hs, sc, (rng() - 0.5) * 0.2, (rng() - 0.5) * 0.2);
+          const n = cnt[g]++; Mt.toArray(bufM[g], n * 16);
+          // tinte casi blanco (0,92-1,08) con variación de gran escala ±8 %: verde vivo en zonas húmedas/bajas, pajizo en las secas (~1/4), más seco junto al camino
+          const big = ter.fbm2(x * 0.017 + 3, z * 0.017, 6, 3), humid = ter.fbm2(x * 0.03 + 9, z * 0.03, 77, 3), dryK = sstep(0.6, 0.76, big) * 0.9 + (1 - edge) * 0.35 + (rng() < 0.06 ? 0.4 : 0), v = lerp(0.92, 1.08, rng()) * (0.94 + 0.12 * ter.fbm2(x * 0.4, z * 0.4, 5, 2));
+          const gr = sstep(0.4, 0.7, humid) * (1 - dryK) * 0.12;
           let wl = 1; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (wg(x + a * 0.5, z + b * 0.5)) wl = 0.62;
-          cols[n * 3] = nrm(c.r * wl, aAvg[0]); cols[n * 3 + 1] = nrm(c.g * wl, aAvg[1]); cols[n * 3 + 2] = nrm(c.b * wl, aAvg[2]);
-          minH = Math.min(minH, y); maxH = Math.max(maxH, y); n++;
+          const sh = ter.slopeAt(x, z) > 0.6 ? 0.8 : 1;
+          c[0] = v * (1 - gr * 0.6 + dryK * 0.16) * wl * sh; c[1] = v * (1 + gr - dryK * 0.04) * wl * sh; c[2] = v * (1 - gr * 0.8 - dryK * 0.22) * wl * sh;
+          bufC[g][n * 3] = c[0]; bufC[g][n * 3 + 1] = c[1]; bufC[g][n * 3 + 2] = c[2];
+          minH = Math.min(minH, y); maxH = Math.max(maxH, y);
         }
-        if (!n) continue;
-        const im = new THREE.InstancedMesh(full, grassMat, n); im.instanceMatrix.array.set(mats.subarray(0, n * 16)); im.instanceColor = new THREE.InstancedBufferAttribute(cols.slice(0, n * 3), 3);
-        const lm = new THREE.InstancedMesh(lodG, grassMat, n); lm.instanceMatrix = im.instanceMatrix; lm.instanceColor = im.instanceColor;
-        for (const m of [im, lm]) { m.userData.veg = true; m.frustumCulled = false; m.receiveShadow = true; m.castShadow = false; m.visible = false; group.add(m); }
-        chunks.push({ box: new THREE.Box3(new V3(x0, minH - 0.3, z0), new V3(x0 + CH, maxH + 1.4, z0 + CH)), cx: x0 + CH / 2, cz: z0 + CH / 2, h: CH / 2, full: im, lod: lm, n, flor: false });
+        const ch = { box: new THREE.Box3(new V3(x0, minH - 0.3, z0), new V3(x0 + CH, maxH + 1.2, z0 + CH)), cx: x0 + CH / 2, cz: z0 + CH / 2, h: CH / 2, full: [], lod: [], n: [], flor: false };
+        for (let g = 0; g < PAIRS.length; g++) {
+          const n = cnt[g]; if (!n) continue;
+          const im = new THREE.InstancedMesh(full[g], grassMat, n); im.instanceMatrix.array.set(bufM[g].subarray(0, n * 16)); im.instanceColor = new THREE.InstancedBufferAttribute(bufC[g].slice(0, n * 3), 3);
+          const lm = new THREE.InstancedMesh(lodG[g], grassLodMat, n); lm.instanceMatrix = im.instanceMatrix; lm.instanceColor = im.instanceColor;
+          for (const m of [im, lm]) { m.userData.veg = true; m.frustumCulled = false; m.receiveShadow = true; m.castShadow = false; m.visible = false; group.add(m); }
+          ch.full.push(im); ch.lod.push(lm); ch.n.push(n);
+        }
+        if (ch.n.length) chunks.push(ch);
       }
-      // flores: parches de 2-5 m con ruido; pequeñas, desaturadas y medio ocultas en la hierba
-      flowerMat = tuftMaterial(true, parts(GLB.flores_matas)[0].mat.map);
-      const fo = [[0, 0, 0.5], [0.16, 0.1, 2.4], [-0.15, 0.14, 4.1], [0.05, -0.18, 5.6]];
-      const types = [['flor_morada_0', 'flor_morada_2', 'flor_blanca_1', 'flor_morada_3'], ['flor_naranja_0', 'flor_amarilla_1', 'flor_naranja_2', 'flor_naranja_3'], ['flor_blanca_0', 'flor_amarilla_2', 'flor_blanca_3', 'flor_morada_1']];
-      const fgeo = types.map((names) => clumpGeo({ glb: 'flores_matas', names }, 0, fo));
-      const CF = 60, NF = 2;
+      // flores del prado: parches de 3-5 matas separadas ~0,7 m, por color (4 geometrías); desaturadas y medio ocultas en la hierba
+      flowerMat = tuftMaterial(true, parts(GLB.flores_prado)[0].mat.map);
+      const fps = parts(GLB.flores_prado), COLS = ['morada', 'blanca', 'amarilla', 'naranja'];
+      const fgeo = COLS.map((cn) => { const list = fps.filter((p) => p.name.indexOf('flor_' + cn) === 0).map((p) => p.geo.clone()); const g = mergeGeos(list.slice(0, 2)); list.forEach((x) => x.dispose()); return G(g); });
+      const CF = 60, NF = 2, ftmp = [[], [], [], []];
       for (let cj = 0; cj < NF; cj++) for (let ci = 0; ci < NF; ci++) {
-        const x0 = -60 + ci * CF, z0 = -60 + cj * CF, per = [[], [], []];
-        for (let t = 0; t < CF * CF * 1.6; t++) {
+        const x0 = -60 + ci * CF, z0 = -60 + cj * CF; ftmp.forEach((a) => { a.length = 0; });
+        for (let t = 0; t < CF * CF * 0.08; t++) {
           const x = x0 + rng() * CF, z = z0 + rng() * CF, pf = ter.fbm2(x * 0.11 + 40, z * 0.11, ter.seed + 5, 3);
-          if (pf < 0.55 || rng() > clamp((pf - 0.53) * 5, 0, 0.9) * (0.25 + 1.5 * ter.fbm2(x * 0.6, z * 0.6, ter.seed + 21, 2) * ter.fbm2(x * 0.6, z * 0.6, ter.seed + 21, 2) * 2)) continue; const k = grassOK(x, z); if (!k || k < 0.6 || ter.roadDist(x, z) > 30) continue;
-          const ty = ter.fbm2(x * 0.06, z * 0.06, ter.seed + 8, 2) + (rng() - 0.5) * 0.45, type = ty < 0.4 ? 0 : ty < 0.58 ? 1 : 2, y = ter.hAt(x, z), sc = lerp(1.0, 1.7, rng());
-          compose(x, y - 0.02, z, rng() * 6.28, sc * 0.8, sc * lerp(0.9, 1.4, rng()) * 0.8, sc * 0.8, (rng() - 0.5) * 0.2, (rng() - 0.5) * 0.2); per[type].push(Mt.toArray([]));
+          if (pf < 0.5 || rng() > clamp((pf - 0.48) * 4.5, 0, 0.95)) continue;
+          const ty = ter.fbm2(x * 0.06, z * 0.06, ter.seed + 8, 2) + (rng() - 0.5) * 0.4, type = ty < 0.36 ? 0 : ty < 0.5 ? 2 : ty < 0.62 ? 3 : 1, nm = 3 + Math.floor(rng() * 3);
+          for (let q = 0; q < nm; q++) {
+            const a = rng() * 6.28, r = 0.35 + rng() * 0.7, fx = x + Math.cos(a) * r, fz = z + Math.sin(a) * r, k = grassOK(fx, fz); if (!k || k < 0.6 || ter.roadDist(fx, fz) > 32) continue;
+            const sc = lerp(0.85, 1.25, rng()); compose(fx, ter.hAt(fx, fz) - 0.02, fz, rng() * 6.28, sc, sc * lerp(0.9, 1.2, rng()), sc, (rng() - 0.5) * 0.2, (rng() - 0.5) * 0.2); ftmp[type].push(Mt.toArray([]));
+          }
         }
-        per.forEach((arr, ty) => {
+        ftmp.forEach((arr, ty) => {
           if (!arr.length) return; const im = new THREE.InstancedMesh(fgeo[ty], flowerMat, arr.length); arr.forEach((a, i) => im.instanceMatrix.array.set(a, i * 16));
-          const cols = new Float32Array(arr.length * 3); for (let i = 0; i < arr.length; i++) { const v = lerp(0.8, 1.15, rng()); cols[i * 3] = v; cols[i * 3 + 1] = v * lerp(0.95, 1.05, rng()); cols[i * 3 + 2] = v; }
+          const cols = new Float32Array(arr.length * 3); for (let i = 0; i < arr.length; i++) { const v = lerp(0.88, 1.08, rng()); cols[i * 3] = v; cols[i * 3 + 1] = v; cols[i * 3 + 2] = v; }
           im.instanceColor = new THREE.InstancedBufferAttribute(cols, 3); im.userData.veg = true; im.frustumCulled = false; im.receiveShadow = true; im.castShadow = false; im.visible = false; group.add(im);
-          chunks.push({ box: new THREE.Box3(new V3(x0, -5, z0), new V3(x0 + CF, 25, z0 + CF)), cx: x0 + CF / 2, cz: z0 + CF / 2, h: CF / 2, full: im, lod: null, n: arr.length, flor: true });
+          chunks.push({ box: new THREE.Box3(new V3(x0, -5, z0), new V3(x0 + CF, 25, z0 + CF)), cx: x0 + CF / 2, cz: z0 + CF / 2, h: CF / 2, full: [im], lod: null, n: [arr.length], flor: true });
         });
       }
     }
@@ -699,10 +711,14 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
       const px = camera.position.x, pz = camera.position.z; let vis = 0;
       for (const c of chunks) {
         const dx = Math.max(Math.abs(c.cx - px) - c.h, 0), dz = Math.max(Math.abs(c.cz - pz) - c.h, 0), d = Math.hypot(dx, dz);
-        let show = d < (c.flor ? Q.r2 * 0.9 : Q.r2) && fr.intersectsBox(c.box);
-        if (c.flor) { c.full.visible = show && Q.flores > 0; if (c.full.visible) { c.full.count = Math.floor(c.n * Q.flores); vis++; } continue; }
-        const nearTier = d < Q.r1; c.full.visible = show && nearTier; c.lod.visible = show && !nearTier;
-        if (show) { c.full.count = c.lod.count = Math.max(1, Math.floor(c.n * Q.hierba * (nearTier ? 1 : 0.55))); vis++; }
+        const show = d < (c.flor ? Q.r2 * 0.9 : Q.r2) && fr.intersectsBox(c.box);
+        if (c.flor) { const m = c.full[0]; m.visible = show && Q.flores > 0; if (m.visible) { m.count = Math.floor(c.n[0] * Q.flores); vis++; } continue; }
+        const nearTier = d < Q.r1;
+        for (let g = 0; g < c.full.length; g++) {
+          c.full[g].visible = show && nearTier; c.lod[g].visible = show && !nearTier;
+          if (show) c.full[g].count = c.lod[g].count = Math.max(1, Math.floor(c.n[g] * Q.hierba * (nearTier ? 1 : 0.4)));
+        }
+        if (show) vis++;
       }
       S.chunksVis = vis;
     }
@@ -767,7 +783,7 @@ tNd = normalize(mix(normalize(Nd), nW, wK * 0.9));`)
     const api = {
       cargar, dispose, update, setQuality, spawnAt, S, group, get muros() { return S.runs; },
       get listo() { return S.listo; }, get ter() { return ter; }, heightAt: (x, z) => ter.hAt(x, z), sunDir, get sunN() { return sunN; }, get sunF() { return sunF; }, get trees() { return trees; },
-      get stats() { return { bloques: S.blocks, trisAldea: S.trisAldea, trisEstaticos: S.trisStatic, taludes: S.talud, arboles: trees.length, chunks: chunks.length, chunksVisibles: S.chunksVis, matas: chunks.reduce((a, c) => a + (c.flor ? 0 : c.n), 0), floresInst: chunks.reduce((a, c) => a + (c.flor ? c.n : 0), 0), trisMata: grassTris }; },
+      get stats() { return { bloques: S.blocks, trisAldea: S.trisAldea, trisEstaticos: S.trisStatic, taludes: S.talud, arboles: trees.length, chunks: chunks.length, chunksVisibles: S.chunksVis, matas: chunks.reduce((a, c) => a + (c.flor ? 0 : c.n.reduce((x, y) => x + y, 0)), 0), floresInst: chunks.reduce((a, c) => a + (c.flor ? c.n[0] : 0), 0), trisMata: grassTris }; },
       limite: (pos, r) => { const L = 57 - r; if (pos.x > L) pos.x = L; else if (pos.x < -L) pos.x = -L; if (pos.z > 60 - r) pos.z = 60 - r; else if (pos.z < -L) pos.z = -L; }
     };
     return api;
