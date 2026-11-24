@@ -22,7 +22,10 @@
    ],
    "espejo": false,
    "cubre": "Ataque ligero der.",
-   "nota": "Tajo horizontal de izquierda a derecha de pantalla, limpio; incluye recuperación"
+   "nota": "Tajo horizontal de izquierda a derecha de pantalla, limpio; incluye recuperación",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual1",
@@ -37,7 +40,10 @@
    ],
    "espejo": true,
    "cubre": "Ataque ligero der.",
-   "nota": "Sword_Attack ESPEJADO (arma en mano izq.): diagonal descendente hacia la derecha"
+   "nota": "Sword_Attack ESPEJADO (arma en mano izq.): diagonal descendente hacia la derecha",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual1",
@@ -52,7 +58,10 @@
    ],
    "espejo": false,
    "cubre": "Ataque ligero izq.",
-   "nota": "Diagonal descendente de alto-derecha a bajo-izquierda; el más sobrio"
+   "nota": "Diagonal descendente de alto-derecha a bajo-izquierda; el más sobrio",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -72,7 +81,10 @@
    ],
    "espejo": true,
    "cubre": "Ataque ligero izq.",
-   "nota": "Regular B ESPEJADO (arma en mano izq.)"
+   "nota": "Regular B ESPEJADO (arma en mano izq.)",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -87,7 +99,10 @@
    ],
    "espejo": false,
    "cubre": "Ataque ligero izq.",
-   "nota": "3er golpe del combo: barrido horizontal der.->izq. con salto y giro (EXAGERADO)"
+   "nota": "3er golpe del combo: barrido horizontal der.->izq. con salto y giro (EXAGERADO)",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -102,7 +117,10 @@
    ],
    "espejo": false,
    "cubre": "Ataque ligero arriba",
-   "nota": "Tajo vertical descendente desde sobre la cabeza (2ª mitad de Regular C)"
+   "nota": "Tajo vertical descendente desde sobre la cabeza (2ª mitad de Regular C)",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -117,7 +135,10 @@
    ],
    "espejo": false,
    "cubre": "Ataque ligero arriba",
-   "nota": "Tajo vertical a dos tiempos del combo pesado; más lento y pesado"
+   "nota": "Tajo vertical a dos tiempos del combo pesado; más lento y pesado",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -137,7 +158,10 @@
    ],
    "espejo": false,
    "cubre": "Ataque ligero abajo",
-   "nota": "Tajo ascendente desde abajo-derecha (golpe bajo que sube); incluye recuperación"
+   "nota": "Tajo ascendente desde abajo-derecha (golpe bajo que sube); incluye recuperación",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -152,7 +176,10 @@
    ],
    "espejo": false,
    "cubre": "Ataque ligero abajo",
-   "nota": "Giro y tajo ascendente del inicio del combo pesado (revisar: gira el torso)"
+   "nota": "Giro y tajo ascendente del inicio del combo pesado (revisar: gira el torso)",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual1",
@@ -167,7 +194,10 @@
    ],
    "espejo": false,
    "cubre": "Guardia neutra EP (bucle)",
-   "nota": "Pose de espada en reposo; solo neutra, no hay guardias direccionales"
+   "nota": "Pose de espada en reposo; solo neutra, no hay guardias direccionales",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -182,7 +212,10 @@
    ],
    "espejo": false,
    "cubre": "Guardia neutra EE (bucle)",
-   "nota": "Escudo alzado ante el pecho; solo neutra"
+   "nota": "Escudo alzado ante el pecho; solo neutra",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -197,7 +230,10 @@
    ],
    "espejo": false,
    "cubre": "Parada / bloqueo / defensa frontal EP",
-   "nota": "Encogerse con la espada baja a un lado; 1,23 s, lento para parada (hay que recortar); sirve como bloqueo frontal"
+   "nota": "Encogerse con la espada baja a un lado; 1,23 s, lento para parada (hay que recortar); sirve como bloqueo frontal",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual1",
@@ -212,7 +248,10 @@
    ],
    "espejo": false,
    "cubre": "Bloqueo normal (impacto) / tambaleo 0,30 EP y EE",
-   "nota": "Sacudida del torso de 0,33 s; sin cambio de postura"
+   "nota": "Sacudida del torso de 0,33 s; sin cambio de postura",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -227,7 +266,10 @@
    ],
    "espejo": false,
    "cubre": "Parada perfecta / bloqueo / defensa frontal EE",
-   "nota": "Alza el escudo, aguanta y baja; 0,83 s"
+   "nota": "Alza el escudo, aguanta y baja; 0,83 s",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -242,7 +284,10 @@
    ],
    "espejo": false,
    "cubre": "Contraataque EP",
-   "nota": "Paso agachado hacia delante con tajo (primera parte de Sword Dash)"
+   "nota": "Paso agachado hacia delante con tajo (primera parte de Sword Dash)",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -257,7 +302,10 @@
    ],
    "espejo": false,
    "cubre": "Contraataque EE (golpe de escudo)",
-   "nota": "Embate con el escudo (primera parte de Shield Dash); sin el tajo posterior"
+   "nota": "Embate con el escudo (primera parte de Shield Dash); sin el tajo posterior",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -277,7 +325,10 @@
    ],
    "espejo": false,
    "cubre": "Habilidad EP: estocada",
-   "nota": "Avance con brazo extendido hacia delante (originalmente un gancho de puño; con espada lee como estocada baja)"
+   "nota": "Avance con brazo extendido hacia delante (originalmente un gancho de puño; con espada lee como estocada baja)",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -292,7 +343,10 @@
    ],
    "espejo": false,
    "cubre": "Habilidad EP: estocada",
-   "nota": "Zancada larga agachada con la espada al frente; 1,57 s, muy larga"
+   "nota": "Zancada larga agachada con la espada al frente; 1,57 s, muy larga",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual1",
@@ -307,7 +361,10 @@
    ],
    "espejo": false,
    "cubre": "Habilidad EP: estocada",
-   "nota": "Directo con la mano derecha (puñetazo): con espada es un pinchazo recto; calidad mediocre"
+   "nota": "Directo con la mano derecha (puñetazo): con espada es un pinchazo recto; calidad mediocre",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -322,7 +379,10 @@
    ],
    "espejo": false,
    "cubre": "Habilidad EE: embestida con escudo",
-   "nota": "Agachado y empuje con el escudo, se incorpora; 1,10 s"
+   "nota": "Agachado y empuje con el escudo, se incorpora; 1,10 s",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -337,7 +397,10 @@
    ],
    "espejo": false,
    "cubre": "Remate humanoide EP (1,30 s)",
-   "nota": "Tajo vertical pesado a dos manos? (una mano); sin víctima sincronizada"
+   "nota": "Tajo vertical pesado a dos manos? (una mano); sin víctima sincronizada",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual2",
@@ -352,7 +415,10 @@
    ],
    "espejo": false,
    "cubre": "Guardia rota EE (1,0 s)",
-   "nota": "El escudo es apartado, tambaleo y recuperación; 1,07 s"
+   "nota": "El escudo es apartado, tambaleo y recuperación; 1,07 s",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual1",
@@ -367,7 +433,10 @@
    ],
    "espejo": false,
    "cubre": "Tambaleo 0,30 EP/EE",
-   "nota": "Reutiliza Hit_Chest"
+   "nota": "Reutiliza Hit_Chest",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
   },
   {
    "fuente": "ual1",
@@ -382,7 +451,589 @@
    ],
    "espejo": false,
    "cubre": "Tambaleo EP/EE / guardia rota EP",
-   "nota": "Sacudida de cabeza hacia atrás; 0,43 s"
+   "nota": "Sacudida de cabeza hacia atrás; 0,43 s",
+   "categoria": "combate",
+   "bucle": false,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Idle_Loop",
+   "nombre": "parado_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Idle_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Parado relajado EP",
+   "nota": "Reposo en bucle, respiración suave",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Idle_Loop",
+   "nombre": "parado_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Idle_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Parado relajado EE",
+   "nota": "Reposo en bucle, respiración suave (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Sword_Idle",
+   "nombre": "parado_guardia_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Sword_Idle",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Parado en guardia EP",
+   "nota": "Sword_Idle: peso adelantado, espada en guardia baja",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual2",
+   "clip": "Idle_Shield_Loop",
+   "nombre": "parado_guardia_EE_ual2_1",
+   "partes": [
+    {
+     "clip": "Idle_Shield_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Parado en guardia EE",
+   "nota": "Escudo alzado ante el pecho",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Walk_Loop",
+   "nombre": "andar_adelante_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Walk_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Andar adelante EP",
+   "nota": "Paso natural",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Walk_Loop",
+   "nombre": "andar_adelante_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Walk_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Andar adelante EE",
+   "nota": "Paso natural (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Walk_Formal_Loop",
+   "nombre": "andar_adelante_EP_ual1_2",
+   "partes": [
+    {
+     "clip": "Walk_Formal_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Andar adelante (formal) EP",
+   "nota": "Paso erguido y marcial, más solemne",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Walk_Formal_Loop",
+   "nombre": "andar_adelante_EE_ual1_2",
+   "partes": [
+    {
+     "clip": "Walk_Formal_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Andar adelante (formal) EE",
+   "nota": "Paso erguido y marcial, más solemne (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Walk_Loop",
+   "nombre": "andar_atras_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Walk_Loop",
+     "t0": 0,
+     "t1": null,
+     "invertir": true
+    }
+   ],
+   "espejo": false,
+   "cubre": "Andar atrás EP",
+   "nota": "DERIVADO: Walk_Loop en reproducción inversa (no hay marcha atrás en UAL); pies y torso invertidos, leer en el visor",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Walk_Loop",
+   "nombre": "andar_atras_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Walk_Loop",
+     "t0": 0,
+     "t1": null,
+     "invertir": true
+    }
+   ],
+   "espejo": false,
+   "cubre": "Andar atrás EE",
+   "nota": "DERIVADO: Walk_Loop en reproducción inversa (no hay marcha atrás en UAL); pies y torso invertidos, leer en el visor (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Jog_Fwd_Loop",
+   "nombre": "correr_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Jog_Fwd_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Correr EP",
+   "nota": "Trote/carrera ligera",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Jog_Fwd_Loop",
+   "nombre": "correr_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Jog_Fwd_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Correr EE",
+   "nota": "Trote/carrera ligera (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Sprint_Loop",
+   "nombre": "sprint_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Sprint_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Sprint EP",
+   "nota": "Carrera a tope, torso inclinado",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Sprint_Loop",
+   "nombre": "sprint_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Sprint_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Sprint EE",
+   "nota": "Carrera a tope, torso inclinado (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Jump_Start",
+   "nombre": "salto_inicio_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Jump_Start",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Salto: despegue EP",
+   "nota": "Flexión y impulso",
+   "categoria": "locomocion",
+   "bucle": false,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Jump_Start",
+   "nombre": "salto_inicio_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Jump_Start",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Salto: despegue EE",
+   "nota": "Flexión y impulso (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": false,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Jump_Loop",
+   "nombre": "salto_aire_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Jump_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Salto: en el aire EP",
+   "nota": "Pose de vuelo en bucle",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Jump_Loop",
+   "nombre": "salto_aire_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Jump_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Salto: en el aire EE",
+   "nota": "Pose de vuelo en bucle (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Jump_Land",
+   "nombre": "salto_aterrizaje_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Jump_Land",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Salto: aterrizaje EP",
+   "nota": "Amortiguación y recuperación",
+   "categoria": "locomocion",
+   "bucle": false,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Jump_Land",
+   "nombre": "salto_aterrizaje_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Jump_Land",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Salto: aterrizaje EE",
+   "nota": "Amortiguación y recuperación (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": false,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Crouch_Idle_Loop",
+   "nombre": "agachado_entrar_EP_ual1_1",
+   "partes": [
+    {
+     "mezcla": {
+      "de": [
+       "Idle_Loop",
+       0
+      ],
+      "a": [
+       "Crouch_Idle_Loop",
+       0
+      ],
+      "dur": 0.4
+     },
+     "clip": "Crouch_Idle_Loop"
+    }
+   ],
+   "espejo": false,
+   "cubre": "Agacharse: entrar EP",
+   "nota": "DERIVADO: fundido de 0,4 s de Idle_Loop a Crouch_Idle_Loop (UAL no trae transición)",
+   "categoria": "locomocion",
+   "bucle": false,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Crouch_Idle_Loop",
+   "nombre": "agachado_entrar_EE_ual1_1",
+   "partes": [
+    {
+     "mezcla": {
+      "de": [
+       "Idle_Loop",
+       0
+      ],
+      "a": [
+       "Crouch_Idle_Loop",
+       0
+      ],
+      "dur": 0.4
+     },
+     "clip": "Crouch_Idle_Loop"
+    }
+   ],
+   "espejo": false,
+   "cubre": "Agacharse: entrar EE",
+   "nota": "DERIVADO: fundido de 0,4 s de Idle_Loop a Crouch_Idle_Loop (UAL no trae transición) (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": false,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Idle_Loop",
+   "nombre": "agachado_salir_EP_ual1_1",
+   "partes": [
+    {
+     "mezcla": {
+      "de": [
+       "Crouch_Idle_Loop",
+       0
+      ],
+      "a": [
+       "Idle_Loop",
+       0
+      ],
+      "dur": 0.4
+     },
+     "clip": "Idle_Loop"
+    }
+   ],
+   "espejo": false,
+   "cubre": "Agacharse: salir EP",
+   "nota": "DERIVADO: fundido de 0,4 s de Crouch_Idle_Loop a Idle_Loop",
+   "categoria": "locomocion",
+   "bucle": false,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Idle_Loop",
+   "nombre": "agachado_salir_EE_ual1_1",
+   "partes": [
+    {
+     "mezcla": {
+      "de": [
+       "Crouch_Idle_Loop",
+       0
+      ],
+      "a": [
+       "Idle_Loop",
+       0
+      ],
+      "dur": 0.4
+     },
+     "clip": "Idle_Loop"
+    }
+   ],
+   "espejo": false,
+   "cubre": "Agacharse: salir EE",
+   "nota": "DERIVADO: fundido de 0,4 s de Crouch_Idle_Loop a Idle_Loop (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": false,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Crouch_Idle_Loop",
+   "nombre": "agachado_parado_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Crouch_Idle_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Agachado parado EP",
+   "nota": "Cuclillas en reposo",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Crouch_Idle_Loop",
+   "nombre": "agachado_parado_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Crouch_Idle_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Agachado parado EE",
+   "nota": "Cuclillas en reposo (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Crouch_Fwd_Loop",
+   "nombre": "agachado_andar_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Crouch_Fwd_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Agachado andando EP",
+   "nota": "Avance sigiloso agachado",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Crouch_Fwd_Loop",
+   "nombre": "agachado_andar_EE_ual1_1",
+   "partes": [
+    {
+     "clip": "Crouch_Fwd_Loop",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Agachado andando EE",
+   "nota": "Avance sigiloso agachado (brazo izq. recogido con el escudo al frente)",
+   "categoria": "locomocion",
+   "bucle": true,
+   "escudo": true
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Roll",
+   "nombre": "rodar_adelante_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Roll",
+     "t0": 0,
+     "t1": null
+    }
+   ],
+   "espejo": false,
+   "cubre": "Voltereta adelante EP",
+   "nota": "Voltereta completa con root motion; ver notas (puede resultar acrobática)",
+   "categoria": "esquiva",
+   "bucle": false,
+   "escudo": false
+  },
+  {
+   "fuente": "ual1",
+   "clip": "Roll",
+   "nombre": "rodar_atras_EP_ual1_1",
+   "partes": [
+    {
+     "clip": "Roll",
+     "t0": 0,
+     "t1": null,
+     "invertir": true
+    }
+   ],
+   "espejo": false,
+   "cubre": "Voltereta atrás EP",
+   "nota": "DERIVADO: Roll en reproducción inversa",
+   "categoria": "esquiva",
+   "bucle": false,
+   "escudo": false
   }
  ]
 }

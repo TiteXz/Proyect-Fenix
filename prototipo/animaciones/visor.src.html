@@ -288,19 +288,67 @@ function makeSword() {      // empuñadura en el origen, hoja a lo largo de +Y (
   const tip = mk(new THREE.ConeGeometry(0.02, 0.07, 4), matMetal, 0, 0.975, 0); tip.scale.set(1, 1, 0.25); tip.rotation.y = Math.PI / 4; g.add(tip);
   g.visible = false; return g;
 }
-function makeShield() {      // escudo circular pequeño (rodela) en el antebrazo/mano
-  const g = new THREE.Group();
-  const d = mk(new THREE.CylinderGeometry(0.27, 0.27, 0.03, 24), matGold, 0, 0, 0); d.rotation.z = Math.PI / 2;
-  const b = mk(new THREE.SphereGeometry(0.06, 12, 8), matMetal, 0.03, 0, 0);
-  g.add(d, b); g.visible = false; return g;
+/* escudo oval de antebrazo: cara a +Z, ejes locales X (ancho), Y (a lo largo del antebrazo); cara interior en z=0 (el brazo queda en -Z) */
+const SH = { rx: 0.19, ry: 0.23, gap: 0.095 };   // gap: distancia eje del antebrazo -> cara interior (radio del brazo ~4.5 cm + ~5 cm de holgura)
+const matFace = new THREE.MeshStandardMaterial({ color: 0x2d4a86, roughness: 0.55, metalness: 0.15 });
+const matLeather = new THREE.MeshStandardMaterial({ color: 0x5a3a24, roughness: 0.85, metalness: 0 });
+function makeShield() {
+  const g = new THREE.Group(), body = new THREE.Group(); body.scale.set(SH.rx / SH.ry, 1, 1); g.add(body);
+  const R = SH.ry, prof = [[0, 0], [R * 0.97, 0], [R, 0.006], [R, 0.016]];
+  for (const f of [0.92, 0.75, 0.55, 0.35, 0.15, 0]) prof.push([R * f, 0.016 + 0.034 * (1 - f * f)]);
+  const geo = new THREE.LatheGeometry(prof.map(p => new THREE.Vector2(p[0], p[1])), 32); geo.rotateX(Math.PI / 2);
+  const disc = mk(geo, matFace, 0, 0, 0); body.add(disc);
+  const rim = mk(new THREE.TorusGeometry(R, 0.011, 8, 40), matGold, 0, 0, 0.016); body.add(rim);
+  const ring = mk(new THREE.TorusGeometry(R * 0.6, 0.006, 6, 32), matGold, 0, 0, 0.04 - 0.034 * 0.36 + 0.004); body.add(ring);
+  const umbo = mk(new THREE.SphereGeometry(0.055, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), matMetal, 0, 0, 0.05); umbo.rotation.x = Math.PI / 2; umbo.scale.set(1, 0.7, 1); umbo.rotation.x = Math.PI / 2; body.add(umbo);
+  // asa (en la palma) y correa (antebrazo): detrás de la cara interior, en -Z
+  const grip = mk(new THREE.CylinderGeometry(0.014, 0.014, 0.11, 8), matLeather, 0, 0, -0.045); grip.rotation.z = Math.PI / 2; g.add(grip);
+  for (const sx of [-1, 1]) g.add(mk(new THREE.BoxGeometry(0.02, 0.02, 0.045), matLeather, sx * 0.05, 0, -0.0225));
+  const strap = mk(new THREE.TorusGeometry(0.056, 0.007, 6, 20, Math.PI * 1.5), matLeather, 0, 0, 0); strap.name = 'strap'; g.add(strap);
+  for (const i of [0, 1]) { const p = mk(new THREE.BoxGeometry(0.014, 0.014, 1), matLeather, 0, 0, 0); p.name = 'post' + i; g.add(p); }
+  g.userData = { disc: true }; g.visible = false; return g;
+}
+/* coloca el escudo en el hueso del antebrazo (lado 'L'/'R'), con el asa en la palma y la normal hacia el lado de la palma, algo hacia delante */
+const _v = new THREE.Vector3(), _m = new THREE.Matrix4(), _q = new THREE.Quaternion();
+function fitShield(ch, side) {
+  const lower = side === 'L' ? ch.lowerL : ch.lowerR, hand = side === 'L' ? ch.handL : ch.hand;
+  if (!lower || !hand) return null;
+  const fin = n => { let f = null; hand.traverse(o => { if (!f && new RegExp(n + '_?0?1_', 'i').test(o.name)) f = o; }); return f; };
+  const mid = fin('middle'), thumb = fin('thumb');
+  const aH = mid ? mid.position.clone().normalize() : new THREE.Vector3(0, 1, 0), tH = thumb ? thumb.position.clone() : new THREE.Vector3(0, 0, 1);
+  tH.addScaledVector(aH, -tH.dot(aH)).normalize();
+  const sgn = side === 'L' ? 1 : -1, nH = new THREE.Vector3().crossVectors(aH, tH).multiplyScalar(sgn);   // lado de la palma
+  const qh = hand.quaternion, h = hand.position.clone();
+  const f = h.clone().normalize();                                    // eje del antebrazo (codo -> muñeca)
+  const n = nH.applyQuaternion(qh); n.addScaledVector(f, -n.dot(f)).normalize();
+  const tilt = 12 * Math.PI / 180; n.multiplyScalar(Math.cos(tilt)).addScaledVector(f, Math.sin(tilt)).normalize();   // algo hacia delante (hacia los dedos)
+  const y = f.clone().addScaledVector(n, -f.dot(n)).normalize(), x = new THREE.Vector3().crossVectors(y, n);
+  const center = h.clone().addScaledVector(f, 0.04).addScaledVector(n, SH.gap);
+  _m.makeBasis(x, y, n); return { lower, q: new THREE.Quaternion().setFromRotationMatrix(_m), pos: center, f, n, x, y, h };
+}
+function attachShield(ch, side) {
+  const fit = (ch.fit = ch.fit || {})[side] || (ch.fit[side] = fitShield(ch, side)); if (!fit) return false;
+  const g = ch.shield; if (g.parent !== fit.lower) fit.lower.add(g);
+  g.position.copy(fit.pos); g.quaternion.copy(fit.q); g.userData.side = side;
+  // correa alrededor del antebrazo (eje f), abierta hacia la cara interior, con dos tirantes hasta el escudo
+  const qi = fit.q.clone().invert(), u = fit.n.clone().addScaledVector(fit.f, -fit.n.dot(fit.f)).normalize(), v = new THREE.Vector3().crossVectors(fit.f, u);
+  const X = u.clone().multiplyScalar(Math.SQRT1_2).addScaledVector(v, Math.SQRT1_2), Y = new THREE.Vector3().crossVectors(fit.f, X);
+  const P = fit.h.clone().addScaledVector(fit.f, -0.07), toL = w => w.clone().sub(fit.pos).applyQuaternion(qi);
+  const strap = g.getObjectByName('strap'); _m.makeBasis(X, Y, fit.f); strap.quaternion.setFromRotationMatrix(_m).premultiply(qi); strap.position.copy(toL(P));
+  [X.clone().multiplyScalar(0.056), Y.clone().multiplyScalar(-0.056)].forEach((o, i) => {
+    const e = toL(P.clone().add(o)), post = g.getObjectByName('post' + i); post.position.set(e.x, e.y, e.z / 2); post.scale.set(1, 1, Math.max(Math.abs(e.z), 1e-3));
+  });
+  return true;
 }
 function syncArma(ch, clip) {
   if (!ch || !clip) return;
-  const mir = /_\d+m$/.test(clip.name), ee = parseName(clip.name).cfg === 'EE';
-  const hs = mir ? ch.handL : ch.hand, hsh = mir ? ch.hand : ch.handL;
+  syncArmaCfg(ch, parseName(clip.name).cfg === 'EE', /_\d+m$/.test(clip.name));
+}
+function syncArmaCfg(ch, ee, mir) {
+  const hs = mir ? ch.handL : ch.hand;
   if (hs && ch.sword.parent !== hs) hs.add(ch.sword);
-  if (hsh && ch.shield.parent !== hsh) { hsh.add(ch.shield); ch.shield.position.set(mir ? -0.04 : 0.04, 0.1, 0); }
-  ch.sword.visible = !!store.arma && !!hs; ch.shield.visible = !!store.arma && ee && !!hsh; dirty = true;
+  const okSh = ee && attachShield(ch, mir ? 'R' : 'L');
+  ch.sword.visible = !!store.arma && !!hs; ch.shield.visible = !!store.arma && !!okSh; dirty = true;
 }
 
 /* ---------- personajes ---------- */
@@ -313,14 +361,16 @@ function makeChar(gltf, x) {
   const root = gltf.scene; root.position.x = x;
   root.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.castShadow = true; o.frustumCulled = false; } });
   scene.add(root);
-  let hand = null, handL = null;
+  let hand = null, handL = null, lowerL = null, lowerR = null;
   root.traverse(o => {
     if (!o.isBone) return;
+    if (!lowerL && /lowerarm[_.]?l$/i.test(o.name)) lowerL = o;
+    if (!lowerR && /lowerarm[_.]?r$/i.test(o.name)) lowerR = o;
     if (!hand && /(^|[_.\-])hand[_.\-]?r(ight)?$|mano.*(der|_r)$|hand[_.]?r\b/i.test(o.name)) hand = o;
     if (!handL && /(^|[_.\-])hand[_.\-]?l(eft)?$|mano.*(izq|_l)$|hand[_.]?l\b/i.test(o.name)) handL = o;
   });
   const skel = new THREE.SkeletonHelper(root); skel.visible = store.skel; skel.material.depthTest = false; skel.material.linewidth = 2; skel.renderOrder = 10; scene.add(skel);
-  const ch = { root, mixer: new THREE.AnimationMixer(root), action: null, clip: null, skel, hand, handL, tmp: new THREE.Vector3(), sword: makeSword(), shield: makeShield() };
+  const ch = { root, mixer: new THREE.AnimationMixer(root), action: null, clip: null, skel, hand, handL, lowerL, lowerR, tmp: new THREE.Vector3(), sword: makeSword(), shield: makeShield() };
   return ch;
 }
 function playOn(ch, clip) {
@@ -683,8 +733,36 @@ function loop(now) {
   } catch (e) { $('msg').textContent = 'Error: ' + e.message; console.error(e); }
 })();
 
+/* comprobación de intersección: distancia (m) de los vértices del brazo/mano del escudo al plano de su cara interior, solo dentro de su huella.
+   Devuelve el hueco mínimo (positivo = brazo detrás del escudo) y cuántos vértices lo cruzan/quedan a < 1 cm. */
+const armVerts = new WeakMap(), _w = new THREE.Vector3(), _inv = new THREE.Matrix4();
+function shieldCheck(clipName, n, side) {
+  const ch = chars[0], clip = clips.find(c => c.name === clipName); if (!ch || !clip) return null;
+  const wasA = A && A.clip; const mir = side === 'R'; syncArmaCfg(ch, true, mir); const sh = ch.shield;
+  const tag = mir ? 'r' : 'l', re = new RegExp('(upperarm|lowerarm|hand|index|middle|ring|pinky|thumb)_.*' + tag + '$', 'i');
+  const meshes = []; ch.root.traverse(o => { if (o.isSkinnedMesh) meshes.push(o); });
+  const act = ch.mixer.clipAction(clip); ch.mixer.stopAllAction(); act.reset(); act.play(); act.paused = true;
+  let minGap = 1e9, bad = 0, cnt = 0, worstT = 0;
+  for (let k = 0; k < n; k++) {
+    const tt = clip.duration * k / n; act.time = tt; ch.mixer.update(0); ch.root.updateMatrixWorld(true);
+    _inv.copy(sh.matrixWorld).invert(); for (const m of meshes) { m.skeleton.update(); }
+    for (const m of meshes) {
+      let idx = armVerts.get(m); const tab = (m.skeleton.bones.map(b => re.test(b.name)));
+      if (!idx) { idx = []; const si = m.geometry.attributes.skinIndex, sw = m.geometry.attributes.skinWeight;
+        for (let i = 0; i < si.count; i++) { let w = 0; for (let j = 0; j < 4; j++) if (tab[[si.getX(i), si.getY(i), si.getZ(i), si.getW(i)][j]]) w += [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)][j]; if (w > 0.4) idx.push(i); }
+        armVerts.set(m, idx); }
+      for (const i of idx) {
+        m.boneTransform(i, _w); _w.applyMatrix4(m.matrixWorld).applyMatrix4(_inv);
+        if ((_w.x / SH.rx) ** 2 + (_w.y / SH.ry) ** 2 > 1) continue;
+        cnt++; const gap = -_w.z; if (gap < minGap) { minGap = gap; worstT = tt; } if (gap < 0.01) bad++;
+      }
+    }
+  }
+  act.stop(); if (wasA) { playOn(ch, wasA); applyPose(); }
+  return { clip: clipName, frames: n, verts: cnt, minGap, bad, worstT };
+}
 window.__VISOR__ = {
-  srcTime,
+  srcTime, shieldCheck, fitInfo: () => { const f = chars[0] && chars[0].fit && chars[0].fit.L; return f && { gap: SH.gap, hLen: f.h.length(), f: f.f.toArray(), n: f.n.toArray() }; },
   state: () => ({ glb: GLB_NAME, clips: clips.length, clip: A && A.clip.name, clipB: compare && B ? B.clip.name : null, playing, loop: loopOn(), compare, t: tShown(),
     dur: A && A.clip.duration, total: total(A), perfil: store.perfil, perfilB: dcmp() ? store.perfilB : null, prof: A && { lunge: A.cfg.prof.lunge, hit: A.cfg.prof.hit, ent: A.cfg.prof.ent }, totalB: dcmp() ? total(B) : null, dB: dcmp() ? B.cfg.d.slice() : null, lt: A && A.lt, ltB: dcmp() ? B.lt : null, hold: !!(A && (A.hsAct || (dcmp() && B.hsAct))), lungeZ: chars[0] ? chars[0].root.position.z : 0, swordVisible: !!(chars[0] && chars[0].sword.visible && chars[0].sword.parent), shieldVisible: !!(chars[0] && chars[0].shield.visible && chars[0].shield.parent), span: span(), cuts: A && A.cfg.c.slice(), d: A && A.cfg.d.slice(), speed: A && A.cfg.sp, vote: A && A.cfg.vote,
     srcAtEnd: A && srcTime(total(A), A.cfg.c[0], A.cfg.c[1], A.clip.duration, A.cfg.d), handBone: !!(chars[0] && chars[0].hand), tabla: A && A.cfg.tabla }),

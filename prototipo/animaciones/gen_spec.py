@@ -39,7 +39,7 @@ add("tambaleo_EP_ual1_1","ual1",[P("Hit_Chest")],"Tambaleo 0,30 EP/EE","Reutiliz
 add("tambaleo_EP_ual1_2","ual1",[P("Hit_Head")],"Tambaleo EP/EE / guardia rota EP","Sacudida de cabeza hacia atrás; 0,43 s")
 # ---------------- locomocion y esquiva (UAL1/UAL2, CC0) ----------------
 INV = lambda c, t0=0, t1=None: {"clip": c, "t0": t0, "t1": t1, "invertir": True}
-MIX = lambda f, a, b, dur: {"mezcla": {"de": f, "a": b, "dur": dur}, "clip": a[0]}
+MIX = lambda a, b, dur: {"mezcla": {"de": a, "a": b, "dur": dur}, "clip": b[0]}
 def par(base, cfg_nombre, f, partes, cubre, nota, bucle=False, cat="locomocion", cfgs=("EP", "EE")):
     for cfg in cfgs:
         add(base.format(cfg), f, partes, cubre + " " + cfg, nota + (" (brazo izq. recogido con el escudo al frente)" if cfg == "EE" else ""),

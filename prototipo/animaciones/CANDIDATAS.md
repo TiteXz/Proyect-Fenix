@@ -1,8 +1,9 @@
 # Animaciones candidatas de combate con espada
 
-Fichero: `candidatas.glb` (personaje del soldado de `caballero_soldado.glb` sin armas + 24 clips, ~3,4 MB). Manifiesto: `candidatas.json`.
-Regenerar: `python3 -I gen_spec.py <UAL1_Standard.glb> <UAL2_Standard.glb> candidatas_spec.json` y
-`blender -b -P retarget_candidatas.py -- <caballero_soldado.glb> candidatas_spec.json candidatas.glb`.
+Fichero: `candidatas.glb` (personaje del soldado de `caballero_soldado.glb` sin armas + 54 clips (24 de combate + 30 de locomoción/esquiva), ~7,3 MB). Manifiesto: `candidatas.json`.
+Regenerar: `python3 -I gen_spec.py <UAL1_Standard.glb> <UAL2_Standard.glb> candidatas_spec.json`,
+`blender -b -P retarget_candidatas.py -- <caballero_soldado.glb> candidatas_spec.json candidatas.glb` (escribe también `candidatas.medidas.json`) y
+`python3 -I gen_manifiesto.py candidatas_spec.json candidatas.medidas.json candidatas.json`.
 
 ## Fuentes y licencias
 - Quaternius Universal Animation Library 1 y 2 (Standard), CC0 1.0. Descargadas de https://quaternius.itch.io/universal-animation-library y https://quaternius.itch.io/universal-animation-library-2 (licencia: https://quaternius.com/packs/universalanimationlibrary2.html). UAL2 trae todo el set de espada y escudo; UAL1 solo `Sword_Attack`/`Sword_Idle`.
@@ -50,3 +51,48 @@ Regenerar: `python3 -I gen_spec.py <UAL1_Standard.glb> <UAL2_Standard.glb> candi
 - Remate EE y remate de jefe (2,4 s): sin candidata; el remate EP es un tajo pesado sin víctima sincronizada.
 - Guardia rota EP: solo tambaleos cortos (`tambaleo_EP_*`). `Hit_Knockback` (cae al suelo) descartado por exagerado.
 - Exagerados (saltos/giros acrobáticos): `ataque_izq_EP_ual2_3`, `ataque_arriba_EP_ual2_1`, `ataque_abajo_EP_ual2_2`, `remate_EP_ual2_1`.
+
+## Locomoción y esquiva (añadidas)
+Campos nuevos en `candidatas.json`: `categoria` (combate|locomocion|esquiva), `bucle`, `velocidad_ms` (bucles de locomoción: m/s del root en los `*_RM` de Quaternius; el personaje mide lo mismo, no se reescala), `desplazamiento_m` (rodar), `config_escudo`.
+Config EE = mismo clip con la pose de brazo izq. de `Idle_Shield_Loop` (UAL2) fijada sobre los huesos del brazo/mano izq. (escudo al frente); el resto del cuerpo igual que EP. `DERIVADO` = no existe en UAL: fundido de 0,4 s entre poses (agacharse entrar/salir) o reproducción inversa (andar atrás, rodar atrás).
+
+| Clip | Original | Duración | Bucle | v (m/s) | Cubre | Notas |
+|---|---|---|---|---|---|---|
+| `parado_EP_ual1_1` | Idle_Loop | 2.53 s | sí |  | Parado relajado EP | Reposo en bucle, respiración suave |
+| `parado_EE_ual1_1` | Idle_Loop | 2.53 s | sí |  | Parado relajado EE | Reposo en bucle, respiración suave (brazo izq. recogido con el escudo al frente) |
+| `parado_guardia_EP_ual1_1` | Sword_Idle | 1.7 s | sí |  | Parado en guardia EP | Sword_Idle: peso adelantado, espada en guardia baja |
+| `parado_guardia_EE_ual2_1` | Idle_Shield_Loop | 2.53 s | sí |  | Parado en guardia EE | Escudo alzado ante el pecho |
+| `andar_adelante_EP_ual1_1` | Walk_Loop | 1.37 s | sí | 0.98 | Andar adelante EP | Paso natural |
+| `andar_adelante_EE_ual1_1` | Walk_Loop | 1.37 s | sí | 0.98 | Andar adelante EE | Paso natural (brazo izq. recogido con el escudo al frente) |
+| `andar_adelante_EP_ual1_2` | Walk_Formal_Loop | 1.37 s | sí | 0.98 | Andar adelante (formal) EP | Paso erguido y marcial, más solemne |
+| `andar_adelante_EE_ual1_2` | Walk_Formal_Loop | 1.37 s | sí | 0.98 | Andar adelante (formal) EE | Paso erguido y marcial, más solemne (brazo izq. recogido con el escudo al frente) |
+| `andar_atras_EP_ual1_1` | Walk_Loop (invertido) | 1.37 s | sí | 0.98 | Andar atrás EP | DERIVADO: Walk_Loop en reproducción inversa (no hay marcha atrás en UAL); pies y torso invertidos, leer en el visor |
+| `andar_atras_EE_ual1_1` | Walk_Loop (invertido) | 1.37 s | sí | 0.98 | Andar atrás EE | DERIVADO: Walk_Loop en reproducción inversa (no hay marcha atrás en UAL); pies y torso invertidos, leer en el visor (brazo izq. recogido con el escudo al frente) |
+| `correr_EP_ual1_1` | Jog_Fwd_Loop | 0.97 s | sí | 5.38 | Correr EP | Trote/carrera ligera |
+| `correr_EE_ual1_1` | Jog_Fwd_Loop | 0.97 s | sí | 5.38 | Correr EE | Trote/carrera ligera (brazo izq. recogido con el escudo al frente) |
+| `sprint_EP_ual1_1` | Sprint_Loop | 0.7 s | sí | 8.21 | Sprint EP | Carrera a tope, torso inclinado |
+| `sprint_EE_ual1_1` | Sprint_Loop | 0.7 s | sí | 8.21 | Sprint EE | Carrera a tope, torso inclinado (brazo izq. recogido con el escudo al frente) |
+| `salto_inicio_EP_ual1_1` | Jump_Start | 1.37 s |  |  | Salto: despegue EP | Flexión y impulso |
+| `salto_inicio_EE_ual1_1` | Jump_Start | 1.37 s |  |  | Salto: despegue EE | Flexión y impulso (brazo izq. recogido con el escudo al frente) |
+| `salto_aire_EP_ual1_1` | Jump_Loop | 2.53 s | sí |  | Salto: en el aire EP | Pose de vuelo en bucle |
+| `salto_aire_EE_ual1_1` | Jump_Loop | 2.53 s | sí |  | Salto: en el aire EE | Pose de vuelo en bucle (brazo izq. recogido con el escudo al frente) |
+| `salto_aterrizaje_EP_ual1_1` | Jump_Land | 1.3 s |  |  | Salto: aterrizaje EP | Amortiguación y recuperación |
+| `salto_aterrizaje_EE_ual1_1` | Jump_Land | 1.3 s |  |  | Salto: aterrizaje EE | Amortiguación y recuperación (brazo izq. recogido con el escudo al frente) |
+| `agachado_entrar_EP_ual1_1` | mezcla Idle_Loop -> Crouch_Idle_Loop (0.4 s) | 0.4 s |  |  | Agacharse: entrar EP | DERIVADO: fundido de 0,4 s de Idle_Loop a Crouch_Idle_Loop (UAL no trae transición) |
+| `agachado_entrar_EE_ual1_1` | mezcla Idle_Loop -> Crouch_Idle_Loop (0.4 s) | 0.4 s |  |  | Agacharse: entrar EE | DERIVADO: fundido de 0,4 s de Idle_Loop a Crouch_Idle_Loop (UAL no trae transición) (brazo izq. recogido con el escudo al frente) |
+| `agachado_salir_EP_ual1_1` | mezcla Crouch_Idle_Loop -> Idle_Loop (0.4 s) | 0.4 s |  |  | Agacharse: salir EP | DERIVADO: fundido de 0,4 s de Crouch_Idle_Loop a Idle_Loop |
+| `agachado_salir_EE_ual1_1` | mezcla Crouch_Idle_Loop -> Idle_Loop (0.4 s) | 0.4 s |  |  | Agacharse: salir EE | DERIVADO: fundido de 0,4 s de Crouch_Idle_Loop a Idle_Loop (brazo izq. recogido con el escudo al frente) |
+| `agachado_parado_EP_ual1_1` | Crouch_Idle_Loop | 2.97 s | sí |  | Agachado parado EP | Cuclillas en reposo |
+| `agachado_parado_EE_ual1_1` | Crouch_Idle_Loop | 2.97 s | sí |  | Agachado parado EE | Cuclillas en reposo (brazo izq. recogido con el escudo al frente) |
+| `agachado_andar_EP_ual1_1` | Crouch_Fwd_Loop | 2.03 s | sí | 0.75 | Agachado andando EP | Avance sigiloso agachado |
+| `agachado_andar_EE_ual1_1` | Crouch_Fwd_Loop | 2.03 s | sí | 0.75 | Agachado andando EE | Avance sigiloso agachado (brazo izq. recogido con el escudo al frente) |
+| `rodar_adelante_EP_ual1_1` | Roll | 1.5 s |  | 4.99 | Voltereta adelante EP | Voltereta completa con root motion; ver notas (puede resultar acrobática) |
+| `rodar_atras_EP_ual1_1` | Roll (invertido) | 1.5 s |  | 4.99 | Voltereta atrás EP | DERIVADO: Roll en reproducción inversa |
+
+### Huecos de locomoción y esquiva
+- Esquiva corta (paso rápido) en 4 direcciones: UAL no trae ninguna y no hay nada que espejar; sin candidata. Solo existen `rodar_adelante` y `rodar_atras` (inversa). Pendiente de Mixamo (humano) o de animar a mano.
+- Strafe izq./der. (andar y correr lateral): no existe en UAL. Rodar izq./der.: no existe.
+- Salto en carrera: solo `NinjaJump_*` (acrobático, descartado). Arranque y frenada de carrera: no existen.
+- Agacharse entrar/salir: derivados por fundido (suficientes para prototipo).
+- `rodar_*` no tiene variante EE (la voltereta no mantiene el brazo recogido); `rodar_adelante` es una voltereta completa algo acrobática (4,99 m de root motion en 1,47 s).
+- Los clips son in-place (solo se mueve la pelvis); el avance lo pone el juego/visor con `velocidad_ms`.
