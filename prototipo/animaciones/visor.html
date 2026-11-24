@@ -325,7 +325,7 @@ function makeSword() {      // empuñadura en el origen, hoja a lo largo de +Y (
 }
 /* escudo oval de antebrazo: cara a +Z, ejes locales X (ancho), Y (a lo largo del antebrazo); cara interior en z=0 (el brazo queda en -Z) */
 const SH = { rx: 0.19, ry: 0.23, gap: 0.105 };   // gap: distancia eje del antebrazo -> cara interior (radio del brazo ~4.5 cm + ~5 cm de holgura)
-const matFace = new THREE.MeshStandardMaterial({ color: 0x2d4a86, roughness: 0.55, metalness: 0.15 });
+const matFace = new THREE.MeshStandardMaterial({ color: 0x16295a, roughness: 0.6, metalness: 0.1 });
 const matLeather = new THREE.MeshStandardMaterial({ color: 0x5a3a24, roughness: 0.85, metalness: 0 });
 function makeShield() {
   const g = new THREE.Group(), body = new THREE.Group(); body.scale.set(SH.rx / SH.ry, 1, 1); g.add(body);
@@ -333,6 +333,7 @@ function makeShield() {
   for (const f of [0.92, 0.75, 0.55, 0.35, 0.15, 0]) prof.push([R * f, 0.016 + 0.034 * (1 - f * f)]);
   const geo = new THREE.LatheGeometry(prof.map(p => new THREE.Vector2(p[0], p[1])), 32); geo.rotateX(Math.PI / 2);
   const disc = mk(geo, matFace, 0, 0, 0); body.add(disc);
+  const back = mk(new THREE.CircleGeometry(R * 0.985, 32), matLeather, 0, 0, -0.0015); back.rotation.y = Math.PI; body.add(back);
   const rim = mk(new THREE.TorusGeometry(R, 0.011, 8, 40), matGold, 0, 0, 0.016); body.add(rim);
   const ring = mk(new THREE.TorusGeometry(R * 0.6, 0.006, 6, 32), matGold, 0, 0, 0.04 - 0.034 * 0.36 + 0.004); body.add(ring);
   const umbo = mk(new THREE.SphereGeometry(0.055, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), matMetal, 0, 0, 0.05); umbo.rotation.x = Math.PI / 2; umbo.scale.set(1, 0.7, 1); umbo.rotation.x = Math.PI / 2; body.add(umbo);
@@ -1155,7 +1156,7 @@ window.__VISOR__ = {
   ctl: { start: ctlStart, stop: () => ctlStop(false), state: ctlState, step: n => { for (let i = 0; i < n; i++) ctlStep(CK.STEP); hudUpdate(); }, hold: v => { ctl.auto = !v; }, cfg: ctlSetCfg, dodge: d => ctlDodgeTest(d), roles: () => ctl.R && Object.fromEntries(Object.entries(ROLES).map(([k]) => [k, ctl.R[k] && ctl.R[k].name])) },
   cat: catOf,
   focusShield: (d, az) => { const ch = chars[0]; if (!ch) return; ch.root.updateMatrixWorld(true); const v = ch.shield.getWorldPosition(new THREE.Vector3()); controls.target.copy(v); camera.position.set(v.x + Math.sin(az) * d, v.y + 0.12 * d, v.z + Math.cos(az) * d); controls.update(); dirty = true; },
-  srcTime, shieldCheck, fitInfo: () => { const f = chars[0] && chars[0].fit && chars[0].fit.L; return f && { gap: SH.gap, hLen: f.h.length(), f: f.f.toArray(), n: f.n.toArray() }; },
+  srcTime, shieldCheck, fitInfo: () => { const f = chars[0] && chars[0].fit && chars[0].fit.L; return f && { parent: chars[0].shield.parent && chars[0].shield.parent.name, gap: SH.gap, hLen: f.h.length(), f: f.f.toArray(), n: f.n.toArray() }; },
   state: () => ({ glb: GLB_NAME, clips: clips.length, clip: A && A.clip.name, clipB: compare && B ? B.clip.name : null, playing, loop: loopOn(), compare, t: tShown(),
     dur: A && A.clip.duration, total: total(A), perfil: store.perfil, perfilB: dcmp() ? store.perfilB : null, prof: A && { lunge: A.cfg.prof.lunge, hit: A.cfg.prof.hit, ent: A.cfg.prof.ent }, totalB: dcmp() ? total(B) : null, dB: dcmp() ? B.cfg.d.slice() : null, lt: A && A.lt, ltB: dcmp() ? B.lt : null, hold: !!(A && (A.hsAct || (dcmp() && B.hsAct))), lungeZ: chars[0] ? chars[0].root.position.z : 0, swordVisible: !!(chars[0] && chars[0].sword.visible && chars[0].sword.parent), shieldVisible: !!(chars[0] && chars[0].shield.visible && chars[0].shield.parent), span: span(), cuts: A && A.cfg.c.slice(), d: A && A.cfg.d.slice(), speed: A && A.cfg.sp, vote: A && A.cfg.vote,
     srcAtEnd: A && srcTime(total(A), A.cfg.c[0], A.cfg.c[1], A.clip.duration, A.cfg.d), handBone: !!(chars[0] && chars[0].hand), tabla: A && A.cfg.tabla }),

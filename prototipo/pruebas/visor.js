@@ -114,6 +114,99 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
     await p.click('#bCmp'); await p.click('#views [data-v=game]'); await p.waitForTimeout(400);
     await p.evaluate(() => window.__VISOR__.step(5)); await p.waitForTimeout(300);
     if (r.n === 'movil') { await p.screenshot({ path: path.join(caps, 'tmp2.png') }); toWebp(path.join(caps, 'tmp2.png'), path.join(caps, 'visor_movil.webp')); }
+    // ---- categorías, ficha y perfil de los clips nuevos
+    await p.click('#bCtl'); await p.click('#bCtl');   // entrar y salir del modo no deja estado roto
+    await p.selectOption('#fCat', 'locomocion'); const nLoc = await p.locator('#clips button').count();
+    ok(nLoc >= 20 && (await p.$$eval('#clips button', bs => bs.every(b => /^(parado|andar|correr|sprint|salto|agachado)/.test(b.dataset.n)))), `filtro locomoción: ${nLoc} clips`);
+    await p.selectOption('#fCat', 'esquiva'); const nEsq = await p.locator('#clips button').count(), proc = await p.$$eval('#clips .proc', es => es.map(e => e.textContent));
+    ok(nEsq >= 2 && proc.length === 4 && proc.every(x => /procedural \/ provisional/.test(x)), `filtro esquiva: ${nEsq} clips + ${proc.length} procedurales marcados`);
+    await p.selectOption('#fCat', 'combate'); ok(await p.$$eval('#clips button', bs => bs.length > 15 && bs.every(b => !/^(parado|andar|correr|sprint|salto|agachado|rodar)/.test(b.dataset.n))), 'filtro combate');
+    await p.selectOption('#fCat', 'locomocion'); await pick('andar_adelante_EE_ual1_1');
+    ok(await p.evaluate(() => document.getElementById('secPerfil').hidden) && /velocidad 0\.98 m\/s/.test(await p.innerText('#ficha')) && !/Dawnwalker/.test(await p.innerText('#ficha')), 'locomoción: sin perfil de sensación y ficha con datos del manifiesto');
+    await p.selectOption('#fCat', ''); await pick('rodar_adelante_EP_ual1_1'); ok(/desplazamiento 4\.99 m/.test(await p.innerText('#ficha')) && (await p.$$eval('#ficha a', a => a.length)) >= 1, 'rodar: ficha con desplazamiento y vídeo de esquiva');
+    await pick('ataque_izq_EP_ual1_1'); ok(!(await p.evaluate(() => document.getElementById('secPerfil').hidden)), 'combate: perfil visible');
+    // ---- escudo: ningún vértice del brazo/mano cruza la cara interior (>= 1 cm), también el EE de locomoción
+    const ee = await p.$$eval('#clips button', bs => bs.map(b => b.dataset.n).filter(n => /_EE_/.test(n)));
+    const fit = await p.evaluate(() => window.__VISOR__.fitInfo());
+    ok(fit && fit.parent === 'lowerarm_l' && fit.gap >= 0.09 && fit.gap <= 0.12, `escudo sujeto al antebrazo (hueso ${fit && fit.parent}), eje del antebrazo a cara interior ${fit && (fit.gap * 100).toFixed(1)} cm`);
+    let worst = { minGap: 1e9 }, nv = 0, badAll = 0;
+    for (const n of ee) { const r1 = await p.evaluate(n => window.__VISOR__.shieldCheck(n, 12, 'L'), n); nv += r1.verts; badAll += r1.bad; if (r1.minGap < worst.minGap) worst = r1; }
+    ok(ee.length >= 10 && badAll === 0 && worst.minGap >= 0.02 && worst.minGap < 0.2, `escudo sin intersección: ${ee.length} clips EE x 12 fotogramas (${nv} vértices); hueco mínimo ${(worst.minGap * 100).toFixed(1)} cm en ${worst.clip} t=${worst.worstT.toFixed(2)}`);
+    const sh = await p.evaluate(() => { const V = window.__VISOR__; return ['EP'].length && V.shieldCheck('guardia_neu_EE_ual2_1', 6, 'L'); }); ok(sh.verts > 0 && sh.minGap >= 0.01, 'comprobación con vértices en la huella del escudo');
+    if (r.n === 'escritorio') {
+      await p.evaluate(() => { document.getElementById('cSkel').checked && document.getElementById('cSkel').click(); });
+      await p.setViewportSize({ width: 1280, height: 760 });
+      const shots = [['guardia_neu_EE_ual2_1', 0.5, 0.5, 0.9], ['parada_fro_EE_ual2_1', 0.45, 0.9, 1.0], ['embestida_EE_ual2_1', 0.6, 2.5, 1.2]];
+      for (let i = 0; i < shots.length; i++) { const [n, tt, az, d] = shots[i]; await pick(n); await p.evaluate(([tt, d, az]) => { window.__VISOR__.seek(tt); window.__VISOR__.focusShield(d, az); }, [tt, d, az]); await p.waitForTimeout(500);
+        await p.screenshot({ path: path.join(caps, 'tmpS' + i + '.png'), clip: { x: 0, y: 0, width: 620, height: 640 } }); }
+      cp.execFileSync('python3', ['-I', '-c', 'import sys;from PIL import Image;ims=[Image.open(f).convert("RGB") for f in sys.argv[2:]];W=sum(i.width for i in ims);o=Image.new("RGB",(W,ims[0].height));x=0\nfor i in ims:o.paste(i,(x,0));x+=i.width\no.resize((W*2//3,ims[0].height*2//3)).save(sys.argv[1],"WEBP",quality=82)', path.join(caps, 'visor_escudo_cerca.webp'), ...shots.map((_, i) => path.join(caps, 'tmpS' + i + '.png'))]);
+      shots.forEach((_, i) => fs.unlinkSync(path.join(caps, 'tmpS' + i + '.png')));
+      await p.click('#views [data-v=game]'); await p.setViewportSize({ width: 1280, height: 720 });
+    }
+    // ---- modo «Probar controles»
+    await pick('guardia_neu_EE_ual2_1'); await p.click('#bCtl'); await p.evaluate(() => window.__VISOR__.ctl.hold(true));
+    const C = () => p.evaluate(() => window.__VISOR__.ctl.state());
+    const run = n => p.evaluate(n => { const V = window.__VISOR__.ctl, out = []; let maxY = 0; for (let i = 0; i < n; i++) { V.step(1); const s = V.state(); if (out[out.length - 1] !== s.estado) out.push(s.estado); maxY = Math.max(maxY, s.pos[1]); } return { out, maxY }; }, n);
+    let c0 = await C(); ok(c0.on && c0.estado === 'parado', 'modo controles activo (parado)');
+    ok(await p.evaluate(() => !document.getElementById('ctlHud').hidden && /Estado: parado/.test(document.getElementById('ctlHud').textContent) && /Clip: /.test(document.getElementById('ctlHud').textContent) && /Círculo/.test(document.getElementById('ctlHud').textContent) && /SUPUESTO/.test(document.getElementById('ctlHud').textContent)), 'esquina: estado, clip y esquema de controles');
+    const seen = [];
+    const go = async (n, label) => { const q = await run(n); seen.push(...q.out); return q; };
+    await go(20); await p.keyboard.down('KeyW'); await go(60); let c1 = await C(); const z1 = c1.pos[2];
+    await go(60); const c2 = await C(); ok(c1.estado === 'andar' && Math.abs((c2.pos[2] - z1) - c2.speed) < 0.15 && Math.abs(c2.speed - 1.5) < 0.05, `andar: ${c2.speed.toFixed(2)} m/s, avance ${(c2.pos[2] - z1).toFixed(2)} m/s; clip ${c2.clip}`);
+    await p.keyboard.down('ShiftLeft'); await go(75); const c3 = await C(); ok(c3.estado === 'correr' && c3.speed > 5 && /correr_/.test(c3.clip), `correr: ${c3.speed.toFixed(2)} m/s (${c3.clip})`);
+    await go(60); const c3b = await C(); ok(c3b.estado === 'sprint', 'sprint tras mantener correr');
+    await p.keyboard.up('ShiftLeft'); await p.keyboard.up('KeyW'); await go(90); const c4 = await C(); ok(c4.estado === 'parado' && c4.speed < 0.01, 'vuelve a parado');
+    await p.keyboard.press('Space'); const jq = await go(120); const c5 = await C();
+    ok(['salto_inicio', 'salto_aire', 'aterrizaje'].every(x => seen.includes(x)) && jq.maxY > 0.6 && jq.maxY < 1.6 && c5.pos[1] === 0 && c5.estado === 'parado', `salto: inicio -> aire -> aterrizaje, altura ${jq.maxY.toFixed(2)} m, vuelve a parado`);
+    await p.keyboard.press('KeyC'); await go(60); const c6 = await C(); ok(c6.agachado && c6.estado === 'agachado_parado' && seen.includes('agachado_entrar'), 'C sin dirección: agacharse (entrar -> parado)');
+    await p.keyboard.down('KeyW'); await go(60); const c7 = await C(); ok(c7.estado === 'agachado_andar' && c7.speed < 1.0 && /agachado_andar/.test(c7.clip), `agachado andar: ${c7.speed.toFixed(2)} m/s`);
+    const pa = (await C()).pos; await p.keyboard.press('KeyC'); const dq = await go(10); const dd = await p.evaluate(() => window.__VISOR__.ctl.state());
+    ok(dd.estado.startsWith('esquiva_') && !dd.agachado, `C con dirección: esquivar (${dd.estado}, ${dd.clip})`);
+    await p.keyboard.press('KeyC'); await go(10); ok((await C()).estado === dd.estado && (await C()).esquivaTipo === dd.esquivaTipo, 'no se encadena otra esquiva durante la esquiva');
+    const de = await p.evaluate(() => { const V = window.__VISOR__.ctl; let n = 0; while (V.state().estado.startsWith('esquiva_') && n < 200) { V.step(1); n++; } return { n: n + 20, pos: V.state().pos }; });   // + 20 fotogramas ya avanzados tras pulsar C
+    const dist = Math.hypot(de.pos[0] - pa[0], de.pos[2] - pa[2]);
+    ok(de.n >= 24 && de.n <= 37 && dist > 2.4 && dist < 3.6, `esquiva (voltereta ${await p.evaluate(() => window.__VISOR__.ctl.roles().rollF)}): ${dist.toFixed(2)} m en ${(de.n / 60).toFixed(2)} s`);
+    await p.keyboard.up('KeyW');
+    // esquiva lateral procedural con Alt + dirección
+    await p.selectOption('#ctlEsq', 'paso'); await go(60); const pb = (await C()).pos; await p.keyboard.down('KeyA'); await p.keyboard.down('Alt'); await go(8); const lat = await C();
+    ok(lat.estado === 'esquiva_izq' && lat.procedural, `Alt + dirección: ${lat.estado} procedural (${lat.clip})`);
+    await p.keyboard.up('Alt'); await p.keyboard.up('KeyA'); await go(40); const pl = await C(); const dl = Math.hypot(pl.pos[0] - pb[0], pl.pos[2] - pb[2]);
+    ok(!pl.estado.startsWith('esquiva') && dl > 1.8 && dl < 2.6, `paso lateral procedural: ${dl.toFixed(2)} m`);
+    await p.selectOption('#ctlEsq', 'voltereta');
+    // mando simulado: Círculo en neutro = agacharse, Círculo + stick = esquivar, X = saltar, L3 = correr
+    await p.evaluate(() => { window.__pad = { connected: true, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false })) }; navigator.getGamepads = () => [window.__pad]; });
+    const pad = (f) => p.evaluate(f);
+    await go(30); const wasCrouch = (await C()).agachado;
+    await pad(() => { window.__pad.buttons[1].pressed = true; }); await go(3); await pad(() => { window.__pad.buttons[1].pressed = false; }); await go(40);
+    const g1 = await C(); ok(g1.agachado !== wasCrouch, `mando: Círculo con stick neutro alterna agachado (${wasCrouch} -> ${g1.agachado})`);
+    await pad(() => { window.__pad.axes[0] = -1; window.__pad.buttons[1].pressed = true; }); await go(4); const g2 = await C(); await pad(() => { window.__pad.buttons[1].pressed = false; window.__pad.axes[0] = 0; });
+    ok(g2.estado.startsWith('esquiva_'), `mando: Círculo + stick inclinado esquiva (${g2.estado})`);
+    await go(60); await pad(() => { window.__pad.buttons[0].pressed = true; }); await go(3); await pad(() => { window.__pad.buttons[0].pressed = false; }); const g3 = await go(10);
+    ok((await C()).estado.startsWith('salto'), 'mando: X salta (' + (await C()).estado + ')');
+    await go(90); await pad(() => { window.__pad.axes[1] = -1; window.__pad.buttons[10].pressed = true; }); await go(75); const g4 = await C(); ok(g4.speed > 4.5 && /^(correr|sprint)$/.test(g4.estado), `mando: stick + L3 mantenido corre (${g4.estado}, ${g4.speed.toFixed(1)} m/s)`);
+    await pad(() => { window.__pad.axes[1] = 0; window.__pad.buttons[10].pressed = false; navigator.getGamepads = () => []; }); await go(90);
+    // configuración EE
+    await p.selectOption('#ctlCfg', 'EE'); await go(60); const ce = await C(); const shEE = await p.evaluate(() => window.__VISOR__.state().shieldVisible);
+    ok(ce.cfg === 'EE' && /_EE_/.test(ce.clip) && shEE, `config EE: clip ${ce.clip}, escudo visible`);
+    await p.selectOption('#ctlCfg', 'EP'); await go(30); ok(!(await p.evaluate(() => window.__VISOR__.state().shieldVisible)), 'config EP: sin escudo');
+    ok(['parado', 'andar', 'correr', 'sprint', 'salto_inicio', 'salto_aire', 'aterrizaje', 'agachado_entrar', 'agachado_parado', 'agachado_andar'].every(x => seen.includes(x)) && seen.some(x => x.startsWith('esquiva_')), 'estados recorridos: ' + [...new Set(seen)].join(' > '));
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'sin scroll horizontal (modo controles)');
+    // táctil
+    const touch = r.n === 'movil';
+    ok((await p.evaluate(() => !document.getElementById('tc').hidden)) === touch, `controles táctiles ${touch ? 'visibles' : 'ocultos'}`);
+    if (touch) {
+      await go(60); await p.locator('#tJump').dispatchEvent('pointerdown', { pointerId: 7 }); const tq = await go(10); const ts = await C();
+      ok(ts.estado.startsWith('salto'), 'táctil: botón Saltar');
+      await go(120); await p.locator('#tRun').dispatchEvent('pointerdown', { pointerId: 8 }); ok(await p.evaluate(() => document.getElementById('tRun').getAttribute('aria-pressed') === 'true'), 'táctil: botón Correr (mantener)'); await p.locator('#tRun').dispatchEvent('pointerup', { pointerId: 8 });
+      await p.locator('#tO').dispatchEvent('pointerdown', { pointerId: 9 }); await go(5); ok((await C()).agachado, 'táctil: botón Agachar/Esquivar con joystick en neutro agacha');
+    }
+    // captura del modo
+    await p.keyboard.down('KeyW'); await go(40); await p.keyboard.down('ShiftLeft'); await go(80); if (r.n === 'escritorio') await p.evaluate(() => { document.getElementById('ctlHud').querySelector('details').open = true; });
+    await p.waitForTimeout(300); await p.screenshot({ path: path.join(caps, 'tmpC.png') }); toWebp(path.join(caps, 'tmpC.png'), path.join(caps, r.n === 'escritorio' ? 'visor_modo_controles.webp' : 'visor_movil_controles.webp'));
+    await p.keyboard.up('ShiftLeft'); await p.keyboard.up('KeyW');
+    // salir con Esc y volver al visor normal
+    await p.keyboard.press('Escape'); await p.waitForTimeout(100); ok(!(await C()).on && await p.evaluate(() => document.getElementById('ctlHud').hidden && window.__VISOR__.state().clip === 'guardia_neu_EE_ual2_1'), 'Esc sale del modo y restaura el visor');
+    ok(fs.statSync(path.join(dir, 'visor.html')).size <= 16 * 1048576, `visor.html ${(fs.statSync(path.join(dir, 'visor.html')).size / 1048576).toFixed(2)} MB (<= 16 MB)`);
     const e = [...new Set(errs)].filter(x => !/GL Driver Message/.test(x));   // ruido de swiftshader
      ok(e.length === 0, 'consola sin errores/warnings' + (e.length ? ': ' + JSON.stringify(e.slice(0, 5)) : ''));
     await c.close();
