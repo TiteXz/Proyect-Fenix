@@ -51,7 +51,25 @@ label{display:inline-flex;align-items:center;gap:6px}
 #ficha a{color:#8fb4ff}#ficha .tag{font-size:11px;color:#ffd27a;margin-left:4px}
 #pfVals{margin:4px 0}
 .ck{display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0}
+#ctlHud{position:absolute;right:8px;top:8px;max-width:min(330px,calc(100% - 16px));background:#0b0e14d9;border:1px solid #38425a;border-radius:8px;padding:6px 10px;font-size:12px;line-height:1.35;z-index:3}
+#ctlHud[hidden]{display:none}
+#ctlHud b{color:#ffd27a}#ctlHud .st{font-size:15px;font-weight:600}
+#ctlHud details{margin-top:4px}#ctlHud summary{cursor:pointer;color:#9fb0d0}#ctlHud ul{margin:4px 0 0;padding-left:16px}#ctlHud li{margin:1px 0}
+#ctlHud .sup{color:#ffb86b}
+#ctlHud button{min-height:28px;padding:2px 8px;font-size:12px;margin-top:4px}
+#tc{position:absolute;inset:0;pointer-events:none;z-index:4}
+#tc[hidden]{display:none}
+#joy{position:absolute;left:16px;bottom:16px;width:112px;height:112px;border-radius:50%;background:#ffffff1a;border:2px solid #ffffff55;touch-action:none;pointer-events:auto}
+#joy i{position:absolute;left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;border-radius:50%;background:#ffffff66}
+#tb{position:absolute;right:12px;bottom:14px;display:flex;flex-direction:column;gap:8px;align-items:flex-end;pointer-events:auto}
+#tb button{min-width:96px;min-height:44px;background:#232a38ee;touch-action:none;user-select:none;-webkit-user-select:none}
+#clips .proc{padding:6px 8px;min-height:36px;font-size:13px;border-radius:6px;cursor:pointer;color:#ffb86b}
+#clips .proc:hover{background:#2c3548}
+#clips .sub{margin:2px 8px 6px;font-size:11px;color:#9fb0d0}
+.cat{width:100%}
 @media (max-width:820px){
+  #ctlHud{font-size:11px;padding:4px 8px}
+
   #app{display:block;height:auto}
   #stage{position:sticky;top:0;z-index:5;height:46vh;height:46dvh}
   #panel{border-left:0;overflow:visible;padding:12px 16px 40px}
@@ -64,9 +82,19 @@ label{display:inline-flex;align-items:center;gap:6px}
   <div id="stage">
     <canvas id="cv" aria-label="Vista 3D del personaje"></canvas>
     <div id="hud" class="mono"></div>
+    <div id="ctlHud" hidden aria-live="off"></div>
+    <div id="tc" hidden><div id="joy" aria-label="Joystick virtual"><i></i></div><div id="tb"><button id="tJump">Saltar</button><button id="tO" title="Joystick en neutro: agacharse. Inclinado: esquivar">Agachar / Esquivar</button><button id="tRun">Correr (mantener)</button></div></div>
     <div id="msg">Cargando modelo…</div>
   </div>
   <div id="panel">
+    <h2>Probar controles</h2>
+    <div class="row">
+      <button id="bCtl" aria-pressed="false" title="Mueve al personaje por un suelo amplio con mando o teclado">&#127918; Probar controles</button>
+      <label>Config <select id="ctlCfg" aria-label="Configuración EP o EE"><option>EP</option><option>EE</option></select></label>
+      <label>Esquiva <select id="ctlEsq" aria-label="Tipo de esquiva"><option value="voltereta">voltereta</option><option value="paso">paso (procedural)</option></select></label>
+    </div>
+    <div class="small">Mando o teclado (esquema en la esquina del visor). Esc para salir.</div>
+
     <h2>Reproducción</h2>
     <div class="row">
       <button id="bPrev" aria-label="Fotograma anterior" title="Fotograma anterior (←)">⏮ −1f</button>
@@ -96,16 +124,21 @@ label{display:inline-flex;align-items:center;gap:6px}
       <input type="search" id="q" placeholder="Buscar clip…" aria-label="Buscar clip" class="grow">
     </div>
     <div class="row">
+      <select id="fCat" aria-label="Filtrar por categoría" class="grow"><option value="">Categoría: todas</option><option value="combate">combate</option><option value="locomocion">locomoción</option><option value="esquiva">esquiva</option></select>
+    </div>
+    <div class="row">
       <select id="fCfg" aria-label="Filtrar por configuración" class="grow"><option value="">Config: todas</option><option>EP</option><option>EE</option></select>
       <select id="fDir" aria-label="Filtrar por dirección" class="grow"><option value="">Dirección: todas</option></select>
     </div>
     <div id="clips" role="list"></div>
 
+    <div id="secPerfil">
     <h2>Perfil de sensación</h2>
     <div class="row"><label class="grow">Perfil <select id="sPerfil" aria-label="Perfil de sensación"></select></label></div>
     <div class="row" id="rowPB" hidden><label class="grow">Perfil de B <select id="sPerfilB" aria-label="Perfil de sensación del clip B"></select></label><button id="bSame" title="Pone en B el mismo clip que A con otro perfil">Mismo clip en B</button></div>
     <div class="small" id="pfDesc"></div>
     <div class="small mono" id="pfVals"></div>
+    </div>
     <div class="ck">
       <label><input type="checkbox" id="cLunge"> Lunge</label>
       <label><input type="checkbox" id="cHit"> Hit-stop</label>
@@ -146,6 +179,8 @@ label{display:inline-flex;align-items:center;gap:6px}
 const GLB_B64 = /*__GLB__*/'';
 const GLB_NAME = /*__GLBNAME__*/'';
 const PERFILES = /*__PERFILES__*/null;
+const META = /*__META__*/null;      // candidatas.json: categoria, bucle, velocidad_ms, ficha del clip
+const META_BY = {}; (META || []).forEach(m => { META_BY[m.clip] = m; });
 const FPS = 30, FRAME = 1 / FPS, MIN_D = 0.02;
 const $ = id => document.getElementById(id);
 
@@ -167,7 +202,7 @@ const ACC_ALIAS = { ataque: 'ataque', ligero: 'ataque', ataqueligero: 'ataque', 
   bloqueo: 'bloqueo', defensa: 'defproy', desvio: 'defproy', defproy: 'defproy', defensaproyectil: 'defproy', bloqueoproyectil: 'defproy',
   contraataque: 'contraataque', contra: 'contraataque', habilidad: 'habilidad', estocada: 'habilidad', embestida: 'habilidad', remate: 'remate' };
 const DIR_ALIAS = { izq: 'izq', izquierda: 'izq', der: 'der', derecha: 'der', arr: 'arr', arriba: 'arr', aba: 'aba', abajo: 'aba',
-  fro: 'fro', frontal: 'fro', neutra: 'neu', neu: 'neu', n: 'neu' };
+  fro: 'fro', frontal: 'fro', neutra: 'neu', neu: 'neu', n: 'neu', adelante: 'adel', atras: 'atr' };
 
 function parseName(name) {
   const toks = name.split('_');
@@ -230,7 +265,7 @@ function srcTime(t, c1, c2, dur, d) {
 
 /* ---------- estado persistente ---------- */
 const LS_KEY = 'fenix_visor_anim_v1';
-let store = { clip: '', loop: true, skel: false, trail: false, fCfg: '', fDir: '', set: {}, perfil: 'combate', perfilB: 'fluido_agil', lunge: true, hit: true, shake: true, arma: true };
+let store = { clip: '', loop: true, skel: false, trail: false, fCfg: '', fDir: '', set: {}, perfil: 'combate', perfilB: 'fluido_agil', lunge: true, hit: true, shake: true, arma: true, fCat: '', ctlCfg: 'EP', ctlEsq: 'voltereta' };
 try { const s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (s && typeof s === 'object') store = Object.assign(store, s); } catch (e) {}
 if (!store.set || typeof store.set !== 'object') store.set = {};
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) {} }
@@ -289,7 +324,7 @@ function makeSword() {      // empuñadura en el origen, hoja a lo largo de +Y (
   g.visible = false; return g;
 }
 /* escudo oval de antebrazo: cara a +Z, ejes locales X (ancho), Y (a lo largo del antebrazo); cara interior en z=0 (el brazo queda en -Z) */
-const SH = { rx: 0.19, ry: 0.23, gap: 0.095 };   // gap: distancia eje del antebrazo -> cara interior (radio del brazo ~4.5 cm + ~5 cm de holgura)
+const SH = { rx: 0.19, ry: 0.23, gap: 0.105 };   // gap: distancia eje del antebrazo -> cara interior (radio del brazo ~4.5 cm + ~5 cm de holgura)
 const matFace = new THREE.MeshStandardMaterial({ color: 0x2d4a86, roughness: 0.55, metalness: 0.15 });
 const matLeather = new THREE.MeshStandardMaterial({ color: 0x5a3a24, roughness: 0.85, metalness: 0 });
 function makeShield() {
@@ -302,8 +337,8 @@ function makeShield() {
   const ring = mk(new THREE.TorusGeometry(R * 0.6, 0.006, 6, 32), matGold, 0, 0, 0.04 - 0.034 * 0.36 + 0.004); body.add(ring);
   const umbo = mk(new THREE.SphereGeometry(0.055, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), matMetal, 0, 0, 0.05); umbo.rotation.x = Math.PI / 2; umbo.scale.set(1, 0.7, 1); umbo.rotation.x = Math.PI / 2; body.add(umbo);
   // asa (en la palma) y correa (antebrazo): detrás de la cara interior, en -Z
-  const grip = mk(new THREE.CylinderGeometry(0.014, 0.014, 0.11, 8), matLeather, 0, 0, -0.045); grip.rotation.z = Math.PI / 2; g.add(grip);
-  for (const sx of [-1, 1]) g.add(mk(new THREE.BoxGeometry(0.02, 0.02, 0.045), matLeather, sx * 0.05, 0, -0.0225));
+  const grip = mk(new THREE.CylinderGeometry(0.014, 0.014, 0.11, 8), matLeather, 0, 0, -0.05); grip.rotation.z = Math.PI / 2; g.add(grip);
+  for (const sx of [-1, 1]) g.add(mk(new THREE.BoxGeometry(0.02, 0.02, 0.05), matLeather, sx * 0.05, 0, -0.025));
   const strap = mk(new THREE.TorusGeometry(0.056, 0.007, 6, 20, Math.PI * 1.5), matLeather, 0, 0, 0); strap.name = 'strap'; g.add(strap);
   for (const i of [0, 1]) { const p = mk(new THREE.BoxGeometry(0.014, 0.014, 1), matLeather, 0, 0, 0); p.name = 'post' + i; g.add(p); }
   g.userData = { disc: true }; g.visible = false; return g;
@@ -472,6 +507,7 @@ function rebuildTrail() {
 
 /* ---------- selección de clip ---------- */
 function selectA(clip, keepT) {
+  if (ctl.on) ctlStop(true);
   A = mkX(clip, store.perfil); playOn(chars[0], clip); syncArma(chars[0], clip); resetHS();
   if (!keepT) t = 0;
   store.clip = clip.name; save();
@@ -534,28 +570,42 @@ let trTimer = 0; function schedTrail() { cancelAnimationFrame(trTimer); trTimer 
 function buildList() {
   const dirs = new Set(); clips.forEach(c => { const p = parseName(c.name); if (p.dir) dirs.add(p.dir); });
   const fd = $('fDir'); fd.length = 1; [...dirs].sort().forEach(d => fd.add(new Option(d, d)));
-  fd.value = dirs.has(store.fDir) ? store.fDir : ''; $('fCfg').value = store.fCfg || '';
+  fd.value = dirs.has(store.fDir) ? store.fDir : ''; $('fCfg').value = store.fCfg || ''; $('fCat').value = store.fCat || '';
   renderList();
 }
+const noAcc = x => x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+function catOf(name) {
+  const m = META_BY[name]; if (m && m.categoria) return noAcc(m.categoria);
+  const f = name.split('_')[0].toLowerCase();
+  return ['parado', 'andar', 'correr', 'sprint', 'salto', 'agachado'].includes(f) ? 'locomocion' : ['esquiva', 'rodar'].includes(f) ? 'esquiva' : 'combate';
+}
+const PROC = [['izq', 'Esquiva lateral izq.'], ['der', 'Esquiva lateral der.'], ['fro', 'Paso rápido adelante'], ['atr', 'Paso rápido atrás']];
 function renderList() {
-  const q = $('q').value.trim().toLowerCase(), fc = $('fCfg').value, fdv = $('fDir').value;
+  const q = $('q').value.trim().toLowerCase(), fc = $('fCfg').value, fdv = $('fDir').value, fcat = $('fCat').value;
   const box = $('clips'); box.textContent = ''; let n = 0, last = null;
   const sorted = clips.slice().sort((a, b) => a.name.localeCompare(b.name));
   for (const c of sorted) {
     const p = parseName(c.name);
     if (q && !c.name.toLowerCase().includes(q)) continue;
-    if (fc && p.cfg !== fc) continue; if (fdv && p.dir !== fdv) continue;
+    if (fc && p.cfg !== fc) continue; if (fdv && p.dir !== fdv) continue; if (fcat && catOf(c.name) !== fcat) continue;
     if (p.accion !== last) { const h = document.createElement('h3'); h.textContent = p.accion; box.appendChild(h); last = p.accion; }
     const b = document.createElement('button'); b.dataset.n = c.name; b.setAttribute('role', 'listitem'); b.setAttribute('aria-pressed', 'false');
     b.innerHTML = '<span class="v"></span>'; b.appendChild(document.createTextNode(c.name + '  '));
     const s = document.createElement('span'); s.className = 'small'; s.textContent = fmt(c.duration) + ' s'; b.appendChild(s);
     b.onclick = () => selectA(c); box.appendChild(b); n++;
   }
+  if (!q && !fc && (!fcat || fcat === 'esquiva')) {   // esquivas procedurales (no son clips): se prueban en «Probar controles»
+    const h = document.createElement('h3'); h.textContent = 'esquiva procedural / provisional'; box.appendChild(h);
+    const sub = document.createElement('div'); sub.className = 'sub'; sub.textContent = 'No hay clip: paso lateral generado por código (raíz + inclinación + saltito). Se prueban en el modo controles.'; box.appendChild(sub);
+    for (const [d, label] of PROC) { const e = document.createElement('div'); e.className = 'proc'; e.dataset.proc = d; e.tabIndex = 0; e.setAttribute('role', 'button'); e.textContent = label + ' (procedural / provisional)';
+      const go = () => { ctlStart(); ctlDodgeTest(d); }; e.onclick = go; e.onkeydown = ev => { if (ev.key === 'Enter') go(); }; box.appendChild(e); }
+  }
   $('nClips').textContent = `(${n}/${clips.length})`;
-  if (!n) box.textContent = 'Ningún clip coincide.';
+  if (!n && !box.children.length) box.textContent = 'Ningún clip coincide.';
   else if (A) refreshUI();
 }
 $('q').oninput = renderList;
+$('fCat').onchange = () => { store.fCat = $('fCat').value; save(); renderList(); };
 $('fCfg').onchange = () => { store.fCfg = $('fCfg').value; save(); renderList(); };
 $('fDir').onchange = () => { store.fDir = $('fDir').value; save(); renderList(); };
 
@@ -602,6 +652,7 @@ $('cTrail').onchange = () => { store.trail = $('cTrail').checked; save(); trail.
 
 /* comparar */
 $('bCmp').onclick = async () => {
+  if (ctl.on) ctlStop(false);
   compare = !compare; $('bCmp').setAttribute('aria-pressed', compare); $('sB').hidden = !compare; $('rowPB').hidden = !compare;
   if (compare) {
     if (!chars[1]) { chars.push(makeChar(await parseGlb(), 0.9)); chars[1].skel.visible = store.skel; }
@@ -641,6 +692,7 @@ const RASGOS = {
 };
 function catsDe(name) {
   const f = name.split('_')[0].toLowerCase(), p = parseName(name);
+  if (f === 'rodar' || f === 'esquiva') return PF.videos.esquiva ? ['esquiva'] : [];
   if (f === 'ataque') return p.dir === 'arr' ? ['ataque_ligero', 'ataque_fuerte_y_direccional'] : ['ataque_ligero'];
   if (f === 'contraataque') return ['parada_y_bloqueo', 'ataque_ligero'];
   if (f === 'estocada' || f === 'embestida') return ['ataque_fuerte_y_direccional'];
@@ -651,16 +703,21 @@ function catsDe(name) {
 const TIPO = { busqueda_youtube: 'búsqueda de YouTube, no un vídeo concreto', pagina_con_video: 'página con vídeo', articulo_sobre_charla: 'artículo sobre una charla' };
 let fichaKey = '';
 function buildFicha(force) {
-  const key = A.clip.name + '|' + store.perfil; if (!force && key === fichaKey) return; fichaKey = key;
+  const key = A.clip.name + '|' + store.perfil + '|' + (A.cfg.prof.nota || ''); if (!force && key === fichaKey) return; fichaKey = key;
   const box = $('ficha'); box.textContent = '';
-  const cats = catsDe(A.clip.name), main = cats[0] || 'mocap_y_animacion';
+  const cats = catsDe(A.clip.name), meta = META_BY[A.clip.name], cat = catOf(A.clip.name);
+  const main = RASGOS[cats[0]] ? cats[0] : cat === 'combate' ? 'mocap_y_animacion' : '';
   const add = (tag, txt, cls) => { const e = document.createElement(tag); e.textContent = txt; if (cls) e.className = cls; box.appendChild(e); return e; };
-  add('p', 'Rasgos de sensación (' + main.replace(/_/g, ' ') + ')', 'small');
-  RASGOS[main].forEach(l => add('p', l));
+  if (main) { add('p', 'Rasgos de sensación (' + main.replace(/_/g, ' ') + ')', 'small'); RASGOS[main].forEach(l => add('p', l)); }
   if (A.cfg.prof.nota) add('p', 'Perfil ' + store.perfil + ': ' + A.cfg.prof.nota, 'small');
-  add('p', 'Valores [EST] = estimaciones a partir de descripciones; no hay frame data publicado. Solo enlaces, no se incrusta nada de esos juegos.', 'small');
+  if (meta) {   // datos del manifiesto (candidatas.json)
+    add('p', 'Datos del clip (' + cat + ')', 'small');
+    const bits = [meta.original && 'original: ' + meta.original, meta.fuente, meta.licencia, meta.bucle ? 'en bucle' : 'una vez', meta.velocidad_ms ? 'velocidad ' + meta.velocidad_ms + ' m/s' : '', meta.desplazamiento_m ? 'desplazamiento ' + meta.desplazamiento_m + ' m' : ''].filter(Boolean);
+    add('p', bits.join(' · ')); if (meta.nota) add('p', meta.nota, 'small');
+  }
+  if (main || cats.length) add('p', 'Valores [EST] = estimaciones a partir de descripciones; no hay frame data publicado. Solo enlaces, no se incrusta nada de esos juegos.', 'small');
   const seen = new Set(), ul = document.createElement('ul');
-  cats.concat(['mocap_y_animacion']).forEach(c => (PF.videos[c] || []).forEach(v => {
+  (main ? cats.concat(cat === 'combate' ? ['mocap_y_animacion'] : []) : cats).forEach(c => (PF.videos[c] || []).forEach(v => {
     if (seen.has(v.url) || !/^https:\/\//.test(v.url)) return; seen.add(v.url);
     const li = document.createElement('li'), a = document.createElement('a');
     a.href = v.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = v.titulo + ' (' + v.juego + ')';
@@ -671,6 +728,7 @@ function buildFicha(force) {
 }
 function refreshPerfil() {
   const k = store.perfil, pr = PF.perfiles[k], o = A.cfg;
+  $('secPerfil').hidden = catOf(A.clip.name) !== 'combate';   // locomoción/esquiva: sin perfil de sensación en perfiles.json
   $('sPerfil').value = k;
   $('pfDesc').textContent = pr ? pr.descripcion + ' Inspiración: ' + pr.inspiracion + '.' : k === 'original' ? 'Sin re-temporizar: duraciones del clip original (tramos entre los cortes).' : 'Valores actuales de la tabla de COMBATE.md §1.1 (sin lunge ni hit-stop definidos).';
   const canc = PF.cancelacion_recuperacion_pct[k];
@@ -691,10 +749,331 @@ $('bCopy').onclick = async () => {
 
 /* atajos */
 addEventListener('keydown', e => {
+  if (ctl.on) return;
   const tg = e.target && e.target.tagName; if (tg === 'INPUT' || tg === 'TEXTAREA' || tg === 'SELECT' || e.target.getAttribute('role') === 'slider') return;
   if (e.key === ' ' && tg !== 'BUTTON') { setPlay(!playing); e.preventDefault(); }
   else if (e.key === 'ArrowLeft') stepFrames(-1); else if (e.key === 'ArrowRight') stepFrames(1);
 });
+
+/* ---------- modo «Probar controles» ----------
+   Máquina de estados sobre el personaje 0: parado/andar/correr/sprint, agachado (entrar/parado/andar/salir), salto (inicio/aire/aterrizaje)
+   y esquiva (voltereta con clip, o paso procedural). Las animaciones se mezclan por pesos (crossfade ~0,2 s) y la velocidad de reproducción de los
+   bucles se ajusta a velocidad_ms para que los pies no patinen. Paso fijo de 1/60 s; sin asignaciones en el bucle caliente. */
+const CK = { dz: 0.2, dzO: 0.25, walk: 1.5, run: 5.38, sprint: 8.21, crouch: 0.9, sprintAfter: 1.5, accel: 14, decel: 22, turn: 12,
+  g: 22, jumpV: 7, takeoff: 0.14, landT: 0.4, fade: 0.2, rollT: 0.6, rollD: 3, stepT: 0.45, stepD: 2.2, crouchT: 0.4, STEP: 1 / 60, lim: 95 };
+const VEL_DEF = { walk: 0.98, run: 5.38, sprint: 8.21, cWalk: 0.75 };
+const ROLES = { idle: 'parado', guard: 'parado_guardia', walk: 'andar_adelante', run: 'correr', sprint: 'sprint', jStart: 'salto_inicio', jAir: 'salto_aire', jLand: 'salto_aterrizaje',
+  cIn: 'agachado_entrar', cOut: 'agachado_salir', cIdle: 'agachado_parado', cWalk: 'agachado_andar', rollF: 'rodar_adelante', rollB: 'rodar_atras' };
+const FALL = [['guard', 'idle'], ['walk', 'idle'], ['run', 'walk'], ['sprint', 'run'], ['jStart', 'idle'], ['jAir', 'jStart'], ['jLand', 'idle'], ['cIdle', 'idle'], ['cIn', 'cIdle'], ['cOut', 'idle'], ['cWalk', 'cIdle'], ['rollB', 'rollF']];
+const byName = (a, b) => a.name.localeCompare(b.name);
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v, clampR = (v, a, b) => v < a ? a : v > b ? b : v;
+const ctl = { on: false, auto: true, cfg: store.ctlCfg === 'EE' ? 'EE' : 'EP', esq: store.ctlEsq === 'paso' ? 'paso' : 'voltereta', st: 'parado', stT: 0, x: 0, y: 0, z: 0, yaw: 0, speed: 0, vy: 0, hx: 0, hz: 0,
+  crouch: false, runT: 0, sprinting: false, camYaw: Math.PI, camPitch: 0.35, camDist: 4.4, cam: new THREE.Vector3(), shake: 0, snap: true, R: null, R0: null,
+  list: [], emap: new Map(), keys: new Set(), ed: { jump: false, circ: false, cfg: false }, padPrev: [false, false, false, false], joy: { x: 0, y: 0, id: -1 }, runBtn: false, drag: -1, dx: 0, dy: 0,
+  I: { ix: 0, iy: 0, mag: 0, run: false, cx: 0, cy: 0, jump: false, circ: false, cfg: false, tilt: false }, dod: null, proc: false, tilt: [0, 0], hop: 0, floor: null, saved: null, taken: 0, dir: [0, 0], frames: 0, log: [] };
+const _cf = new THREE.Vector3();
+
+function ctlResolve() {
+  const cfg = ctl.cfg, R = {};
+  const find = pre => { const re = new RegExp('^' + pre + '_(EP|EE)_'), c = clips.filter(x => re.test(x.name)).sort(byName);
+    return c.find(x => parseName(x.name).cfg === cfg) || c.find(x => parseName(x.name).cfg === 'EP') || c[0] || null; };
+  for (const k in ROLES) R[k] = find(ROLES[k]);
+  R.real = {}; for (const k in ROLES) R.real[k] = !!R[k];
+  for (let n = 0; n < 3; n++) for (const [k, f] of FALL) if (!R[k] && R[f]) R[k] = R[f];
+  if (!R.idle) R.idle = clips.slice().sort(byName).find(c => /guardia_neu/.test(c.name)) || clips[0];
+  for (let n = 0; n < 3; n++) for (const [k, f] of FALL) if (!R[k] && R[f]) R[k] = R[f];
+  for (const k in ROLES) if (!R[k]) R[k] = R.idle;
+  return R;
+}
+const velOf = (clip, def) => (META_BY[clip.name] && META_BY[clip.name].velocidad_ms) || def;
+function entry(clip, once) {
+  let e = ctl.emap.get(clip);
+  if (!e) { const a = chars[0].mixer.clipAction(clip); a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); a.clampWhenFinished = true; e = { clip, a, w: 0, tw: 0, ts: 1, run: false, once }; ctl.emap.set(clip, e); ctl.list.push(e); }
+  return e;
+}
+function want(clip, w, ts, once) { if (!clip || w <= 0) return; const e = entry(clip, !!once); e.tw += w; e.ts = ts; }
+function restart(clip, once) { const e = entry(clip, !!once); e.a.setLoop(once ? THREE.LoopOnce : THREE.LoopRepeat, Infinity); e.a.reset(); e.a.play(); e.a.setEffectiveWeight(0); e.run = true; e.w = 0; }
+function animate(dt, tau) {
+  let S = 0; for (const e of ctl.list) S += e.tw;
+  const k = dt / tau;
+  for (const e of ctl.list) {
+    const tg = S > 0 ? e.tw / S : 0;
+    if (tg > 0 && !e.run) { e.a.reset(); e.a.play(); e.run = true; e.w = 0; }
+    if (ctl.snap) e.w = tg; else if (e.w < tg) e.w = Math.min(tg, e.w + k); else e.w = Math.max(tg, e.w - k);
+    if (e.run) { e.a.setEffectiveWeight(e.w); e.a.setEffectiveTimeScale(e.ts); if (e.w <= 0 && tg === 0) { e.a.stop(); e.run = false; } }
+    e.tw = 0;
+  }
+  ctl.snap = false; chars[0].mixer.update(dt);
+}
+
+/* ---- entrada ---- */
+const DIRK = ['KeyW', 'KeyA', 'KeyS', 'KeyD'];
+function typing(e) { const t = e.target && e.target.tagName; return t === 'TEXTAREA' || (t === 'INPUT' && e.target.type !== 'checkbox' && e.target.type !== 'range') || t === 'SELECT'; }
+function keyTilt() { const k = ctl.keys; return (k.has('KeyW') ? 1 : 0) + (k.has('KeyA') ? 1 : 0) + (k.has('KeyS') ? 1 : 0) + (k.has('KeyD') ? 1 : 0) > 0; }
+addEventListener('keydown', e => {
+  if (!ctl.on || typing(e)) return;
+  const c = e.code;
+  if (c === 'Escape') { ctlStop(false); e.preventDefault(); return; }
+  if (['Space', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'AltLeft', 'AltRight', 'KeyC', 'Tab'].includes(c) || (e.ctrlKey && DIRK.includes(c))) e.preventDefault();
+  if (e.repeat) return;
+  ctl.keys.add(c);
+  if (c === 'Space') ctl.ed.jump = true;
+  else if (c === 'KeyC') ctl.ed.circ = true;                                        // C: neutro = agacharse; con dirección pulsada = esquivar
+  else if (c === 'KeyT') ctl.ed.cfg = true;
+  else if ((c === 'AltLeft' || c === 'AltRight' || c === 'ControlLeft' || c === 'ControlRight') && keyTilt()) ctl.ed.circ = true;       // Alt/Ctrl con dirección ya pulsada
+  else if (DIRK.includes(c) && (e.altKey || e.ctrlKey)) ctl.ed.circ = true;         // Alt/Ctrl pulsado y luego dirección
+});
+addEventListener('keyup', e => { if (!ctl.on) return; ctl.keys.delete(e.code); if (e.code === 'Space' || e.code === 'AltLeft' || e.code === 'AltRight') e.preventDefault(); });
+addEventListener('blur', () => { ctl.keys.clear(); ctl.runBtn = false; });
+cv.addEventListener('pointerdown', e => { if (!ctl.on) return; ctl.drag = e.pointerId; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
+cv.addEventListener('pointermove', e => { if (ctl.on && ctl.drag === e.pointerId) { ctl.dx += e.movementX || 0; ctl.dy += e.movementY || 0; } });
+const endDrag = e => { if (ctl.drag === e.pointerId) ctl.drag = -1; };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('wheel', e => { if (ctl.on) { ctl.camDist = clampR(ctl.camDist * (1 + Math.sign(e.deltaY) * 0.08), 1.8, 9); e.preventDefault(); } }, { passive: false });
+/* táctil mínimo */
+const joyEl = $('joy'), JR = 46;
+function joyMove(e) { const r = joyEl.getBoundingClientRect(); let x = (e.clientX - r.left - r.width / 2) / JR, y = (e.clientY - r.top - r.height / 2) / JR; const m = Math.hypot(x, y); if (m > 1) { x /= m; y /= m; }
+  ctl.joy.x = x; ctl.joy.y = y; joyEl.firstElementChild.style.transform = `translate(${x * JR}px,${y * JR}px)`; }
+joyEl.addEventListener('pointerdown', e => { ctl.joy.id = e.pointerId; joyEl.setPointerCapture(e.pointerId); joyMove(e); e.preventDefault(); });
+joyEl.addEventListener('pointermove', e => { if (ctl.joy.id === e.pointerId) joyMove(e); });
+const joyEnd = e => { if (ctl.joy.id === e.pointerId) { ctl.joy.id = -1; ctl.joy.x = ctl.joy.y = 0; joyEl.firstElementChild.style.transform = ''; } };
+joyEl.addEventListener('pointerup', joyEnd); joyEl.addEventListener('pointercancel', joyEnd);
+$('tJump').addEventListener('pointerdown', e => { ctl.ed.jump = true; e.preventDefault(); });
+$('tO').addEventListener('pointerdown', e => { ctl.ed.circ = true; e.preventDefault(); });
+$('tRun').addEventListener('pointerdown', e => { ctl.runBtn = true; $('tRun').setAttribute('aria-pressed', 'true'); e.preventDefault(); try { $('tRun').setPointerCapture(e.pointerId); } catch (x) {} });
+const runUp = () => { ctl.runBtn = false; $('tRun').setAttribute('aria-pressed', 'false'); };
+$('tRun').addEventListener('pointerup', runUp); $('tRun').addEventListener('pointercancel', runUp);
+
+const dz = (v, d) => Math.abs(v) < d ? 0 : v;
+function readInput() {
+  const I = ctl.I, k = ctl.keys;
+  let ix = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0), iy = (k.has('KeyS') ? 1 : 0) - (k.has('KeyW') ? 1 : 0);
+  let cx = (k.has('ArrowRight') ? 1 : 0) - (k.has('ArrowLeft') ? 1 : 0), cy = (k.has('ArrowDown') ? 1 : 0) - (k.has('ArrowUp') ? 1 : 0);
+  let run = k.has('ShiftLeft') || k.has('ShiftRight') || ctl.runBtn, jump = ctl.ed.jump, circ = ctl.ed.circ, cfg = ctl.ed.cfg;
+  let m = Math.hypot(ix, iy); if (m > 1) { ix /= m; iy /= m; m = 1; }
+  if (ctl.joy.id >= 0 || ctl.joy.x || ctl.joy.y) { const jx = ctl.joy.x, jy = ctl.joy.y; if (Math.hypot(jx, jy) > m) { ix = jx; iy = jy; } }
+  let gp = null; try { const g = navigator.getGamepads ? navigator.getGamepads() : []; for (let i = 0; i < g.length; i++) if (g[i] && g[i].connected) { gp = g[i]; break; } } catch (x) {}
+  if (gp) {
+    const ax = gp.axes[0] || 0, ay = gp.axes[1] || 0, am = Math.hypot(ax, ay);
+    if (am > Math.hypot(ix, iy)) { ix = ax; iy = ay; }
+    cx += dz(gp.axes[2] || 0, 0.15); cy += dz(gp.axes[3] || 0, 0.15);
+    const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed), P = ctl.padPrev;
+    run = run || b(10); const bj = b(0), bo = b(1), bt = b(3);       // X/Cruz = saltar, Círculo = agacharse/esquivar, Triángulo = EP/EE
+    jump = jump || (bj && !P[0]); circ = circ || (bo && !P[1]); cfg = cfg || (bt && !P[3]); P[0] = bj; P[1] = bo; P[3] = bt;
+  }
+  const mm = Math.hypot(ix, iy);
+  I.mag = mm < CK.dz ? 0 : Math.min((mm - CK.dz) / (1 - CK.dz), 1); I.ix = mm ? ix / mm : 0; I.iy = mm ? iy / mm : 0;
+  I.tilt = mm >= CK.dzO;     // inclinación leída en el instante de pulsar Círculo
+  I.run = run; I.cx = cx; I.cy = cy; I.jump = jump; I.circ = circ; I.cfg = cfg;
+  ctl.ed.jump = ctl.ed.circ = ctl.ed.cfg = false;
+  return I;
+}
+/* dirección del stick relativa a la cámara -> vector mundo (dir[0], dir[1]) */
+function worldDir(I, out) {
+  const s = Math.sin(ctl.camYaw), c = Math.cos(ctl.camYaw), fx = -s, fz = -c, rx = c, rz = -s;
+  const x = fx * (-I.iy) + rx * I.ix, z = fz * (-I.iy) + rz * I.ix, m = Math.hypot(x, z) || 1; out[0] = x / m; out[1] = z / m;
+}
+const angDiff = (a, b) => { let d = a - b; while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI; return d; };
+
+/* ---- transiciones ---- */
+function setSt(s) { ctl.st = s; ctl.stT = 0; }
+function startJump() { ctl.crouch = false; setSt('salto_inicio'); restart(ctl.R.jStart, true); }
+function toggleCrouch() { ctl.crouch = !ctl.crouch; setSt(ctl.crouch ? 'agachado_entrar' : 'agachado_salir'); restart(ctl.crouch ? ctl.R.cIn : ctl.R.cOut, true); }
+function startDodge(wd, kindForce) {
+  // clasificación respecto a hacia dónde mira el personaje
+  const fx = Math.sin(ctl.yaw), fz = Math.cos(ctl.yaw), rx = -Math.cos(ctl.yaw), rz = Math.sin(ctl.yaw);
+  const cf = wd[0] * fx + wd[1] * fz, cr = wd[0] * rx + wd[1] * rz;
+  let kind = kindForce || (Math.abs(cf) >= Math.abs(cr) ? (cf >= 0 ? 'fro' : 'atr') : (cr >= 0 ? 'der' : 'izq'));
+  const roll = ctl.esq === 'voltereta' && (kind === 'fro' || kind === 'atr') && ctl.R.real[kind === 'fro' ? 'rollF' : 'rollB'];
+  let dx = wd[0], dz2 = wd[1];
+  if (kind === 'fro' || kind === 'atr') { const a = Math.atan2(wd[0], wd[1]); ctl.yaw = kind === 'fro' ? a : a + Math.PI; }   // la voltereta/paso sigue el eje del cuerpo
+  else { const sg = kind === 'der' ? 1 : -1; dx = rx * sg; dz2 = rz * sg; }                                                       // lateral: eje perpendicular al cuerpo
+  if (kind === 'atr') { dx = wd[0]; dz2 = wd[1]; }
+  ctl.crouch = false; ctl.speed = 0;
+  ctl.dod = { kind, roll, u: 0, dur: roll ? CK.rollT : CK.stepT, dist: roll ? CK.rollD : CK.stepD, dx, dz: dz2 };
+  ctl.proc = !roll; setSt('esquiva_' + kind);
+  if (roll) restart(ctl.R[kind === 'fro' ? 'rollF' : 'rollB'], true);
+  ctl.shake = Math.max(ctl.shake, 0.012);
+}
+function ctlDodgeTest(d) {     // desde la lista: esquiva procedural en la dirección indicada
+  if (!ctl.on) return; const prev = ctl.esq; if (d === 'fro' || d === 'atr') ctl.esq = 'paso';
+  const fx = Math.sin(ctl.yaw), fz = Math.cos(ctl.yaw), rx = -Math.cos(ctl.yaw), rz = Math.sin(ctl.yaw), s = d === 'fro' ? 1 : d === 'atr' ? -1 : 0, r = d === 'der' ? 1 : d === 'izq' ? -1 : 0;
+  startDodge([fx * s + rx * r, fz * s + rz * r], d); ctl.esq = prev;
+}
+
+/* ---- paso de simulación ---- */
+const wdir = [0, 0];
+function ctlStep(dt) {
+  const I = readInput(), R = ctl.R; ctl.frames++;
+  ctl.camYaw += I.cx * dt * 2.4 + ctl.dx * 0.005; ctl.camPitch = clampR(ctl.camPitch + I.cy * dt * 1.6 + ctl.dy * 0.005, -0.12, 1.25); ctl.dx = ctl.dy = 0;
+  if (I.cfg) ctlSetCfg(ctl.cfg === 'EP' ? 'EE' : 'EP');
+  const st = ctl.st; ctl.stT += dt;
+  worldDir(I, wdir);
+  const free = st === 'parado' || st === 'andar' || st === 'correr' || st === 'sprint' || st === 'agachado_parado' || st === 'agachado_andar';
+  let tau = CK.fade, moveK = 1;
+  if (free) {
+    if (I.circ) { if (I.tilt) startDodge(wdir); else toggleCrouch(); }
+    else if (I.jump) startJump();
+  }
+  const s2 = ctl.st;
+  if (s2 === 'esquiva_fro' || s2 === 'esquiva_atr' || s2 === 'esquiva_izq' || s2 === 'esquiva_der') {
+    const d = ctl.dod, u0 = d.u; d.u = Math.min(1, d.u + dt / d.dur); const f = u => 1 - (1 - u) * (1 - u), dd = d.dist * (f(d.u) - f(u0));
+    ctl.x += d.dx * dd; ctl.z += d.dz * dd;
+    ctl.hop = d.roll ? 0 : Math.sin(Math.PI * d.u) * 0.07;
+    const a = Math.sin(Math.PI * d.u) * 0.24 * (d.roll ? 0 : 1);   // inclinación del tronco (rad) solo en la esquiva procedural
+    ctl.tilt[0] = d.kind === 'fro' ? a : d.kind === 'atr' ? -a : 0; ctl.tilt[1] = d.kind === 'der' ? a : d.kind === 'izq' ? -a : 0;
+    const base = ctl.crouch ? R.cIdle : R.guard;
+    if (d.roll) want(R[d.kind === 'fro' ? 'rollF' : 'rollB'], 1, R[d.kind === 'fro' ? 'rollF' : 'rollB'].duration / d.dur, true); else want(base, 1, 1);
+    tau = 0.1;
+    if (d.u >= 1) { ctl.dod = null; ctl.proc = false; ctl.hop = 0; ctl.tilt[0] = ctl.tilt[1] = 0; setSt('parado'); ctl.speed = 0; }
+  } else if (s2 === 'salto_inicio') {
+    ctl.speed = Math.max(0, ctl.speed - CK.decel * dt * 0.3); ctl.x += Math.sin(ctl.yaw) * ctl.speed * dt; ctl.z += Math.cos(ctl.yaw) * ctl.speed * dt;
+    want(R.jStart, 1, 1, true);
+    if (ctl.stT >= CK.takeoff) { ctl.vy = CK.jumpV; ctl.hx = Math.sin(ctl.yaw) * ctl.speed; ctl.hz = Math.cos(ctl.yaw) * ctl.speed; setSt('salto_aire'); restart(R.jAir, false); }
+  } else if (s2 === 'salto_aire') {
+    if (I.mag > 0) { const k = 1 - Math.exp(-2.5 * dt), tv = Math.max(Math.hypot(ctl.hx, ctl.hz), 1.5 * I.mag); ctl.hx += (wdir[0] * tv - ctl.hx) * k; ctl.hz += (wdir[1] * tv - ctl.hz) * k; }
+    ctl.x += ctl.hx * dt; ctl.z += ctl.hz * dt; ctl.vy -= CK.g * dt; ctl.y += ctl.vy * dt;
+    if (I.mag > 0) ctl.yaw += clampR(angDiff(Math.atan2(wdir[0], wdir[1]), ctl.yaw), -CK.turn * dt * 0.5, CK.turn * dt * 0.5);
+    want(R.jAir, 1, 1);
+    if (ctl.y <= 0 && ctl.vy < 0) { ctl.y = 0; ctl.vy = 0; ctl.speed = Math.hypot(ctl.hx, ctl.hz) * 0.4; setSt('aterrizaje'); restart(R.jLand, true); ctl.shake = Math.max(ctl.shake, 0.03); }
+    tau = 0.12;
+  } else if (s2 === 'aterrizaje') {
+    ctl.speed = Math.max(0, ctl.speed - CK.decel * dt * 0.5); ctl.x += Math.sin(ctl.yaw) * ctl.speed * dt; ctl.z += Math.cos(ctl.yaw) * ctl.speed * dt;
+    want(R.jLand, 1, 1, true);
+    if (ctl.stT >= CK.landT) setSt('parado');
+  } else if (s2 === 'agachado_entrar' || s2 === 'agachado_salir') {
+    ctl.speed = Math.max(0, ctl.speed - CK.decel * dt); ctl.x += Math.sin(ctl.yaw) * ctl.speed * dt; ctl.z += Math.cos(ctl.yaw) * ctl.speed * dt;
+    const cl = s2 === 'agachado_entrar' ? R.cIn : R.cOut; want(cl, 1, Math.max(1, cl.duration / CK.crouchT), true);
+    if (ctl.stT >= CK.crouchT) setSt('parado');
+  } else {
+    locomotion(I, dt);
+  }
+  ctl.x = clampR(ctl.x, -CK.lim, CK.lim); ctl.z = clampR(ctl.z, -CK.lim, CK.lim);
+  animate(dt, tau);
+  ctlApply(dt);
+}
+function locomotion(I, dt) {
+  const R = ctl.R, crouch = ctl.crouch;
+  let tv = 0;
+  if (I.mag > 0) {
+    if (crouch) tv = CK.crouch * I.mag;
+    else if (I.run) { ctl.runT += dt; tv = (ctl.runT >= CK.sprintAfter ? CK.sprint : CK.run) * Math.max(I.mag, 0.6); }
+    else tv = CK.walk * I.mag;
+  }
+  if (!(I.run && I.mag > 0 && !crouch)) ctl.runT = 0;
+  if (I.mag > 0) ctl.yaw += clampR(angDiff(Math.atan2(wdir[0], wdir[1]), ctl.yaw), -CK.turn * dt, CK.turn * dt);
+  const a = tv > ctl.speed ? CK.accel : CK.decel; ctl.speed = tv > ctl.speed ? Math.min(tv, ctl.speed + a * dt) : Math.max(tv, ctl.speed - a * dt);
+  const sp = ctl.speed; ctl.x += Math.sin(ctl.yaw) * sp * dt; ctl.z += Math.cos(ctl.yaw) * sp * dt;
+  if (crouch) {
+    const wc = clamp01((sp - 0.05) / 0.5), vW = velOf(R.cWalk, VEL_DEF.cWalk);
+    want(R.cIdle, 1 - wc, 1); want(R.cWalk, wc, clampR(sp / vW, 0.5, 1.7));
+    setSt2(sp > 0.08 ? 'agachado_andar' : 'agachado_parado');
+  } else {
+    let wI = 0, wW = 0, wR = 0, wS = 0;
+    if (sp < CK.walk) { wI = 1 - Math.min(sp / 0.7, 1); wW = 1 - wI; } else if (sp < CK.run) { const t = (sp - CK.walk) / (CK.run - CK.walk); wW = 1 - t; wR = t; } else { const t = Math.min((sp - CK.run) / (CK.sprint - CK.run), 1); wR = 1 - t; wS = t; }
+    want(R.idle, wI, 1); want(R.walk, wW, clampR(sp / velOf(R.walk, VEL_DEF.walk), 0.6, 1.7));
+    want(R.run, wR, clampR(sp / velOf(R.run, VEL_DEF.run), 0.7, 1.3)); want(R.sprint, wS, clampR(sp / velOf(R.sprint, VEL_DEF.sprint), 0.7, 1.3));
+    ctl.sprinting = sp > CK.run + 0.6;
+    setSt2(sp < 0.08 ? 'parado' : sp < 3 ? 'andar' : ctl.sprinting ? 'sprint' : 'correr');
+  }
+}
+function setSt2(s) { if (ctl.st !== s) { ctl.st = s; ctl.stT = 0; } }
+function ctlSetCfg(c) {
+  ctl.cfg = c; store.ctlCfg = c; save(); $('ctlCfg').value = c; ctl.R = ctlResolve(); syncArmaCfg(chars[0], c === 'EE', false);
+}
+function ctlApply(dt) {
+  const ch = chars[0], r = ch.root;
+  r.position.set(ctl.x, ctl.y + ctl.hop, ctl.z); r.rotation.set(ctl.tilt[0], ctl.yaw, ctl.tilt[1], 'YXZ');
+  // cámara en tercera persona
+  _cf.set(ctl.x, ctl.y * 0.5 + H * 0.78, ctl.z); ctl.cam.lerp(_cf, 1 - Math.exp(-10 * dt));
+  const cp = Math.cos(ctl.camPitch), d = ctl.camDist * (H / 1.8);
+  camera.position.set(ctl.cam.x + Math.sin(ctl.camYaw) * cp * d, Math.max(ctl.cam.y + Math.sin(ctl.camPitch) * d, 0.15), ctl.cam.z + Math.cos(ctl.camYaw) * cp * d);
+  if (ctl.shake > 0.0005) { if (store.shake && !reduceMotion) { camera.position.x += (Math.random() - 0.5) * ctl.shake * 2; camera.position.y += (Math.random() - 0.5) * ctl.shake * 2; } ctl.shake *= Math.exp(-9 * dt); } else ctl.shake = 0;
+  camera.lookAt(ctl.cam);
+  key.position.set(ctl.x + 3, 5, ctl.z + 4); key.target.position.set(ctl.x, 0, ctl.z); key.target.updateMatrixWorld();
+  if (ctl.floor) { ctl.floor.position.set(Math.round(ctl.x / 5) * 5, 0, Math.round(ctl.z / 5) * 5); }
+  dirty = true;
+}
+/* suelo amplio con rejilla (1 m, líneas marcadas cada 5 m) */
+function makeFloor() {
+  const c = document.createElement('canvas'); c.width = c.height = 640; const g = c.getContext('2d');
+  g.fillStyle = '#2a3148'; g.fillRect(0, 0, 640, 640);
+  for (let i = 0; i <= 5; i++) { g.strokeStyle = i % 5 === 0 ? '#7f8db0' : '#475270'; g.lineWidth = i % 5 === 0 ? 4 : 2; g.beginPath(); g.moveTo(i * 128, 0); g.lineTo(i * 128, 640); g.moveTo(0, i * 128); g.lineTo(640, i * 128); g.stroke(); }
+  const tex = new THREE.CanvasTexture(c); tex.wrapS = tex.wrapT = THREE.RepeatWrapping; tex.repeat.set(40, 40); tex.anisotropy = 8; tex.encoding = THREE.sRGBEncoding;
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95, metalness: 0 }));
+  m.rotation.x = -Math.PI / 2; m.receiveShadow = true; m.visible = false; scene.add(m); return m;
+}
+let oldFloor = null; scene.children.forEach(o => { if (o.isMesh && o.geometry && o.geometry.type === 'CircleGeometry') oldFloor = o; });
+scene.add(key.target);
+
+/* ---- HUD ---- */
+const SUP = '[SUPUESTO]';
+function hudHtml() {
+  return `<div class="st" id="cSt"></div><div id="cClip" class="mono"></div><div id="cInfo" class="small"></div>
+<details ${touchDev ? '' : 'open'}><summary>Controles</summary><ul>
+<li><b>Mover</b>: stick izq. / WASD</li><li><b>Cámara</b>: stick der. / ratón (arrastrar) / flechas</li>
+<li><b>Correr</b>: mantener L3 / Shift (tras 1,5 s a tope pasa a sprint <span class="sup">${SUP}</span>)</li>
+<li><b>Saltar</b>: X (Cruz) / Espacio</li>
+<li><b>Círculo (O) / C</b>: stick en neutro = agacharse / levantarse</li>
+<li><b>Círculo + stick inclinado</b> = esquivar hacia esa dirección (relativa a la cámara). Teclado: C o Alt/Ctrl + dirección</li>
+<li><b>EP / EE</b>: Triángulo / T. <b>Salir</b>: Esc</li>
+<li class="sup">Esquiva lateral y «paso rápido»: procedural / provisional (no hay clip)</li></ul></details>
+<button id="cExit">Salir del modo</button>`;
+}
+let hudLast = '';
+function hudUpdate() {
+  const el = $('cSt'); if (!el) return;
+  let a = null, b = null; for (const e of ctl.list) { if (e.w > 0.02) { if (!a || e.w > a.w) { b = a; a = e; } else if (!b || e.w > b.w) b = e; } }
+  const clip = a ? a.clip.name + (b ? ' + ' + b.clip.name + ' (' + Math.round(b.w * 100) + '%)' : '') : '-';
+  const txt = ctl.st + (ctl.proc ? '  [procedural / provisional]' : '') + '|' + clip + '|' + ctl.cfg + ' · esquiva ' + ctl.esq + ' · ' + ctl.speed.toFixed(1) + ' m/s' + (ctl.crouch ? ' · agachado' : '');
+  if (txt === hudLast) return; hudLast = txt; const p = txt.split('|');
+  el.textContent = 'Estado: ' + p[0]; $('cClip').textContent = 'Clip: ' + p[1]; $('cInfo').textContent = p[2];
+}
+
+/* ---- arranque / parada ---- */
+function ctlStart() {
+  if (ctl.on || !chars[0]) return;
+  if (compare) { compare = false; $('bCmp').setAttribute('aria-pressed', 'false'); $('sB').hidden = true; $('rowPB').hidden = true; if (chars[1]) { chars[1].root.visible = false; chars[1].skel.visible = false; } trail.position.x = 0; }
+  const ch = chars[0]; ctl.saved = { x: ch.root.position.x, y: ch.root.position.y, z: ch.root.position.z };
+  ch.mixer.stopAllAction(); ch.root.rotation.order = 'YXZ'; trail.visible = false;
+  if (!ctl.floor) ctl.floor = makeFloor();
+  ctl.floor.visible = true; if (oldFloor) oldFloor.visible = false; controls.enabled = false;
+  Object.assign(ctl, { on: true, st: 'parado', stT: 0, x: 0, y: 0, z: 0, yaw: 0, speed: 0, vy: 0, crouch: false, runT: 0, dod: null, proc: false, hop: 0, snap: true, camYaw: Math.PI, camPitch: 0.35, frames: 0 });
+  ctl.tilt[0] = ctl.tilt[1] = 0; ctl.keys.clear(); ctl.ed.jump = ctl.ed.circ = ctl.ed.cfg = false; ctl.padPrev.fill(false);
+  ctl.R = ctlResolve(); for (const e of ctl.list) { e.a.stop(); e.run = false; e.w = 0; e.tw = 0; }
+  syncArmaCfg(ch, ctl.cfg === 'EE', false);
+  ctl.cam.set(0, H * 0.78, 0);
+  $('ctlHud').innerHTML = hudHtml(); $('ctlHud').hidden = false; hudLast = ''; $('cExit').onclick = () => ctlStop(false);
+  $('tc').hidden = !(touchDev || new URLSearchParams(location.search).get('touch') === '1');
+  $('bCtl').setAttribute('aria-pressed', 'true'); if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  ch.skel.visible = store.skel; setPlay(false); ctl.R && ctlStep(ctl.STEP || CK.STEP); hudUpdate(); resize();
+}
+function ctlStop(fromSelect) {
+  if (!ctl.on) return;
+  ctl.on = false; const ch = chars[0];
+  for (const e of ctl.list) { e.a.stop(); e.run = false; e.w = 0; }
+  ch.mixer.stopAllAction(); ch.root.rotation.set(0, 0, 0); ch.root.position.set(ctl.saved.x, ctl.saved.y, ctl.saved.z);
+  ctl.floor.visible = false; if (oldFloor) oldFloor.visible = true; controls.enabled = true; key.position.set(3, 5, 4); key.target.position.set(0, 0, 0); key.target.updateMatrixWorld();
+  $('ctlHud').hidden = true; $('tc').hidden = true; $('bCtl').setAttribute('aria-pressed', 'false'); ctl.keys.clear(); ctl.runBtn = false; ctl.joy.x = ctl.joy.y = 0; ctl.joy.id = -1;
+  cv.style.transform = '';
+  if (!fromSelect) { setView('game'); selectA(A.clip, true); setPlay(true); }
+}
+function ctlFrame(dt) {
+  ctl.taken += dt; let n = 0;
+  while (ctl.taken >= CK.STEP && n < 5) { ctlStep(CK.STEP); ctl.taken -= CK.STEP; n++; }
+  if (n === 5) ctl.taken = 0;
+  hudUpdate();
+}
+$('bCtl').onclick = () => ctl.on ? ctlStop(false) : ctlStart();
+$('ctlCfg').value = ctl.cfg; $('ctlEsq').value = ctl.esq;
+$('ctlCfg').onchange = () => { if (ctl.on) ctlSetCfg($('ctlCfg').value); else { ctl.cfg = $('ctlCfg').value; store.ctlCfg = ctl.cfg; save(); } $('ctlCfg').blur(); };
+$('ctlEsq').onchange = () => { ctl.esq = $('ctlEsq').value; store.ctlEsq = ctl.esq; save(); $('ctlEsq').blur(); };
+function ctlState() {
+  const w = {}; for (const e of ctl.list) if (e.w > 0.005) w[e.clip.name] = +e.w.toFixed(3);
+  let top = ''; let m = 0; for (const e of ctl.list) if (e.w > m) { m = e.w; top = e.clip.name; }
+  return { on: ctl.on, estado: ctl.st, clip: top, pesos: w, cfg: ctl.cfg, esquiva: ctl.esq, procedural: ctl.proc, pos: [ctl.x, ctl.y, ctl.z], yaw: ctl.yaw, speed: ctl.speed, vy: ctl.vy, agachado: ctl.crouch, grounded: ctl.y <= 0.0001 && ctl.st !== 'salto_aire',
+    cam: { yaw: ctl.camYaw, pitch: ctl.camPitch }, frames: ctl.frames, esquivaTipo: ctl.dod ? ctl.dod.kind : null, roles: ctl.R ? Object.keys(ctl.R.real).filter(k => ctl.R.real[k]) : [], shake: ctl.shake };
+}
 
 /* ---------- bucle ---------- */
 function resize() {
@@ -707,10 +1086,11 @@ let last = performance.now(), fpsAcc = 0, fpsN = 0;
 function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min((now - last) / 1000, 0.1); last = now;
-  if (A && playing) {
+  if (ctl.on) { if (ctl.auto) ctlFrame(dt); }
+  else if (A && playing) {
     advance(dt); updateTime();
   }
-  controls.update();
+  if (!ctl.on) controls.update();
   if (dirty) { renderer.render(scene, camera); dirty = false; }
   fpsAcc += dt; fpsN++; if (fpsAcc > 1) { $('hud').textContent = Math.round(fpsN / fpsAcc) + ' fps'; fpsAcc = fpsN = 0; }
 }
@@ -735,13 +1115,22 @@ function loop(now) {
 
 /* comprobación de intersección: distancia (m) de los vértices del brazo/mano del escudo al plano de su cara interior, solo dentro de su huella.
    Devuelve el hueco mínimo (positivo = brazo detrás del escudo) y cuántos vértices lo cruzan/quedan a < 1 cm. */
+const _sv = new THREE.Vector3(), _sm = new THREE.Matrix4();
+function skinVert(m, i, out) {   // posición mundial de un vértice con skinning (en CPU)
+  const g = m.geometry, si = g.attributes.skinIndex, sw = g.attributes.skinWeight, bs = m.skeleton.bones, bi = m.skeleton.boneInverses;
+  _sv.fromBufferAttribute(g.attributes.position, i).applyMatrix4(m.bindMatrix); out.set(0, 0, 0);
+  for (let j = 0; j < 4; j++) { const w = [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)][j]; if (!w) continue; const k = [si.getX(i), si.getY(i), si.getZ(i), si.getW(i)][j];
+    _sm.multiplyMatrices(bs[k].matrixWorld, bi[k]); out.addScaledVector(_w2.copy(_sv).applyMatrix4(_sm), w); }
+  return out;
+}
+const _w2 = new THREE.Vector3();
 const armVerts = new WeakMap(), _w = new THREE.Vector3(), _inv = new THREE.Matrix4();
 function shieldCheck(clipName, n, side) {
   const ch = chars[0], clip = clips.find(c => c.name === clipName); if (!ch || !clip) return null;
   const wasA = A && A.clip; const mir = side === 'R'; syncArmaCfg(ch, true, mir); const sh = ch.shield;
   const tag = mir ? 'r' : 'l', re = new RegExp('(upperarm|lowerarm|hand|index|middle|ring|pinky|thumb)_.*' + tag + '$', 'i');
   const meshes = []; ch.root.traverse(o => { if (o.isSkinnedMesh) meshes.push(o); });
-  const act = ch.mixer.clipAction(clip); ch.mixer.stopAllAction(); act.reset(); act.play(); act.paused = true;
+  const act = ch.mixer.clipAction(clip); ch.mixer.stopAllAction(); act.reset(); act.play(); act.paused = false;
   let minGap = 1e9, bad = 0, cnt = 0, worstT = 0;
   for (let k = 0; k < n; k++) {
     const tt = clip.duration * k / n; act.time = tt; ch.mixer.update(0); ch.root.updateMatrixWorld(true);
@@ -752,7 +1141,7 @@ function shieldCheck(clipName, n, side) {
         for (let i = 0; i < si.count; i++) { let w = 0; for (let j = 0; j < 4; j++) if (tab[[si.getX(i), si.getY(i), si.getZ(i), si.getW(i)][j]]) w += [sw.getX(i), sw.getY(i), sw.getZ(i), sw.getW(i)][j]; if (w > 0.4) idx.push(i); }
         armVerts.set(m, idx); }
       for (const i of idx) {
-        m.boneTransform(i, _w); _w.applyMatrix4(m.matrixWorld).applyMatrix4(_inv);
+        skinVert(m, i, _w); _w.applyMatrix4(_inv);
         if ((_w.x / SH.rx) ** 2 + (_w.y / SH.ry) ** 2 > 1) continue;
         cnt++; const gap = -_w.z; if (gap < minGap) { minGap = gap; worstT = tt; } if (gap < 0.01) bad++;
       }
@@ -762,6 +1151,10 @@ function shieldCheck(clipName, n, side) {
   return { clip: clipName, frames: n, verts: cnt, minGap, bad, worstT };
 }
 window.__VISOR__ = {
+  track: (n, b) => { const c = clips.find(c => c.name === n); const t = c.tracks.find(t => t.name === b); return t && { times: Array.from(t.times), values: Array.from(t.values) }; },
+  ctl: { start: ctlStart, stop: () => ctlStop(false), state: ctlState, step: n => { for (let i = 0; i < n; i++) ctlStep(CK.STEP); hudUpdate(); }, hold: v => { ctl.auto = !v; }, cfg: ctlSetCfg, dodge: d => ctlDodgeTest(d), roles: () => ctl.R && Object.fromEntries(Object.entries(ROLES).map(([k]) => [k, ctl.R[k] && ctl.R[k].name])) },
+  cat: catOf,
+  focusShield: (d, az) => { const ch = chars[0]; if (!ch) return; ch.root.updateMatrixWorld(true); const v = ch.shield.getWorldPosition(new THREE.Vector3()); controls.target.copy(v); camera.position.set(v.x + Math.sin(az) * d, v.y + 0.12 * d, v.z + Math.cos(az) * d); controls.update(); dirty = true; },
   srcTime, shieldCheck, fitInfo: () => { const f = chars[0] && chars[0].fit && chars[0].fit.L; return f && { gap: SH.gap, hLen: f.h.length(), f: f.f.toArray(), n: f.n.toArray() }; },
   state: () => ({ glb: GLB_NAME, clips: clips.length, clip: A && A.clip.name, clipB: compare && B ? B.clip.name : null, playing, loop: loopOn(), compare, t: tShown(),
     dur: A && A.clip.duration, total: total(A), perfil: store.perfil, perfilB: dcmp() ? store.perfilB : null, prof: A && { lunge: A.cfg.prof.lunge, hit: A.cfg.prof.hit, ent: A.cfg.prof.ent }, totalB: dcmp() ? total(B) : null, dB: dcmp() ? B.cfg.d.slice() : null, lt: A && A.lt, ltB: dcmp() ? B.lt : null, hold: !!(A && (A.hsAct || (dcmp() && B.hsAct))), lungeZ: chars[0] ? chars[0].root.position.z : 0, swordVisible: !!(chars[0] && chars[0].sword.visible && chars[0].sword.parent), shieldVisible: !!(chars[0] && chars[0].shield.visible && chars[0].shield.parent), span: span(), cuts: A && A.cfg.c.slice(), d: A && A.cfg.d.slice(), speed: A && A.cfg.sp, vote: A && A.cfg.vote,
