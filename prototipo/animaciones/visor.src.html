@@ -67,6 +67,10 @@ label{display:inline-flex;align-items:center;gap:6px}
 #clips .proc:hover{background:#2c3548}
 #clips .sub{margin:2px 8px 6px;font-size:11px;color:#9fb0d0}
 .cat{width:100%}
+#tb button.sm{min-width:64px}
+#fxSel{width:auto}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mg[hidden]{display:none}
 @media (max-width:820px){
   #ctlHud{font-size:11px;padding:4px 8px}
 
@@ -83,7 +87,7 @@ label{display:inline-flex;align-items:center;gap:6px}
     <canvas id="cv" aria-label="Vista 3D del personaje"></canvas>
     <div id="hud" class="mono"></div>
     <div id="ctlHud" hidden aria-live="off"></div>
-    <div id="tc" hidden><div id="joy" aria-label="Joystick virtual"><i></i></div><div id="tb"><button id="tJump">Saltar</button><button id="tO" title="Joystick en neutro: agacharse. Inclinado: esquivar">Agachar / Esquivar</button><button id="tRun">Correr (mantener)</button></div></div>
+    <div id="tc" hidden><div id="joy" aria-label="Joystick virtual"><i></i></div><div id="tb"><button id="tJump">Saltar</button><button id="tO" title="Joystick en neutro: agacharse. Inclinado: esquivar">Agachar / Esquivar</button><button id="tRun">Correr (mantener)</button><button id="tCast" class="sm" title="R1: lanzar el hechizo elegido">Lanzar</button><button id="tL1" class="sm" aria-pressed="false" title="L1 mantenido + Lanzar mantenido = canalizar">L1</button></div></div>
     <div id="msg">Cargando modelo…</div>
   </div>
   <div id="panel">
@@ -93,7 +97,12 @@ label{display:inline-flex;align-items:center;gap:6px}
       <label>Config <select id="ctlCfg" aria-label="Configuración EP o EE"><option>EP</option><option>EE</option></select></label>
       <label>Esquiva <select id="ctlEsq" aria-label="Tipo de esquiva"><option value="voltereta">voltereta</option><option value="paso">paso (procedural)</option></select></label>
     </div>
-    <div class="small">Mando o teclado (esquema en la esquina del visor). Esc para salir.</div>
+    <div class="row">
+      <label>Hechizo <select id="spForma" aria-label="Forma del hechizo"></select></label>
+      <label><select id="spElem" aria-label="Elemento del hechizo"></select></label>
+      <label><select id="spIne" aria-label="Inestabilidad del hechizo"></select></label>
+    </div>
+    <div class="small">Mando o teclado (esquema en la esquina del visor). R1 / F = lanzar; L1 / Q + R1 / F mantenido = canalizar. Esc para salir.</div>
 
     <h2>Reproducción</h2>
     <div class="row">
@@ -124,11 +133,17 @@ label{display:inline-flex;align-items:center;gap:6px}
       <input type="search" id="q" placeholder="Buscar clip…" aria-label="Buscar clip" class="grow">
     </div>
     <div class="row">
-      <select id="fCat" aria-label="Filtrar por categoría" class="grow"><option value="">Categoría: todas</option><option value="combate">combate</option><option value="locomocion">locomoción</option><option value="esquiva">esquiva</option></select>
+      <select id="fCat" aria-label="Filtrar por categoría" class="grow"><option value="">Categoría: todas</option><option value="combate">combate</option><option value="locomocion">locomoción</option><option value="esquiva">esquiva</option><option value="magia">magia</option></select>
     </div>
     <div class="row">
       <select id="fCfg" aria-label="Filtrar por configuración" class="grow"><option value="">Config: todas</option><option>EP</option><option>EE</option></select>
       <select id="fDir" aria-label="Filtrar por dirección" class="grow"><option value="">Dirección: todas</option></select>
+    </div>
+    <div class="mg" id="rowMagia" hidden>
+      <select id="fForma" aria-label="Filtrar por forma"><option value="">Forma: todas</option></select>
+      <select id="fElem" aria-label="Filtrar por elemento"><option value="">Elemento: todos</option></select>
+      <select id="fMod" aria-label="Filtrar por modificador"><option value="">Modificador: todos</option></select>
+      <select id="fIne" aria-label="Filtrar por inestabilidad"><option value="">Inestabilidad: todas</option></select>
     </div>
     <div id="clips" role="list"></div>
 
@@ -144,6 +159,8 @@ label{display:inline-flex;align-items:center;gap:6px}
       <label><input type="checkbox" id="cHit"> Hit-stop</label>
       <label><input type="checkbox" id="cShake"> Temblor</label>
       <label><input type="checkbox" id="cArma"> Mostrar arma</label>
+      <label><input type="checkbox" id="cFx"> Efecto de magia</label>
+      <label>Color <select id="fxSel" aria-label="Color del efecto (elemento)"><option value="">del clip</option></select></label>
     </div>
     <h2>Ficha de referencia</h2>
     <div id="ficha"></div>
@@ -181,6 +198,7 @@ const GLB_NAME = /*__GLBNAME__*/'';
 const PERFILES = /*__PERFILES__*/null;
 const META = /*__META__*/null;      // candidatas.json: categoria, bucle, velocidad_ms, ficha del clip
 const META_BY = {}; (META || []).forEach(m => { META_BY[m.clip] = m; });
+const magiaOf = n => { const m = META_BY[n]; return m && m.categoria === 'magia' ? m : null; };
 const FPS = 30, FRAME = 1 / FPS, MIN_D = 0.02;
 const $ = id => document.getElementById(id);
 
@@ -265,7 +283,7 @@ function srcTime(t, c1, c2, dur, d) {
 
 /* ---------- estado persistente ---------- */
 const LS_KEY = 'fenix_visor_anim_v1';
-let store = { clip: '', loop: true, skel: false, trail: false, fCfg: '', fDir: '', set: {}, perfil: 'combate', perfilB: 'fluido_agil', lunge: true, hit: true, shake: true, arma: true, fCat: '', ctlCfg: 'EP', ctlEsq: 'voltereta' };
+let store = { clip: '', loop: true, skel: false, trail: false, fCfg: '', fDir: '', set: {}, perfil: 'combate', perfilB: 'fluido_agil', lunge: true, hit: true, shake: true, arma: true, fCat: '', ctlCfg: 'EP', ctlEsq: 'voltereta', fx: true, fxElem: '', spForma: 'proyectil', spElem: 'fuego', spIne: 'estable', fForma: '', fElem: '', fMod: '', fIne: '' };
 try { const s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (s && typeof s === 'object') store = Object.assign(store, s); } catch (e) {}
 if (!store.set || typeof store.set !== 'object') store.set = {};
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) {} }
@@ -397,16 +415,17 @@ function makeChar(gltf, x) {
   const root = gltf.scene; root.position.x = x;
   root.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.castShadow = true; o.frustumCulled = false; } });
   scene.add(root);
-  let hand = null, handL = null, lowerL = null, lowerR = null;
+  let hand = null, handL = null, lowerL = null, lowerR = null, pelvis = null;
   root.traverse(o => {
     if (!o.isBone) return;
+    if (!pelvis && /^pelvis$/i.test(o.name)) pelvis = o;
     if (!lowerL && /lowerarm[_.]?l$/i.test(o.name)) lowerL = o;
     if (!lowerR && /lowerarm[_.]?r$/i.test(o.name)) lowerR = o;
     if (!hand && /(^|[_.\-])hand[_.\-]?r(ight)?$|mano.*(der|_r)$|hand[_.]?r\b/i.test(o.name)) hand = o;
     if (!handL && /(^|[_.\-])hand[_.\-]?l(eft)?$|mano.*(izq|_l)$|hand[_.]?l\b/i.test(o.name)) handL = o;
   });
   const skel = new THREE.SkeletonHelper(root); skel.visible = store.skel; skel.material.depthTest = false; skel.material.linewidth = 2; skel.renderOrder = 10; scene.add(skel);
-  const ch = { root, mixer: new THREE.AnimationMixer(root), action: null, clip: null, skel, hand, handL, lowerL, lowerR, tmp: new THREE.Vector3(), sword: makeSword(), shield: makeShield() };
+  const ch = { root, mixer: new THREE.AnimationMixer(root), action: null, clip: null, skel, hand, handL, lowerL, lowerR, pelvis, tmp: new THREE.Vector3(), sword: makeSword(), shield: makeShield() };
   return ch;
 }
 function playOn(ch, clip) {
@@ -416,7 +435,12 @@ function playOn(ch, clip) {
 
 /* ---------- ajustes por clip ---------- */
 function defaults(clip) {
-  const dur = clip.duration, tb = tablaFases(clip.name);
+  const dur = clip.duration, tb = tablaFases(clip.name), mg = magiaOf(clip.name);
+  if (mg && mg.fases && !mg.bucle) {   // magia: cortes y duraciones del manifiesto (fases anticipación / activo / recuperación); sin re-temporizar
+    const f = mg.fases, a0 = f.anticipacion ? f.anticipacion[1] : 0.02, a1 = f.activo ? f.activo[1] : a0 + 0.02;
+    const c0 = Math.min(Math.max(a0, 0.02), dur - 0.04), c1 = Math.min(Math.max(a1, c0 + 0.02), dur - 0.02);
+    return { c: [c0, c1], d: [c0, c1 - c0, dur - c1], sp: 1, vote: '', tabla: false, mg: true };
+  }
   if (tb) { const s = tb[0] + tb[1] + tb[2]; return { c: [dur * tb[0] / s, dur * (tb[0] + tb[1]) / s], d: tb.slice(), sp: 1, vote: '', tabla: true }; }
   return { c: [dur / 3, dur * 2 / 3], d: [dur / 3, dur / 3, dur / 3], sp: 1, vote: '', tabla: false };
 }
@@ -455,13 +479,39 @@ function resetHS() { for (const x of [A, B]) if (x) { x.shift = 0; x.hsAct = fal
 function holdFx(on) { cv.style.transform = on && store.shake && !reduceMotion ? `translate(${((Math.random() - .5) * 5).toFixed(1)}px,${((Math.random() - .5) * 5).toFixed(1)}px)` : ''; }
 const lungeZ = x => store.lunge ? Math.min(x.cfg.prof.lunge, LUNGE_MAX) * lungeCurve(x.lt, x.cfg.d) : 0;
 
+/* root motion (desplazamiento_m, p. ej. el paso atrás de Sobrecarga): el clip lleva el desplazamiento en la cadera (pelvis.position.z);
+   con «Lunge» activo se pasa a la raíz (misma lógica que el lunge: sube con la cadera, se mantiene y vuelve a origen al final de la recuperación)
+   y la cadera se deja en su posición inicial para no contarlo dos veces. Con «Lunge» apagado se ve el clip tal cual. */
+const RMT = new Map();
+function pelvisTrack(clip) {
+  let r = RMT.get(clip); if (r !== undefined) return r;
+  const tr = clip.tracks.find(q => q.name === 'pelvis.position'); r = null;
+  if (tr) { const n = tr.times.length; r = { times: tr.times, z: new Float32Array(n), z0: tr.values[2], dz: tr.values[(n - 1) * 3 + 2] - tr.values[2] }; for (let i = 0; i < n; i++) r.z[i] = tr.values[i * 3 + 2]; }
+  RMT.set(clip, r); return r;
+}
+function pelvisProg(r, st) {
+  const T = r.times, n = T.length; if (st <= T[0]) return r.z[0]; if (st >= T[n - 1]) return r.z[n - 1];
+  let i = 1; while (T[i] < st) i++;
+  return r.z[i - 1] + (r.z[i] - r.z[i - 1]) * (st - T[i - 1]) / (T[i] - T[i - 1]);
+}
+function rootMotion(ch, x, st, lt) {   // lt < 0: sin cola de retorno (muestreo del punto de lanzamiento)
+  const m = META_BY[x.clip.name], d = m && m.desplazamiento_m;
+  if (!d || !store.lunge) return 0;
+  const r = pelvisTrack(x.clip); if (!r || Math.abs(r.dz) < 0.02) return 0;
+  let k = (pelvisProg(r, st) - r.z0) / r.dz;
+  if (ch.pelvis) ch.pelvis.position.z = r.z0;
+  if (lt >= 0) { const a = x.cfg.d[0] + x.cfg.d[1], q = (lt - a) / x.cfg.d[2]; if (q > 0.6) k *= 1 - ss((q - 0.6) / 0.4); }
+  return d * k;
+}
 function applyPose() {
   const set = (ch, x) => {
     if (!ch || !x) return; x.lt = localT(x);
-    ch.action.time = Math.min(srcTime(x.lt, x.cfg.c[0], x.cfg.c[1], x.clip.duration, x.cfg.d), x.clip.duration - 1e-4); ch.mixer.update(0);
-    ch.root.position.z = lungeZ(x);
+    const st = Math.min(srcTime(x.lt, x.cfg.c[0], x.cfg.c[1], x.clip.duration, x.cfg.d), x.clip.duration - 1e-4);
+    ch.action.time = st; ch.mixer.update(0);
+    ch.root.position.z = lungeZ(x) + rootMotion(ch, x, st, x.lt);
   };
   set(chars[0], A); if (compare) set(chars[1], B);
+  if (!ctl.on) fxView();
   dirty = true;
 }
 /* avance de la simulación (lo usa el bucle y las pruebas); detecta fin de fase activa para el hit-stop */
@@ -535,7 +585,7 @@ function refreshUI() {
   $('m1').style.left = (o.c[0] / dur * 100) + '%'; $('m2').style.left = (o.c[1] / dur * 100) + '%';
   $('m1').setAttribute('aria-valuenow', fmt(o.c[0])); $('m2').setAttribute('aria-valuenow', fmt(o.c[1]));
   $('cutTxt').textContent = `original ${fmt(dur)} s · corte ${fmt(o.c[0])} / ${fmt(o.c[1])} s · retemporizado ${fmt(tot)} s`;
-  $('refTxt').textContent = o.tabla ? 'Valores iniciales: tabla de COMBATE §1.1' : 'Sin fila en la tabla: tercios';
+  $('refTxt').textContent = o.tabla ? 'Valores iniciales: tabla de COMBATE §1.1' : o.def.mg ? 'Fases del manifiesto (candidatas.json)' : 'Sin fila en la tabla: tercios';
   $('rSpeed').value = o.sp; $('oSpeed').textContent = o.sp.toFixed(1) + '×';
   $('vOk').setAttribute('aria-pressed', o.vote === 'ok'); $('vNo').setAttribute('aria-pressed', o.vote === 'no');
   document.querySelectorAll('#clips button').forEach(b => { b.setAttribute('aria-pressed', b.dataset.n === A.clip.name); const c = clips.find(c => c.name === b.dataset.n); const v = store.set[b.dataset.n]; b.querySelector('.v').textContent = v && v.vote === 'ok' ? '👍' : v && v.vote === 'no' ? '👎' : ''; });
@@ -569,6 +619,10 @@ let trTimer = 0; function schedTrail() { cancelAnimationFrame(trTimer); trTimer 
 
 /* lista de clips con filtros */
 function buildList() {
+  const mgs = clips.map(c => magiaOf(c.name)).filter(Boolean), fillSel = (id, vals, cur) => { const e = $(id); e.length = 1; [...new Set(vals)].sort().forEach(v => e.add(new Option(v, v))); e.value = vals.includes(cur) ? cur : ''; };
+  fillSel('fForma', mgs.map(m => m.forma), store.fForma); fillSel('fElem', mgs.map(m => m.elemento), store.fElem);
+  fillSel('fMod', mgs.map(m => m.modificador || 'ninguno'), store.fMod); fillSel('fIne', mgs.map(m => m.inestabilidad || 'estable'), store.fIne);
+  if (!mgs.length) { const o = $('fCat').querySelector('option[value=magia]'); if (o) o.remove(); }
   const dirs = new Set(); clips.forEach(c => { const p = parseName(c.name); if (p.dir) dirs.add(p.dir); });
   const fd = $('fDir'); fd.length = 1; [...dirs].sort().forEach(d => fd.add(new Option(d, d)));
   fd.value = dirs.has(store.fDir) ? store.fDir : ''; $('fCfg').value = store.fCfg || ''; $('fCat').value = store.fCat || '';
@@ -584,12 +638,17 @@ const PROC = [['izq', 'Esquiva lateral izq.'], ['der', 'Esquiva lateral der.'], 
 function renderList() {
   const q = $('q').value.trim().toLowerCase(), fc = $('fCfg').value, fdv = $('fDir').value, fcat = $('fCat').value;
   const box = $('clips'); box.textContent = ''; let n = 0, last = null;
-  const sorted = clips.slice().sort((a, b) => a.name.localeCompare(b.name));
+  const sk = c => { const m = magiaOf(c.name); return m ? 'magia ' + m.forma + ' ' + c.name : c.name; };
+  const sorted = clips.slice().sort((a, b) => sk(a).localeCompare(sk(b)));
+  const fF = $('fForma').value, fE = $('fElem').value, fM = $('fMod').value, fI = $('fIne').value, isMg = fcat === 'magia';
+  $('rowMagia').hidden = !isMg;
   for (const c of sorted) {
-    const p = parseName(c.name);
+    const p = parseName(c.name), mg = magiaOf(c.name);
     if (q && !c.name.toLowerCase().includes(q)) continue;
     if (fc && p.cfg !== fc) continue; if (fdv && p.dir !== fdv) continue; if (fcat && catOf(c.name) !== fcat) continue;
-    if (p.accion !== last) { const h = document.createElement('h3'); h.textContent = p.accion; box.appendChild(h); last = p.accion; }
+    if (isMg && ((fF && mg.forma !== fF) || (fE && mg.elemento !== fE) || (fM && (mg.modificador || 'ninguno') !== fM) || (fI && (mg.inestabilidad || 'estable') !== fI))) continue;
+    const gk = mg ? 'magia · ' + mg.forma : p.accion;
+    if (gk !== last) { const h = document.createElement('h3'); h.textContent = gk; box.appendChild(h); last = gk; }
     const b = document.createElement('button'); b.dataset.n = c.name; b.setAttribute('role', 'listitem'); b.setAttribute('aria-pressed', 'false');
     b.innerHTML = '<span class="v"></span>'; b.appendChild(document.createTextNode(c.name + '  '));
     const s = document.createElement('span'); s.className = 'small'; s.textContent = fmt(c.duration) + ' s'; b.appendChild(s);
@@ -609,6 +668,7 @@ $('q').oninput = renderList;
 $('fCat').onchange = () => { store.fCat = $('fCat').value; save(); renderList(); };
 $('fCfg').onchange = () => { store.fCfg = $('fCfg').value; save(); renderList(); };
 $('fDir').onchange = () => { store.fDir = $('fDir').value; save(); renderList(); };
+[['fForma', 'fForma'], ['fElem', 'fElem'], ['fMod', 'fMod'], ['fIne', 'fIne']].forEach(([id, k]) => { $(id).onchange = () => { store[k] = $(id).value; save(); renderList(); }; });
 
 /* transporte */
 function setPlay(v) { playing = v; $('bPlay').textContent = v ? '⏸ Pausa' : '▶ Reproducir'; }
@@ -681,7 +741,9 @@ $('bSame').onclick = () => {
   $('sB').value = A.clip.name; save(); selectB(A.clip); t = 0;
 };
 const tg = (id, k, fn) => { $(id).checked = !!store[k]; $(id).onchange = () => { store[k] = $(id).checked; save(); if (fn) fn(); refreshUI(); applyPose(); }; };
-tg('cLunge', 'lunge'); tg('cHit', 'hit', resetHS); tg('cShake', 'shake'); tg('cArma', 'arma', () => { chars.forEach(c => c.clip && syncArma(c, c.clip)); });
+tg('cFx', 'fx'); tg('cLunge', 'lunge'); tg('cHit', 'hit', resetHS); tg('cShake', 'shake'); tg('cArma', 'arma', () => { chars.forEach(c => c.clip && syncArma(c, c.clip)); });
+['cualquiera', 'fuego', 'hielo', 'luz', 'rayo', 'tierra', 'sombra', 'aire'].forEach(e => $('fxSel').add(new Option(e, e))); $('fxSel').value = store.fxElem || '';
+$('fxSel').onchange = () => { store.fxElem = $('fxSel').value; save(); applyPose(); };
 if (reduceMotion) { $('cShake').checked = false; $('cShake').disabled = true; $('cShake').parentNode.title = 'Desactivado por prefers-reduced-motion'; }
 
 const RASGOS = {
@@ -715,6 +777,11 @@ function buildFicha(force) {
     add('p', 'Datos del clip (' + cat + ')', 'small');
     const bits = [meta.original && 'original: ' + meta.original, meta.fuente, meta.licencia, meta.bucle ? 'en bucle' : 'una vez', meta.velocidad_ms ? 'velocidad ' + meta.velocidad_ms + ' m/s' : '', meta.desplazamiento_m ? 'desplazamiento ' + meta.desplazamiento_m + ' m' : ''].filter(Boolean);
     add('p', bits.join(' · ')); if (meta.nota) add('p', meta.nota, 'small');
+    if (cat === 'magia') {
+      const fs = meta.fases ? Object.keys(meta.fases).map(k => k.slice(0, 3) + ' ' + meta.fases[k][0] + '–' + meta.fases[k][1] + ' s').join(' / ') : '';
+      add('p', 'Magia: forma ' + meta.forma + ' · variante ' + meta.variante + ' · elemento ' + meta.elemento + ' · piezas ' + meta.piezas + ' · modificador ' + (meta.modificador || '—') + ' · inestabilidad ' + (meta.inestabilidad || 'estable') + ' · config ' + meta.config + ' · mano ' + meta.mano_lanzadora);
+      add('p', 't_disparo ' + (meta.t_disparos ? meta.t_disparos.join(' / ') : meta.t_disparo != null ? meta.t_disparo : '—') + ' s' + (meta.fases ? ' · fases ' + fs : ''), 'small');
+    }
   }
   if (main || cats.length) add('p', 'Valores [EST] = estimaciones a partir de descripciones; no hay frame data publicado. Solo enlaces, no se incrusta nada de esos juegos.', 'small');
   const seen = new Set(), ul = document.createElement('ul');
@@ -770,8 +837,8 @@ const byName = (a, b) => a.name.localeCompare(b.name);
 const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v, clampR = (v, a, b) => v < a ? a : v > b ? b : v;
 const ctl = { on: false, auto: true, cfg: store.ctlCfg === 'EE' ? 'EE' : 'EP', esq: store.ctlEsq === 'paso' ? 'paso' : 'voltereta', st: 'parado', stT: 0, x: 0, y: 0, z: 0, yaw: 0, speed: 0, vy: 0, hx: 0, hz: 0,
   crouch: false, runT: 0, sprinting: false, camYaw: Math.PI, camPitch: 0.35, camDist: 4.4, cam: new THREE.Vector3(), shake: 0, snap: true, R: null, R0: null,
-  list: [], emap: new Map(), keys: new Set(), ed: { jump: false, circ: false, cfg: false }, padPrev: [false, false, false, false], joy: { x: 0, y: 0, id: -1 }, runBtn: false, drag: -1, dx: 0, dy: 0,
-  I: { ix: 0, iy: 0, mag: 0, run: false, cx: 0, cy: 0, jump: false, circ: false, cfg: false, tilt: false }, dod: null, proc: false, tilt: [0, 0], hop: 0, floor: null, saved: null, taken: 0, dir: [0, 0], frames: 0, log: [] };
+  list: [], emap: new Map(), keys: new Set(), ed: { jump: false, circ: false, cfg: false, cast: false }, padPrev: [false, false, false, false, false, false, false, false], cast: null, castBtn: false, l1Btn: false, rmOff: 0, sp: { forma: store.spForma, elem: store.spElem, ine: store.spIne }, joy: { x: 0, y: 0, id: -1 }, runBtn: false, drag: -1, dx: 0, dy: 0,
+  I: { ix: 0, iy: 0, mag: 0, run: false, cx: 0, cy: 0, jump: false, circ: false, cfg: false, tilt: false, cast: false, castHeld: false, l1: false }, dod: null, proc: false, tilt: [0, 0], hop: 0, floor: null, saved: null, taken: 0, dir: [0, 0], frames: 0, log: [] };
 const _cf = new THREE.Vector3();
 
 function ctlResolve() {
@@ -821,11 +888,12 @@ addEventListener('keydown', e => {
   if (c === 'Space') ctl.ed.jump = true;
   else if (c === 'KeyC') ctl.ed.circ = true;                                        // C: neutro = agacharse; con dirección pulsada = esquivar
   else if (c === 'KeyT') ctl.ed.cfg = true;
+  else if (c === 'KeyF') ctl.ed.cast = true;                                        // F = R1 (lanzar); Q = L1
   else if ((c === 'AltLeft' || c === 'AltRight' || c === 'ControlLeft' || c === 'ControlRight') && keyTilt()) ctl.ed.circ = true;       // Alt/Ctrl con dirección ya pulsada
   else if (DIRK.includes(c) && (e.altKey || e.ctrlKey)) ctl.ed.circ = true;         // Alt/Ctrl pulsado y luego dirección
 });
 addEventListener('keyup', e => { if (!ctl.on) return; ctl.keys.delete(e.code); if (e.code === 'Space' || e.code === 'AltLeft' || e.code === 'AltRight') e.preventDefault(); });
-addEventListener('blur', () => { ctl.keys.clear(); ctl.runBtn = false; });
+addEventListener('blur', () => { ctl.keys.clear(); ctl.runBtn = false; ctl.castBtn = false; });
 cv.addEventListener('pointerdown', e => { if (!ctl.on) return; ctl.drag = e.pointerId; try { cv.setPointerCapture(e.pointerId); } catch (x) {} });
 cv.addEventListener('pointermove', e => { if (ctl.on && ctl.drag === e.pointerId) { ctl.dx += e.movementX || 0; ctl.dy += e.movementY || 0; } });
 const endDrag = e => { if (ctl.drag === e.pointerId) ctl.drag = -1; };
@@ -843,6 +911,10 @@ $('tJump').addEventListener('pointerdown', e => { ctl.ed.jump = true; e.preventD
 $('tO').addEventListener('pointerdown', e => { ctl.ed.circ = true; e.preventDefault(); });
 $('tRun').addEventListener('pointerdown', e => { ctl.runBtn = true; $('tRun').setAttribute('aria-pressed', 'true'); e.preventDefault(); try { $('tRun').setPointerCapture(e.pointerId); } catch (x) {} });
 const runUp = () => { ctl.runBtn = false; $('tRun').setAttribute('aria-pressed', 'false'); };
+$('tCast').addEventListener('pointerdown', e => { ctl.ed.cast = true; ctl.castBtn = true; try { $('tCast').setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); });
+const castUp = () => { ctl.castBtn = false; };
+$('tCast').addEventListener('pointerup', castUp); $('tCast').addEventListener('pointercancel', castUp);
+$('tL1').addEventListener('pointerdown', e => { ctl.l1Btn = !ctl.l1Btn; $('tL1').setAttribute('aria-pressed', ctl.l1Btn); e.preventDefault(); });
 $('tRun').addEventListener('pointerup', runUp); $('tRun').addEventListener('pointercancel', runUp);
 
 const dz = (v, d) => Math.abs(v) < d ? 0 : v;
@@ -850,7 +922,7 @@ function readInput() {
   const I = ctl.I, k = ctl.keys;
   let ix = (k.has('KeyD') ? 1 : 0) - (k.has('KeyA') ? 1 : 0), iy = (k.has('KeyS') ? 1 : 0) - (k.has('KeyW') ? 1 : 0);
   let cx = (k.has('ArrowRight') ? 1 : 0) - (k.has('ArrowLeft') ? 1 : 0), cy = (k.has('ArrowDown') ? 1 : 0) - (k.has('ArrowUp') ? 1 : 0);
-  let run = k.has('ShiftLeft') || k.has('ShiftRight') || ctl.runBtn, jump = ctl.ed.jump, circ = ctl.ed.circ, cfg = ctl.ed.cfg;
+  let run = k.has('ShiftLeft') || k.has('ShiftRight') || ctl.runBtn, jump = ctl.ed.jump, circ = ctl.ed.circ, cfg = ctl.ed.cfg, cast = ctl.ed.cast, rh = k.has('KeyF') || ctl.castBtn, l1 = k.has('KeyQ') || ctl.l1Btn;
   let m = Math.hypot(ix, iy); if (m > 1) { ix /= m; iy /= m; m = 1; }
   if (ctl.joy.id >= 0 || ctl.joy.x || ctl.joy.y) { const jx = ctl.joy.x, jy = ctl.joy.y; if (Math.hypot(jx, jy) > m) { ix = jx; iy = jy; } }
   let gp = null; try { const g = navigator.getGamepads ? navigator.getGamepads() : []; for (let i = 0; i < g.length; i++) if (g[i] && g[i].connected) { gp = g[i]; break; } } catch (x) {}
@@ -861,12 +933,13 @@ function readInput() {
     const b = i => !!(gp.buttons[i] && gp.buttons[i].pressed), P = ctl.padPrev;
     run = run || b(10); const bj = b(0), bo = b(1), bt = b(3);       // X/Cruz = saltar, Círculo = agacharse/esquivar, Triángulo = EP/EE
     jump = jump || (bj && !P[0]); circ = circ || (bo && !P[1]); cfg = cfg || (bt && !P[3]); P[0] = bj; P[1] = bo; P[3] = bt;
+    const b5 = b(5); l1 = l1 || b(4); rh = rh || b5; cast = cast || (b5 && !P[5]); P[5] = b5;   // L1 / R1
   }
   const mm = Math.hypot(ix, iy);
   I.mag = mm < CK.dz ? 0 : Math.min((mm - CK.dz) / (1 - CK.dz), 1); I.ix = mm ? ix / mm : 0; I.iy = mm ? iy / mm : 0;
   I.tilt = mm >= CK.dzO;     // inclinación leída en el instante de pulsar Círculo
-  I.run = run; I.cx = cx; I.cy = cy; I.jump = jump; I.circ = circ; I.cfg = cfg;
-  ctl.ed.jump = ctl.ed.circ = ctl.ed.cfg = false;
+  I.run = run; I.cx = cx; I.cy = cy; I.jump = jump; I.circ = circ; I.cfg = cfg; I.cast = cast; I.castHeld = rh; I.l1 = l1;
+  ctl.ed.jump = ctl.ed.circ = ctl.ed.cfg = ctl.ed.cast = false;
   return I;
 }
 /* dirección del stick relativa a la cámara -> vector mundo (dir[0], dir[1]) */
@@ -915,6 +988,7 @@ function ctlStep(dt) {
   if (free) {
     if (I.circ) { if (I.tilt) startDodge(wdir); else toggleCrouch(); }
     else if (I.jump) startJump();
+    else if (I.cast && !ctl.crouch) startCast(I);
   }
   const s2 = ctl.st;
   if (s2 === 'esquiva_fro' || s2 === 'esquiva_atr' || s2 === 'esquiva_izq' || s2 === 'esquiva_der') {
@@ -942,6 +1016,8 @@ function ctlStep(dt) {
     ctl.speed = Math.max(0, ctl.speed - CK.decel * dt * 0.5); ctl.x += Math.sin(ctl.yaw) * ctl.speed * dt; ctl.z += Math.cos(ctl.yaw) * ctl.speed * dt;
     want(R.jLand, 1, 1, true);
     if (ctl.stT >= CK.landT) setSt('parado');
+  } else if (s2 === 'lanzar' || s2 === 'canalizar') {
+    castStep(I, dt);
   } else if (s2 === 'agachado_entrar' || s2 === 'agachado_salir') {
     ctl.speed = Math.max(0, ctl.speed - CK.decel * dt); ctl.x += Math.sin(ctl.yaw) * ctl.speed * dt; ctl.z += Math.cos(ctl.yaw) * ctl.speed * dt;
     const cl = s2 === 'agachado_entrar' ? R.cIn : R.cOut; want(cl, 1, Math.max(1, cl.duration / CK.crouchT), true);
@@ -950,7 +1026,7 @@ function ctlStep(dt) {
     locomotion(I, dt);
   }
   ctl.x = clampR(ctl.x, -CK.lim, CK.lim); ctl.z = clampR(ctl.z, -CK.lim, CK.lim);
-  animate(dt, tau);
+  animate(dt, tau); castMotion(); castTick(dt);
   ctlApply(dt);
 }
 function locomotion(I, dt) {
@@ -984,7 +1060,7 @@ function ctlSetCfg(c) {
 }
 function ctlApply(dt) {
   const ch = chars[0], r = ch.root;
-  r.position.set(ctl.x, ctl.y + ctl.hop, ctl.z); r.rotation.set(ctl.tilt[0], ctl.yaw, ctl.tilt[1], 'YXZ');
+  r.position.set(ctl.x + Math.sin(ctl.yaw) * ctl.rmOff, ctl.y + ctl.hop, ctl.z + Math.cos(ctl.yaw) * ctl.rmOff); r.rotation.set(ctl.tilt[0], ctl.yaw, ctl.tilt[1], 'YXZ');
   // cámara en tercera persona
   _cf.set(ctl.x, ctl.y * 0.5 + H * 0.78, ctl.z); ctl.cam.lerp(_cf, 1 - Math.exp(-10 * dt));
   const cp = Math.cos(ctl.camPitch), d = ctl.camDist * (H / 1.8);
@@ -1017,6 +1093,7 @@ function hudHtml() {
 <li><b>Saltar</b>: X (Cruz) / Espacio</li>
 <li><b>Círculo (O) / C</b>: stick en neutro = agacharse / levantarse</li>
 <li><b>Círculo + stick inclinado</b> = esquivar hacia esa dirección (relativa a la cámara). Teclado: C o Alt/Ctrl + dirección</li>
+<li><b>Lanzar</b> el hechizo elegido: R1 / F. <b>Canalizar</b> (cono / persistencia): L1 / Q + mantener R1 / F</li>
 <li><b>EP / EE</b>: Triángulo / T. <b>Salir</b>: Esc</li>
 <li class="sup">Esquiva lateral y «paso rápido»: procedural / provisional (no hay clip)</li></ul></details>
 <button id="cExit">Salir del modo</button>`;
@@ -1031,6 +1108,56 @@ function hudUpdate() {
   el.textContent = 'Estado: ' + p[0]; $('cClip').textContent = 'Clip: ' + p[1]; $('cInfo').textContent = p[2];
 }
 
+/* ---- lanzar hechizos (R1) y canalizar (L1 + R1 mantenido) ----
+   El clip se elige por forma + elemento + inestabilidad del selector; el efecto usa la forma del clip y el elemento / la inestabilidad elegidos. */
+const SP_FORMS = [['proyectil', 'Proyectil'], ['multiplicar', 'Multiplicar'], ['area', 'Área'], ['zona', 'Zona'], ['cono', 'Cono'], ['yo', 'Yo'], ['fusion', 'Fusión'], ['fusion_area', 'Fusión de área']];
+const SP_ELEM = ['cualquiera', 'fuego', 'hielo', 'luz', 'rayo', 'tierra', 'sombra', 'aire'], SP_INE = ['estable', 'inestable', 'sobrecarga', 'contragolpe', 'fallo'];
+function spellName(f, el, ine, chan) {
+  if (chan) return f === 'cono' ? 'magia_cono_canalizar' : 'magia_persistencia_canalizar';
+  if (f === 'multiplicar') return 'magia_proyectil_multiplicar'; if (f === 'fusion') return 'magia_fusion_proyectil'; if (f === 'fusion_area') return 'magia_fusion_area';
+  if ((f === 'proyectil' || f === 'area') && ine !== 'estable') return 'magia_' + f + '_' + ine;
+  if ((f === 'proyectil' || f === 'zona') && el !== 'cualquiera') return 'magia_' + f + '_' + el;
+  return 'magia_' + f + '_base';
+}
+function spellClip(chan) {
+  const n = spellName(ctl.sp.forma, ctl.sp.elem, ctl.sp.ine, chan);
+  return clips.find(c => c.name === n + '_' + ctl.cfg + '_1') || clips.find(c => c.name === n + '_EP_1') || null;
+}
+function startCast(I) {
+  const chan = I.l1, clip = spellClip(chan), m = clip && magiaOf(clip.name); if (!m) return;
+  ctl.cast = { clip, m, loop: !!m.bucle, t: 0, rm: 0, done: false, elem: m.elemento !== 'cualquiera' ? m.elemento : ctl.sp.elem, ine: ctl.sp.ine === 'estable' ? null : ctl.sp.ine, px: ctl.x, py: ctl.y, pz: ctl.z, yaw: ctl.yaw };
+  ctl.crouch = false; setSt(chan ? 'canalizar' : 'lanzar'); restart(clip, !ctl.cast.loop); FX.capt = false;
+}
+function castStep(I, dt) {
+  const c = ctl.cast; ctl.speed = Math.max(0, ctl.speed - CK.decel * dt); ctl.x += Math.sin(ctl.yaw) * ctl.speed * dt; ctl.z += Math.cos(ctl.yaw) * ctl.speed * dt;
+  if (!c) { setSt('parado'); return; }
+  want(c.clip, 1, 1, !c.loop);
+  if (c.loop ? !I.castHeld : c.t >= c.clip.duration) endCast();
+}
+function endCast() {   // el desplazamiento (root motion) queda como posición real del personaje
+  const c = ctl.cast; ctl.x += Math.sin(ctl.yaw) * c.rm; ctl.z += Math.cos(ctl.yaw) * c.rm; c.rm = 0; ctl.rmOff = 0; setSt('parado');
+  if (c.loop) { ctl.cast = null; fxUpdate(null, null, null, 0, FXL); } else c.done = true;
+}
+function castMotion() {
+  const c = ctl.cast, e = c && ctl.emap.get(c.clip), d = c && c.m.desplazamiento_m; ctl.rmOff = 0;
+  if (!e || !d || !store.lunge) return;
+  const r = pelvisTrack(c.clip); if (!r || Math.abs(r.dz) < 0.02) return;
+  const dz = pelvisProg(r, e.a.time) - r.z0, ch = chars[0]; if (ch.pelvis) ch.pelvis.position.z -= dz * e.w;
+  if (!c.done) { c.rm = d * dz / r.dz * e.w; ctl.rmOff = c.rm; }
+}
+function castTick(dt) {
+  const c = ctl.cast; if (!c) return;
+  c.t += dt; FX.g.position.set(c.px, c.py, c.pz); FX.g.rotation.set(0, c.yaw, 0); FXL.elem = c.elem; FXL.ine = c.ine;
+  fxUpdate(chars[0], null, c.m, c.t, FXL);
+  if (c.done && c.t > c.clip.duration + 0.9) { ctl.cast = null; fxUpdate(null, null, null, 0, FXL); }
+}
+(function spellUI() {
+  const fill = (id, vals, cur) => { const e = $(id); vals.forEach(v => { const a = Array.isArray(v) ? v : [v, v]; e.add(new Option(a[1], a[0])); }); e.value = cur; };
+  fill('spForma', SP_FORMS, ctl.sp.forma); fill('spElem', SP_ELEM, ctl.sp.elem); fill('spIne', SP_INE, ctl.sp.ine);
+  if ($('spForma').value !== ctl.sp.forma) $('spForma').value = ctl.sp.forma = 'proyectil';
+  [['spForma', 'forma', 'spForma'], ['spElem', 'elem', 'spElem'], ['spIne', 'ine', 'spIne']].forEach(([id, k, sk]) => { $(id).onchange = () => { ctl.sp[k] = $(id).value; store[sk] = $(id).value; save(); $(id).blur(); }; });
+})();
+
 /* ---- arranque / parada ---- */
 function ctlStart() {
   if (ctl.on || !chars[0]) return;
@@ -1040,7 +1167,7 @@ function ctlStart() {
   if (!ctl.floor) ctl.floor = makeFloor();
   ctl.floor.visible = true; if (oldFloor) oldFloor.visible = false; controls.enabled = false;
   Object.assign(ctl, { on: true, st: 'parado', stT: 0, x: 0, y: 0, z: 0, yaw: 0, speed: 0, vy: 0, crouch: false, runT: 0, dod: null, proc: false, hop: 0, snap: true, camYaw: Math.PI, camPitch: 0.35, frames: 0 });
-  ctl.tilt[0] = ctl.tilt[1] = 0; ctl.keys.clear(); ctl.ed.jump = ctl.ed.circ = ctl.ed.cfg = false; ctl.padPrev.fill(false);
+  ctl.tilt[0] = ctl.tilt[1] = 0; ctl.keys.clear(); ctl.ed.jump = ctl.ed.circ = ctl.ed.cfg = ctl.ed.cast = false; ctl.padPrev.fill(false); ctl.cast = null; ctl.rmOff = 0; ctl.castBtn = ctl.l1Btn = false; $('tL1').setAttribute('aria-pressed', 'false');
   ctl.R = ctlResolve(); for (const e of ctl.list) { e.a.stop(); e.run = false; e.w = 0; e.tw = 0; }
   syncArmaCfg(ch, ctl.cfg === 'EE', false);
   ctl.cam.set(0, H * 0.78, 0);
@@ -1051,7 +1178,7 @@ function ctlStart() {
 }
 function ctlStop(fromSelect) {
   if (!ctl.on) return;
-  ctl.on = false; const ch = chars[0];
+  ctl.on = false; const ch = chars[0]; ctl.cast = null; ctl.rmOff = 0; fxUpdate(null, null, null, 0, FXL);
   for (const e of ctl.list) { e.a.stop(); e.run = false; e.w = 0; }
   ch.mixer.stopAllAction(); ch.root.rotation.set(0, 0, 0); ch.root.position.set(ctl.saved.x, ctl.saved.y, ctl.saved.z);
   ctl.floor.visible = false; if (oldFloor) oldFloor.visible = true; controls.enabled = true; key.position.set(3, 5, 4); key.target.position.set(0, 0, 0); key.target.updateMatrixWorld();
@@ -1073,7 +1200,158 @@ function ctlState() {
   const w = {}; for (const e of ctl.list) if (e.w > 0.005) w[e.clip.name] = +e.w.toFixed(3);
   let top = ''; let m = 0; for (const e of ctl.list) if (e.w > m) { m = e.w; top = e.clip.name; }
   return { on: ctl.on, estado: ctl.st, clip: top, pesos: w, cfg: ctl.cfg, esquiva: ctl.esq, procedural: ctl.proc, pos: [ctl.x, ctl.y, ctl.z], yaw: ctl.yaw, speed: ctl.speed, vy: ctl.vy, agachado: ctl.crouch, grounded: ctl.y <= 0.0001 && ctl.st !== 'salto_aire',
-    cam: { yaw: ctl.camYaw, pitch: ctl.camPitch }, frames: ctl.frames, esquivaTipo: ctl.dod ? ctl.dod.kind : null, roles: ctl.R ? Object.keys(ctl.R.real).filter(k => ctl.R.real[k]) : [], shake: ctl.shake };
+    cam: { yaw: ctl.camYaw, pitch: ctl.camPitch }, frames: ctl.frames, esquivaTipo: ctl.dod ? ctl.dod.kind : null, roles: ctl.R ? Object.keys(ctl.R.real).filter(k => ctl.R.real[k]) : [], shake: ctl.shake, cast: ctl.cast ? { clip: ctl.cast.clip.name, t: ctl.cast.t, loop: ctl.cast.loop, rm: ctl.cast.rm } : null, rmOff: ctl.rmOff, fx: FX.info, spell: ctl.sp };
+}
+
+/* ---------- efecto de magia: barato, solo para leer el gesto ----------
+   Sprites aditivos (pool fijo) y 4 anillos en el suelo. Todo es función pura del tiempo del clip (ts, en s del clip original):
+   se puede recorrer con la barra, fotograma a fotograma y a cualquier velocidad. Sin asignaciones por fotograma.
+   Colores por elemento según prototipo/magia/VFX.md (fuego cálido, hielo translúcido, luz dorada, rayo casi blanco, tierra polvo, sombra violeta, aire pálido). */
+const FXC = { cualquiera: [.75, .82, 1], fuego: [1, .5, .14], hielo: [.5, .85, 1], luz: [1, .9, .55], rayo: [.82, .86, 1], tierra: [.72, .55, .32], sombra: [.55, .28, .85], aire: [.78, 1, .9], rojo: [1, .12, .08], humo: [.5, .52, .58], blanco: [1, 1, 1] };
+for (const k in FXC) FXC[k] = FXC[k].map(v => Math.pow(v, 2.2));
+const FX = { g: new THREE.Group(), spr: [], rg: [], n: 0, nr: 0, nPrev: 0, rPrev: 0, hL: new THREE.Vector3(), hR: new THREE.Vector3(), hM: new THREE.Vector3(), lo: new THREE.Vector3(), lp: new THREE.Vector3(),
+  dir: new THREE.Vector3(0, 0, 1), rt: new THREE.Vector3(), up: new THREE.Vector3(), lkey: '', capt: false, info: { on: false } };
+const FXV = { elem: '', live: false }, FXL = { elem: '', ine: null, live: true };
+(function fxInit() {
+  const mkTex = (n, draw) => { const c = document.createElement('canvas'); c.width = c.height = n; draw(c.getContext('2d'), n / 2); return new THREE.CanvasTexture(c); };
+  const glow = mkTex(64, (g, h) => { const r = g.createRadialGradient(h, h, 0, h, h, h); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.25, 'rgba(255,255,255,.55)'); r.addColorStop(0.6, 'rgba(255,255,255,.12)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 2 * h, 2 * h); });
+  const ring = mkTex(128, (g, h) => { const r = g.createRadialGradient(h, h, 0, h, h, h); r.addColorStop(0, 'rgba(255,255,255,.08)'); r.addColorStop(0.74, 'rgba(255,255,255,.14)'); r.addColorStop(0.9, 'rgba(255,255,255,1)'); r.addColorStop(0.97, 'rgba(255,255,255,.2)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 2 * h, 2 * h); });
+  const pg = new THREE.PlaneGeometry(2, 2); pg.rotateX(-Math.PI / 2);
+  for (let i = 0; i < 110; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glow, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, transparent: true, fog: false })); s.visible = false; s.renderOrder = 12; FX.g.add(s); FX.spr.push(s); }
+  for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(pg, new THREE.MeshBasicMaterial({ map: ring, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, side: THREE.DoubleSide, fog: false })); m.visible = false; m.renderOrder = 11; FX.g.add(m); FX.rg.push(m); }
+  FX.g.visible = false; scene.add(FX.g);
+})();
+const hh = (a, b) => { const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453; return v - Math.floor(v); };
+function sp(x, y, z, size, c, k, op) {
+  if (FX.n >= FX.spr.length || op < 0.004 || size <= 0) return;
+  const s = FX.spr[FX.n++]; s.visible = true; s.position.set(x, y, z); s.scale.set(size, size, 1); k *= 0.6; s.material.color.setRGB(c[0] * k, c[1] * k, c[2] * k); s.material.opacity = op > 1 ? 1 : op;
+}
+function rgs(x, z, rad, c, k, op) {
+  if (FX.nr >= FX.rg.length || op < 0.004 || rad <= 0) return;
+  const m = FX.rg[FX.nr++]; m.visible = true; m.position.set(x, 0.012, z); m.scale.set(rad, 1, rad); k *= 0.3; m.material.color.setRGB(c[0] * k, c[1] * k, c[2] * k); m.material.opacity = op > 1 ? 1 : op;
+}
+function glowAt(p, sz, c, op) { sp(p.x, p.y, p.z, sz * 2.4, c, 0.9, op * 0.5); sp(p.x, p.y, p.z, sz, c, 2, op); sp(p.x, p.y, p.z, sz * 0.4, FXC.blanco, 1.5, op); }
+function orb(x, y, z, size, c, c2, ph, op) {   // núcleo blanco + halo del elemento; fusión: dos colores que giran uno alrededor del otro
+  sp(x, y, z, size * 0.5, FXC.blanco, 1.4, op);
+  if (c2) { const r = size * 0.4, cs = Math.cos(ph) * r, sn = Math.sin(ph) * r; sp(x + cs, y + sn, z, size * 0.9, c, 2, op); sp(x - cs, y - sn, z, size * 0.9, c2, 2, op); } else sp(x, y, z, size * 1.6, c, 2, op * 0.8);
+}
+function fxHand(bone, out) { if (!bone) return false; bone.getWorldPosition(out); FX.g.worldToLocal(out); return true; }
+function fxHands(ch, m) {
+  fxHand(m.mano_lanzadora === 'R' ? ch.hand : ch.handL, FX.hL);
+  if (m.mano_lanzadora === 'ambas') { fxHand(ch.hand, FX.hR); FX.hM.copy(FX.hL).add(FX.hR).multiplyScalar(0.5); } else FX.hM.copy(FX.hL);
+}
+function fxArm(ch, m) {   // dirección del antebrazo (codo -> muñeca) en el espacio del efecto: el chorro sigue el barrido del tronco
+  const lo = m.mano_lanzadora === 'R' ? ch.lowerR : ch.lowerL;
+  if (lo && fxHand(lo, FX.lo)) { FX.dir.copy(FX.hL).sub(FX.lo); if (FX.dir.lengthSq() > 1e-6) { FX.dir.normalize(); return; } }
+  FX.dir.set(0, 0, 1);
+}
+const fxTd = m => m.t_disparo != null ? m.t_disparo : (m.fases && m.fases.anticipacion ? m.fases.anticipacion[1] : 0);
+/* punto de lanzamiento (donde está la mano en t_disparo): se muestrea una vez por clip, o se captura al vuelo en el modo controles */
+function fxSampleLaunch(ch, x, m, td) {
+  const key = x.clip.name + '|' + store.lunge + '|' + ch.root.position.x; if (FX.lkey === key) return; FX.lkey = key;
+  const a = ch.action, tS = a.time, tD = Math.min(td, x.clip.duration - 1e-4);
+  a.time = tD; ch.mixer.update(0); ch.root.position.z = rootMotion(ch, x, tD, -1); ch.root.updateMatrixWorld(true); FX.g.updateMatrixWorld(true);
+  fxHands(ch, m); FX.lp.copy(FX.hM);
+  a.time = tS; ch.mixer.update(0); ch.root.position.z = lungeZ(x) + rootMotion(ch, x, tS, x.lt); ch.root.updateMatrixWorld(true);
+}
+function fxStream(h, d, len, s0, s1, N, cyc, z0, z1, e, ts, c, k) {   // chorro de partículas en cono (sin estado: cada partícula es función de ts)
+  FX.rt.set(-d.z, 0, d.x); if (FX.rt.lengthSq() < 1e-6) FX.rt.set(1, 0, 0); FX.rt.normalize(); FX.up.crossVectors(FX.rt, d);
+  for (let i = 0; i < N; i++) {
+    const w = i / N + ts * cyc, id = Math.floor(w), ph = w - id, a = 6.2832 * hh(i, id), r = Math.sqrt(hh(i + 50, id)) * (s0 + (s1 - s0) * ph), L = ph * len, ca = Math.cos(a) * r, sa = Math.sin(a) * r;
+    sp(h.x + d.x * L + FX.rt.x * ca + FX.up.x * sa, h.y + d.y * L + FX.rt.y * ca + FX.up.y * sa, h.z + d.z * L + FX.rt.z * ca + FX.up.z * sa, z0 + (z1 - z0) * ph, c, k, e * Math.pow(1 - ph, 1.3));
+  }
+}
+function fxSparks(h, ts) {
+  for (let i = 0; i < 8; i++) {
+    const w = ts * 2.6 + i / 8, id = Math.floor(w), ph = w - id, d = ph;
+    sp(h.x + (hh(i, id) - 0.5) * d, h.y + (hh(i + 9, id) - 0.2) * d - 0.25 * ph * ph, h.z + (hh(i + 19, id) - 0.5) * d, 0.05, FXC.luz, 3, 1 - ph);
+  }
+}
+function fxDraw(ch, x, m, ts, o) {
+  const I = FX.info, mot = store.shake && !reduceMotion, v = m.variante || '', fus = v.indexOf('fusion') === 0, loop = !!m.bucle, both = m.mano_lanzadora === 'ambas', f = m.forma;
+  const ine = o.ine !== undefined ? o.ine : m.inestabilidad, el = (o.elem || m.elemento || 'cualquiera'), td = fxTd(m), fizz = ine === 'fallo' || v === 'sin_mana', back = ine === 'contragolpe';
+  const c = FXC[el] || FXC.cualquiera, cA = fus && el === 'cualquiera' ? FXC.fuego : c, cB = fus ? FXC.hielo : null, cr = FXC.rojo, after = ts - td;
+  I.forma = f; I.elem = el; I.ine = ine || null; I.td = td; I.fired = loop ? ts > 0 : after >= -1e-6;
+  if (!o.live) fxSampleLaunch(ch, x, m, td);
+  ch.root.updateMatrixWorld(true); FX.g.updateMatrixWorld(true); fxHands(ch, m);
+  if (o.live) { if (ts >= td && !FX.capt) { FX.lp.copy(FX.hM); FX.capt = true; } else if (ts < td) FX.capt = false; }
+  const M = FX.hM, LP = FX.lp, tEnd = m.fases && m.fases.activo ? m.fases.activo[1] : td;
+  /* carga: brillo del color del elemento que crece durante la anticipación (parpadea si es inestable; se apaga en t_disparo si falla) */
+  const u = loop ? 1 : ts < td ? ss(ts / td) : 1;
+  let gk = 1; if (!loop && ts >= td) gk = fizz ? 0 : f === 'cono' ? (ts < tEnd ? 1 : 0) : Math.max(0, 1 - after / 0.14);
+  const fl = ine === 'inestable' ? (mot ? 0.3 + 0.7 * hh(Math.floor(ts * 36), 3.1) : 0.8) : 1 + (mot ? 0.08 * Math.sin(ts * 25) : 0);
+  const sz = (loop ? 0.24 : 0.05 + 0.3 * u * u) * gk;
+  I.glow = sz;
+  if (sz > 0.004) { const op = (0.45 + 0.55 * u) * fl; glowAt(FX.hL, sz, cA, op); if (both) glowAt(FX.hR, sz, cB || cA, op); }
+  if (ine === 'inestable' && (loop || ts < td + 0.3)) fxSparks(M, ts);
+  /* destello en t_disparo */
+  let zoom = 1;
+  if (!loop && !fizz && after >= 0 && after < 0.2) {
+    const q = after / 0.2, big = ine === 'sobrecarga' ? 2.4 : v === 'fusion_potencia' ? 1.5 : 1, fc = back ? cr : c;
+    sp(M.x, M.y, M.z, 0.9 * big * (1 - q * 0.5), FXC.blanco, 1.2, 1 - q); sp(M.x, M.y, M.z, 1.7 * big, fc, 2, (1 - q) * 0.7); I.flash = 1 - q;
+    if (ine === 'sobrecarga') rgs(0, 0, 0.5 + 1.8 * q, fc, 2, 0.8 * (1 - q));
+  }
+  if (ine === 'sobrecarga' && mot && after >= 0) zoom = 1 + 0.07 * Math.exp(-after / 0.2);   // empuje de cámara leve
+  if (fizz) {   // el brillo se apaga y sale humo
+    for (let i = 0; i < 6 && after >= 0; i++) { const w = (after - i * 0.07) / 0.8; if (w > 0 && w < 1) sp(M.x + (hh(i, 1) - 0.5) * 0.25 * w, M.y + 0.7 * w, M.z + (hh(i, 2) - 0.5) * 0.2, 0.12 + 0.32 * w, FXC.humo, 1.2, 0.5 * (1 - w)); }
+    return zoom;
+  }
+  if (back) {   // el hechizo vuelve al lanzador: orbe rojo que sale un poco y regresa al pecho
+    if (after >= 0) {
+      const p = after / 0.45;
+      if (p < 1) { const i1 = 1 - p, w0 = i1 * i1, w1 = 2 * i1 * p, w2 = p * p; orb(w0 * LP.x + w2 * 0, w0 * LP.y + w1 * (LP.y + 0.1) + w2 * 1.25, w0 * LP.z + w1 * (LP.z + 1.5) + w2 * 0.15, 0.34, cr, null, 0, 1 - p * 0.3); I.shots = 1; }
+      else if (p < 1.6) { const q = (p - 1) / 0.6; sp(0, 1.25, 0.15, 1.3 * (1 - q), FXC.blanco, 1.2, 1 - q); sp(0, 1.25, 0.15, 2.2 * (1 - q * 0.5), cr, 2, (1 - q) * 0.8); }
+    }
+    return zoom;
+  }
+  if (loop) {   // canalizar: chorro continuo (cono) o haz estrecho (persistencia)
+    fxArm(ch, m); I.shots = 1;
+    if (f === 'cono') fxStream(FX.hL, FX.dir, 3.6, 0.05, 0.6, 36, 2.4, 0.12, 0.6, 1, ts, cA, 2); else fxStream(FX.hL, FX.dir, 5.5, 0.02, 0.07, 14, 1.6, 0.26, 0.2, 1, ts, cA, 2);
+    return zoom;
+  }
+  if (after < 0) return zoom;
+  if (f === 'cono') {
+    const e = ss(after / 0.06) * (1 - ss((ts - tEnd) / 0.1)); fxArm(ch, m); I.shots = 1;
+    if (e > 0) fxStream(FX.hL, FX.dir, 3.6, 0.05, 0.6, 36, 2.4, 0.12, 0.6, e, ts, cA, 2);
+  } else if (f === 'proyectil') {
+    const tt = m.t_disparos || [td], n = tt.length, big = v === 'fusion_potencia' ? 1.5 : 1;
+    for (let k = 0; k < n; k++) {
+      const dt = ts - tt[k]; if (dt < 0) continue; I.shots++;
+      if (dt >= 0.5) continue;
+      const ang = n === 3 ? (k - 1) * 0.42 : 0, sa = Math.sin(ang), ca = Math.cos(ang), d = dt * 12, op = 1 - ss((dt - 0.38) / 0.12);
+      orb(LP.x + sa * d, LP.y, LP.z + ca * d, 0.3 * big, cA, cB, ts * 18, op);
+      for (let j = 1; j <= 3; j++) { const dj = Math.max(0, d - 0.16 * j); sp(LP.x + sa * dj, LP.y, LP.z + ca * dj, 0.22 * big * (1 - j * 0.22), cA, 1.6, op * (1 - j * 0.25)); }
+    }
+  } else if (f === 'area') {
+    const FL = 0.45, TZ = 8; I.shots = 1;
+    if (after < FL) {
+      const q = after / FL; rgs(0, TZ, 1.1, cA, 1.2, 0.35 + 0.2 * q);
+      for (let j = 0; j <= 4; j++) { const w = Math.max(0, q - 0.05 * j); orb(LP.x * (1 - w), LP.y * (1 - w) + 8.8 * w * (1 - w) + 0.15 * w, LP.z + (TZ - LP.z) * w, j ? 0.2 * (1 - j * 0.18) : 0.32, cA, j ? null : cB, ts * 18, j ? 0.7 - j * 0.13 : 1); }
+    } else { const w = after - FL; if (w < 0.45) { const q = w / 0.45; rgs(0, TZ, 0.4 + 1.9 * (1 - (1 - q) * (1 - q)), cA, 2, 1 - q); rgs(0, TZ, 0.2 + 1.2 * q, FXC.blanco, 1, (1 - q) * 0.6); sp(0, 0.25, TZ, 1.4 * (1 - q), cA, 2, 1 - q); } }
+  } else if (f === 'zona') {
+    const q = Math.min(after / 0.55, 1), e = 1 - (1 - q) * (1 - q), op = 1 - ss((after - 0.45) / 0.3), R = 0.3 + 2.1 * e; I.shots = 1;
+    rgs(0, 1.6, R, cA, 2, op); rgs(0, 1.6, R * 0.6, FXC.blanco, 0.8, op * 0.5); sp(0, 0.3, 1.6, 1.2 * (1 - e), cA, 2, 1 - e);
+    for (let i = 0; i < 8; i++) { const a = 6.283 * hh(i, 2), r = R * (0.3 + 0.7 * hh(i, 5)); sp(Math.cos(a) * r, 0.1 + after * 0.9 * hh(i, 7), 1.6 + Math.sin(a) * r, 0.12, cA, 2, op * 0.8); }
+  } else if (f === 'yo') {
+    const a = ss(after / 0.25) * (1 - ss((after - 0.7) / 0.3)); I.shots = 1;
+    sp(0, 0.95, 0, 2.4, c, 1.2, 0.28 * a); rgs(0, 0, 0.9, c, 2, a * 0.8);
+    for (let i = 0; i < 14; i++) { const ang = i / 14 * 6.283 + after * 4, h = ((i * 0.37 + after * 0.9) % 1) * 1.8, r = 0.52 + 0.06 * Math.sin(after * 6 + i); sp(Math.cos(ang) * r, 0.1 + h, Math.sin(ang) * r, 0.16, c, 2, a * (1 - h / 1.8)); }
+  }
+  return zoom;
+}
+function fxUpdate(ch, x, m, ts, o) {
+  const I = FX.info; let zoom = 1; FX.n = FX.nr = 0; I.on = false; I.shots = 0; I.flash = 0; I.glow = 0; I.fired = false; I.ts = ts;
+  if (ch && m && store.fx) { I.on = true; zoom = fxDraw(ch, x, m, ts, o); }
+  for (let i = FX.n; i < FX.nPrev; i++) FX.spr[i].visible = false;
+  for (let i = FX.nr; i < FX.rPrev; i++) FX.rg[i].visible = false;
+  FX.nPrev = FX.n; FX.rPrev = FX.nr; FX.g.visible = I.on; I.n = FX.n + FX.nr;
+  if (Math.abs(camera.zoom - zoom) > 1e-4) { camera.zoom = zoom; camera.updateProjectionMatrix(); }
+  dirty = true;
+}
+function fxView() {   // visor normal: el efecto del clip A, anclado a la posición base del personaje (no sigue al lunge)
+  const ch = chars[0]; if (!ch || !A) return;
+  FXV.elem = store.fxElem || ''; FX.g.position.set(ch.root.position.x, 0, 0); FX.g.rotation.set(0, 0, 0);
+  fxUpdate(ch, A, magiaOf(A.clip.name), ch.action.time, FXV);
 }
 
 /* ---------- bucle ---------- */
@@ -1159,7 +1437,8 @@ window.__VISOR__ = {
   srcTime, shieldCheck, fitInfo: () => { const f = chars[0] && chars[0].fit && chars[0].fit.L; return f && { parent: chars[0].shield.parent && chars[0].shield.parent.name, gap: SH.gap, hLen: f.h.length(), f: f.f.toArray(), n: f.n.toArray() }; },
   state: () => ({ glb: GLB_NAME, clips: clips.length, clip: A && A.clip.name, clipB: compare && B ? B.clip.name : null, playing, loop: loopOn(), compare, t: tShown(),
     dur: A && A.clip.duration, total: total(A), perfil: store.perfil, perfilB: dcmp() ? store.perfilB : null, prof: A && { lunge: A.cfg.prof.lunge, hit: A.cfg.prof.hit, ent: A.cfg.prof.ent }, totalB: dcmp() ? total(B) : null, dB: dcmp() ? B.cfg.d.slice() : null, lt: A && A.lt, ltB: dcmp() ? B.lt : null, hold: !!(A && (A.hsAct || (dcmp() && B.hsAct))), lungeZ: chars[0] ? chars[0].root.position.z : 0, swordVisible: !!(chars[0] && chars[0].sword.visible && chars[0].sword.parent), shieldVisible: !!(chars[0] && chars[0].shield.visible && chars[0].shield.parent), span: span(), cuts: A && A.cfg.c.slice(), d: A && A.cfg.d.slice(), speed: A && A.cfg.sp, vote: A && A.cfg.vote,
-    srcAtEnd: A && srcTime(total(A), A.cfg.c[0], A.cfg.c[1], A.clip.duration, A.cfg.d), handBone: !!(chars[0] && chars[0].hand), tabla: A && A.cfg.tabla }),
+    srcAtEnd: A && srcTime(total(A), A.cfg.c[0], A.cfg.c[1], A.clip.duration, A.cfg.d), fx: JSON.parse(JSON.stringify(FX.info)), rootZ: chars[0] && chars[0].root.position.z, pelvisZ: chars[0] && chars[0].pelvis ? chars[0].pelvis.position.z : null, zoom: camera.zoom, handBone: !!(chars[0] && chars[0].hand), tabla: A && A.cfg.tabla }),
+  fx: () => JSON.parse(JSON.stringify(FX.info)), cam: (p, tg) => { controls.target.fromArray(tg); camera.position.fromArray(p); controls.update(); dirty = true; }, setZoom: z => { camera.zoom = z; camera.updateProjectionMatrix(); },
   step: n => stepFrames(n), advance, lungeCurve, perfilDe: (n, k) => perfilDe(clips.find(c => c.name === n), k),
   seek: v => { setPlay(false); resetHS(); t = Math.min(Math.max(v, 0), span()); applyPose(); updateTime(); },
   pose: i => { const ch = chars[i || 0]; return ch ? ch.action.time : 0; },

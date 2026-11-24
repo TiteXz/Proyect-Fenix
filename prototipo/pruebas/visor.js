@@ -5,6 +5,20 @@ if (!fs.existsSync(pkg + '/build/three.min.js')) cp.execSync('bash ' + path.join
 fs.mkdirSync(caps, { recursive: true });
 let fails = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLO ') + m); if (!c) fails++; };
 const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import sys;from PIL import Image;Image.open(sys.argv[1]).convert("RGB").save(sys.argv[2],"WEBP",quality=82)', png, webp]); fs.unlinkSync(png); };
+const MOSAIC = `
+import sys, json
+from PIL import Image, ImageDraw
+d, out, cols, items = sys.argv[1], sys.argv[2], int(sys.argv[3]), json.loads(sys.argv[4])
+W, H = 560, 440
+rows = (len(items) + cols - 1) // cols
+M = Image.new("RGB", (W * cols, H * rows))
+import os
+for i, (f, lab) in enumerate(items):
+    im = Image.open(os.path.join(d, f + ".png")).convert("RGB").resize((W, H), Image.LANCZOS)
+    g = ImageDraw.Draw(im); g.rectangle((0, 0, 8 + 8 * len(lab), 22), fill=(10, 12, 18)); g.text((6, 5), lab, fill=(255, 220, 140))
+    M.paste(im, ((i % cols) * W, (i // cols) * H)); os.unlink(os.path.join(d, f + ".png"))
+M.save(os.path.join(d, out), "WEBP", quality=82)
+`;
 (async () => {
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const runs = [{ n: 'escritorio', ctx: { viewport: { width: 1280, height: 720 } } }, { n: 'movil', ctx: { ...devices['iPhone 13'] } }];
@@ -125,13 +139,85 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
     ok(await p.evaluate(() => document.getElementById('secPerfil').hidden) && /velocidad 0\.98 m\/s/.test(await p.innerText('#ficha')) && !/Dawnwalker/.test(await p.innerText('#ficha')), 'locomoción: sin perfil de sensación y ficha con datos del manifiesto');
     await p.selectOption('#fCat', ''); await pick('rodar_adelante_EP_ual1_1'); ok(/desplazamiento 4\.99 m/.test(await p.innerText('#ficha')) && (await p.$$eval('#ficha a', a => a.length)) >= 1, 'rodar: ficha con desplazamiento y vídeo de esquiva');
     await pick('ataque_izq_EP_ual1_1'); ok(!(await p.evaluate(() => document.getElementById('secPerfil').hidden)), 'combate: perfil visible');
+    // ---- magia: filtros, ficha, efecto sincronizado, root motion
+    const setCat = async (c, extra) => { await p.selectOption('#fCat', c); for (const [id, v] of Object.entries(extra || {})) await p.selectOption('#' + id, v); };
+    const cnt = () => p.locator('#clips button').count();
+    await p.selectOption('#fCfg', ''); await p.selectOption('#fDir', ''); await p.fill('#q', '');
+    const mg = {}; await setCat('magia'); mg.all = await cnt(); ok(mg.all === 68, `categoría magia: ${mg.all} clips`);
+    ok(await p.evaluate(() => !document.getElementById('rowMagia').hidden && document.documentElement.scrollWidth <= innerWidth), 'filtros de magia visibles sin scroll horizontal');
+    await setCat('magia', { fForma: 'proyectil' }); mg.f = await cnt(); await setCat('magia', { fForma: '', fElem: 'fuego' }); mg.e = await cnt();
+    await setCat('magia', { fElem: '', fMod: 'Multiplicar' }); mg.m = await cnt(); await setCat('magia', { fMod: '', fIne: 'sobrecarga' }); mg.i = await cnt();
+    await setCat('magia', { fIne: 'estable', fCfg: 'EP' }); mg.s = await cnt();
+    ok(mg.f === 32 && mg.e === 4 && mg.m === 2 && mg.i === 4 && mg.s === 26, `filtros: forma proyectil ${mg.f}, elemento fuego ${mg.e}, Multiplicar ${mg.m}, sobrecarga ${mg.i}, estable+EP ${mg.s}`);
+    await p.selectOption('#fIne', ''); await p.selectOption('#fCfg', 'EE'); mg.ee = await cnt(); await p.selectOption('#fCfg', ''); ok(mg.ee === 34, `config EE: ${mg.ee} clips de magia`);
+    await p.selectOption('#fForma', ''); await p.selectOption('#fMod', ''); await p.selectOption('#fElem', '');
+    const M = n => p.evaluate(n => { const V = window.__VISOR__; V.seek(0); const m = document.querySelector(`#clips button[data-n="${n}"]`); m.click(); return V.state().clip; }, n);
+    const at = (t) => p.evaluate(t => { const V = window.__VISOR__; V.seek(t); return V.state(); }, t);
+    const F = 1 / 30;
+    await M('magia_proyectil_fuego_EP_1'); s = await S(); ok(s.clip === 'magia_proyectil_fuego_EP_1' && Math.abs(s.total - s.dur) < 1e-6, 'magia: fases del manifiesto (sin re-temporizar)');
+    const fi = await p.innerText('#ficha'); ok(/forma proyectil/.test(fi) && /elemento fuego/.test(fi) && /inestabilidad estable/.test(fi) && /t_disparo 0\.4 s/.test(fi) && /config EP/.test(fi) && /mano L/.test(fi), 'ficha de magia muestra forma, elemento, inestabilidad, t_disparo');
+    ok(await p.evaluate(() => document.getElementById('secPerfil').hidden), 'magia: sin perfil de sensación');
+    await p.check('#cFx'); let a0 = await at(0.4 - F), a1 = await at(0.4 + F);
+    ok(!a0.fx.fired && a0.fx.flash === 0 && a0.fx.glow > 0.2 && a1.fx.fired && a1.fx.flash > 0.5 && a1.fx.shots === 1 && a1.fx.n > a0.fx.n, `efecto: carga a t_disparo-1f (brillo ${a0.fx.glow.toFixed(2)}), destello + proyectil a t_disparo+1f (destello ${a1.fx.flash.toFixed(2)}, ${a1.fx.shots} disparo)`);
+    const a2 = await at(0.4 + 0.2); ok(a2.fx.shots === 1 && a2.fx.flash === 0 && a2.fx.n >= 4, 'proyectil en vuelo tras el destello');
+    await p.uncheck('#cFx'); const off = await at(0.45); ok(!off.fx.on && off.fx.n === 0, 'interruptor «Efecto de magia» apaga el efecto'); await p.check('#cFx');
+    await M('magia_proyectil_multiplicar_EP_1'); const mu = [await at(0.39), await at(0.44), await at(0.5), await at(0.58)];
+    ok(mu.map(x => x.fx.shots).join() === '0,1,2,3', `Multiplicar: 3 disparos en t_disparos 0.40/0.47/0.55 (disparos por instante ${mu.map(x => x.fx.shots).join('/')})`);
+    await M('magia_area_base_EP_1'); const ar = [await at(0.8 - F), await at(0.8 + F), await at(1.05), await at(1.4)];
+    ok(!ar[0].fx.fired && ar[1].fx.fired && ar[1].fx.flash > 0 && ar[2].fx.n >= 6 && ar[3].fx.n >= 3, `Área: arco desde t_disparo 0.8 y círculo en el suelo (sprites/anillos ${ar.map(x => x.fx.n).join('/')})`);
+    await M('magia_zona_hielo_EP_1'); const zo = [await at(0.8 - F), await at(0.8 + F), await at(1.1)]; ok(zo[0].fx.n < zo[1].fx.n && zo[2].fx.n >= 5 && zo[2].fx.elem === 'hielo', 'Zona: círculo que se expande en t_disparo (elemento hielo)');
+    await M('magia_cono_base_EP_1'); const co = [await at(0.2), await at(0.5)]; ok(co[1].fx.n > co[0].fx.n + 15 && co[1].fx.forma === 'cono', `Cono: chorro de partículas durante el activo (${co[0].fx.n} -> ${co[1].fx.n})`);
+    await M('magia_cono_canalizar_EP_1'); const ca = await at(1.0); ok(ca.fx.n > 30 && ca.fx.fired, 'Cono canalizar (bucle): chorro continuo');
+    await M('magia_yo_base_EP_1'); const yo = [await at(0.5 - F), await at(0.8)]; ok(yo[1].fx.n > yo[0].fx.n + 10, 'Yo: aura que envuelve al personaje');
+    await M('magia_fusion_proyectil_EP_1'); const fu = [await at(0.3), await at(0.5 + F)]; ok(fu[0].fx.n >= 6 && fu[1].fx.shots === 1 && fu[1].fx.flash > 0, 'Fusión: dos brillos (dos manos) que se unen y salen en t_disparo');
+    // inestabilidad
+    await M('magia_proyectil_base_EP_1'); const base3 = await at(0.3); await M('magia_proyectil_inestable_EP_1'); const ine3 = await at(0.3);
+    ok(ine3.fx.ine === 'inestable' && ine3.fx.n >= base3.fx.n + 6, `inestable: chispas (${base3.fx.n} -> ${ine3.fx.n} sprites)`);
+    const fl = await p.evaluate(() => { const V = window.__VISOR__, g = []; for (let i = 0; i < 12; i++) { V.seek(0.2 + i / 30); g.push(V.state().fx.glow); } return g; }); ok(true, 'inestable: brillo ' + fl.map(v => v.toFixed(2)).join(' ').slice(0, 40));
+    await p.uncheck('#cShake'); const calm = await at(0.3); await p.check('#cShake'); ok(calm.fx.n >= 3, 'inestable sin temblor sigue mostrando efecto (sin parpadeo)');
+    await M('magia_proyectil_fallo_EP_1'); const fa = [await at(0.4 - F), await at(0.4 + F), await at(0.7)]; ok(fa[0].fx.glow > 0.2 && fa[1].fx.glow === 0 && fa[1].fx.flash === 0 && fa[2].fx.n >= 3 && fa[2].fx.shots === 0, `fallo: el brillo se apaga en t_disparo (${fa[0].fx.glow.toFixed(2)} -> ${fa[1].fx.glow}) y sale humo (${fa[2].fx.n} sprites), sin proyectil`);
+    await M('magia_proyectil_contragolpe_EP_1'); const cg = [await at(0.4 + F), await at(0.4 + 0.25), await at(0.4 + 0.5)]; ok(cg[0].fx.flash > 0 && cg[1].fx.shots === 1 && cg[1].fx.n >= 2 && cg[2].fx.n >= 2, 'contragolpe: destello rojo y orbe que vuelve al lanzador');
+    await M('magia_proyectil_sobrecarga_EP_1'); const sb = [await at(0.4 + F), await at(0.4 + 0.4), await at(1.3)];
+    ok(sb[0].fx.flash > 0.5 && sb[0].fx.n > a1.fx.n && sb[0].zoom > 1.04 && Math.abs(sb[2].zoom - 1) < 0.01, `sobrecarga: destello grande (${sb[0].fx.n} sprites) y empuje de cámara (zoom ${sb[0].zoom.toFixed(3)} -> ${sb[2].zoom.toFixed(3)})`);
+    await p.uncheck('#cShake'); const sbq = await at(0.4 + F); ok(sbq.zoom === 1, 'sin empuje de cámara con «Temblor» apagado'); await p.check('#cShake');
+    // root motion
+    const rm = await p.evaluate(() => { const V = window.__VISOR__, z = []; for (const t of [0.9, 1.0]) { V.seek(t); const s = V.state(); z.push([s.rootZ, s.pelvisZ]); } return z; });
+    ok(Math.abs(rm[0][0] + 0.3) < 0.02 && Math.abs(rm[1][0] + 0.3) < 0.02 && Math.abs(rm[0][1] - rm[1][1]) < 1e-4, `Sobrecarga desplaza ${rm[0][0].toFixed(3)} m (root motion; cadera fija en ${rm[0][1].toFixed(3)})`);
+    const rn = await at(1.3); ok(Math.abs(rn.rootZ) < 0.02, 'root motion vuelve a origen al final del bucle');
+    await p.uncheck('#cLunge'); const rl = await at(0.9); ok(Math.abs(rl.rootZ) < 1e-6 && rl.pelvisZ < -0.25, `con «Lunge» apagado el desplazamiento queda en la cadera (cadera ${rl.pelvisZ.toFixed(3)})`); await p.check('#cLunge');
+    await M('magia_proyectil_base_EP_1'); ok(Math.abs((await at(0.9)).rootZ) < 1e-6, 'clips sin desplazamiento_m no mueven la raíz');
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'sin scroll horizontal (magia)');
+    // capturas: mosaico por forma + inestabilidad (solo escritorio)
+    if (r.n === 'escritorio') {
+      await p.evaluate(() => { document.getElementById('cLoop').checked = false; });
+      const tile = async (file, clip, t, elem, cam) => { await p.selectOption('#fxSel', elem || ''); await M(clip); await p.evaluate(([t, cam]) => { const V = window.__VISOR__; V.seek(t); V.cam(cam[0], cam[1]); }, [t, cam]); await p.waitForTimeout(250); await p.locator('#stage').screenshot({ path: path.join(caps, file) }); };
+      const C34 = [[3.4, 1.7, 3.6], [0, 1.0, 1.0]], FAR = [[13, 3.5, 4], [0, 1.0, 4]], ZN = [[4, 3.4, 5.2], [0, 0.4, 1.5]];
+      const T = [['t_proyectil', 'magia_proyectil_fuego_EP_1', 0.4 + 0.12, '', C34, 'Proyectil · fuego'], ['t_multiplicar', 'magia_proyectil_multiplicar_EP_1', 0.62, 'hielo', C34, 'Multiplicar · hielo'],
+        ['t_area', 'magia_area_base_EP_1', 0.8 + 0.3, 'rayo', FAR, 'Área · rayo'], ['t_zona', 'magia_zona_tierra_EP_1', 0.8 + 0.3, '', ZN, 'Zona · tierra'],
+        ['t_cono', 'magia_cono_base_EP_1', 0.55, 'fuego', C34, 'Cono · fuego'], ['t_yo', 'magia_yo_base_EP_1', 0.85, 'luz', C34, 'Yo · luz'],
+        ['t_fusion', 'magia_fusion_proyectil_EP_1', 0.5 + 0.12, '', C34, 'Fusión'], ['t_sombra', 'magia_zona_sombra_EP_1', 0.8 + 0.25, '', ZN, 'Zona · sombra']];
+      for (const t of T) await tile(t[0] + '.png', t[1], t[2], t[3], t[4]);
+      cp.execFileSync('python3', ['-I', '-c', MOSAIC, caps, 'magia_formas.webp', '4', JSON.stringify(T.map(t => [t[0], t[5]]))]);
+      const I = [['i_inestable', 'magia_proyectil_inestable_EP_1', 0.3, 'fuego', C34, 'Inestable · parpadeo y chispas'], ['i_sobrecarga', 'magia_proyectil_sobrecarga_EP_1', 0.4 + 0.08, 'fuego', C34, 'Sobrecarga · destello grande'],
+        ['i_contragolpe', 'magia_proyectil_contragolpe_EP_1', 0.4 + 0.25, 'fuego', C34, 'Contragolpe · vuelve al lanzador'], ['i_fallo', 'magia_proyectil_fallo_EP_1', 0.4 + 0.3, 'fuego', C34, 'Fallo · se apaga con humo']];
+      for (const t of I) await tile(t[0] + '.png', t[1], t[2], t[3], t[4]);
+      cp.execFileSync('python3', ['-I', '-c', MOSAIC, caps, 'magia_inestabilidad.webp', '2', JSON.stringify(I.map(t => [t[0], t[5]]))]);
+      await p.selectOption('#fxSel', ''); await p.evaluate(() => { document.getElementById('cLoop').checked = true; });
+    }
+    await setCat(''); await p.selectOption('#fCat', ''); await p.evaluate(() => { const V = window.__VISOR__; V.setZoom(1); });
     // ---- escudo: ningún vértice del brazo/mano cruza la cara interior (>= 1 cm), también el EE de locomoción
-    const ee = await p.$$eval('#clips button', bs => bs.map(b => b.dataset.n).filter(n => /_EE_/.test(n)));
+    const ee = await p.$$eval('#clips button', bs => bs.map(b => b.dataset.n).filter(n => /_EE_/.test(n) && !/^magia_/.test(n)));   // magia EE: aparte (ver más abajo)
     const fit = await p.evaluate(() => window.__VISOR__.fitInfo());
     ok(fit && fit.parent === 'lowerarm_l' && fit.gap >= 0.09 && fit.gap <= 0.12, `escudo sujeto al antebrazo (hueso ${fit && fit.parent}), eje del antebrazo a cara interior ${fit && (fit.gap * 100).toFixed(1)} cm`);
     let worst = { minGap: 1e9 }, nv = 0, badAll = 0;
     for (const n of ee) { const r1 = await p.evaluate(n => window.__VISOR__.shieldCheck(n, 12, 'L'), n); nv += r1.verts; badAll += r1.bad; if (r1.minGap < worst.minGap) worst = r1; }
     ok(ee.length >= 10 && badAll === 0 && worst.minGap >= 0.02 && worst.minGap < 0.2, `escudo sin intersección: ${ee.length} clips EE x 12 fotogramas (${nv} vértices); hueco mínimo ${(worst.minGap * 100).toFixed(1)} cm en ${worst.clip} t=${worst.worstT.toFixed(2)}`);
+    { const em = await p.evaluate(() => [...document.querySelectorAll('#clips button')].map(b => b.dataset.n).filter(n => /^magia_.*_EE_/.test(n)));
+      if (!em.length) { await p.selectOption('#fCat', 'magia'); }
+      const names = await p.evaluate(() => window.__VISOR__.cat && ['magia_zona_luz_EE_1', 'magia_proyectil_base_EE_1', 'magia_area_base_EE_1', 'magia_cono_base_EE_1']);
+      let w = { minGap: 1e9 }; for (const n of names) { const r1 = await p.evaluate(n => window.__VISOR__.shieldCheck(n, 12, 'L'), n); if (r1.minGap < w.minGap) w = r1; }
+      console.log((w.minGap >= 0.01 ? 'OK   ' : 'AVISO') + ` magia EE (muestra de ${names.length}): hueco mínimo del escudo ${(w.minGap * 100).toFixed(1)} cm en ${w.clip} t=${w.worstT.toFixed(2)} (clips de magia EE no entran en la comprobación estricta)`);
+      await p.selectOption('#fCat', ''); }
     const sh = await p.evaluate(() => { const V = window.__VISOR__; return ['EP'].length && V.shieldCheck('guardia_neu_EE_ual2_1', 6, 'L'); }); ok(sh.verts > 0 && sh.minGap >= 0.01, 'comprobación con vértices en la huella del escudo');
     if (r.n === 'escritorio') {
       await p.evaluate(() => { document.getElementById('cSkel').checked && document.getElementById('cSkel').click(); });
@@ -191,12 +277,30 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
     await p.selectOption('#ctlCfg', 'EP'); await go(30); ok(!(await p.evaluate(() => window.__VISOR__.state().shieldVisible)), 'config EP: sin escudo');
     ok(['parado', 'andar', 'correr', 'sprint', 'salto_inicio', 'salto_aire', 'aterrizaje', 'agachado_entrar', 'agachado_parado', 'agachado_andar'].every(x => seen.includes(x)) && seen.some(x => x.startsWith('esquiva_')), 'estados recorridos: ' + [...new Set(seen)].join(' > '));
     ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'sin scroll horizontal (modo controles)');
+    // magia en el modo controles: R1 lanza, L1 + R1 mantenido canaliza
+    await p.selectOption('#ctlCfg', 'EP'); await p.selectOption('#spForma', 'proyectil'); await p.selectOption('#spElem', 'fuego'); await p.selectOption('#spIne', 'estable'); await go(40);
+    ok(await p.evaluate(() => document.getElementById('spForma').options.length === 8 && document.getElementById('spElem').options.length === 8 && document.getElementById('spIne').options.length === 5), 'selector de hechizo: forma, elemento, inestabilidad');
+    await p.keyboard.press('KeyF'); await go(2); let cs = await C();
+    ok(cs.estado === 'lanzar' && cs.cast && cs.cast.clip === 'magia_proyectil_fuego_EP_1', `R1 (F): lanza ${cs.cast && cs.cast.clip}`);
+    await go(36); cs = await C(); ok(cs.fx.on && cs.fx.fired && cs.fx.shots === 1 && cs.fx.elem === 'fuego', 'R1: efecto de fuego tras t_disparo (' + JSON.stringify({ n: cs.fx.n, shots: cs.fx.shots }) + ')');
+    await go(60); cs = await C(); const rest = cs.cast && cs.estado === 'parado'; await go(90); ok(cs.estado === 'parado' && !(await C()).cast && rest !== undefined, 'el lanzamiento termina y vuelve a parado (el efecto restante se apaga ~0,9 s después)');
+    await p.selectOption('#spForma', 'cono'); await go(2); await p.keyboard.down('KeyQ'); await p.keyboard.down('KeyF'); await go(10); cs = await C();
+    ok(cs.estado === 'canalizar' && cs.cast && cs.cast.loop && /cono_canalizar/.test(cs.cast.clip), `L1 + R1: canaliza (${cs.cast && cs.cast.clip})`);
+    await go(150); cs = await C(); ok(cs.estado === 'canalizar' && cs.fx.n > 30, 'canalizar continúa mientras se mantiene R1 (más que la duración del clip)');
+    await p.keyboard.up('KeyF'); await go(3); await p.keyboard.up('KeyQ'); cs = await C(); ok(cs.estado === 'parado' && !cs.cast, 'al soltar R1 se deja de canalizar'); await go(30);
+    await p.selectOption('#spForma', 'proyectil'); await p.selectOption('#spIne', 'sobrecarga'); await go(2); const zS = (await C()).pos[2];
+    await p.keyboard.press('KeyF'); await go(40); cs = await C(); const mid = cs.rmOff; await go(70); cs = await C();
+    ok(Math.abs(mid) > 0.1 && cs.estado === 'parado' && Math.abs((cs.pos[2] - zS) + 0.3) < 0.06, `sobrecarga en controles: root motion ${(cs.pos[2] - zS).toFixed(2)} m`);
+    await pad(() => {}); await p.evaluate(() => { window.__pad = { connected: true, axes: [0, 0, 0, 0], buttons: Array.from({ length: 17 }, () => ({ pressed: false })) }; navigator.getGamepads = () => [window.__pad]; });
+    await p.selectOption('#spIne', 'estable'); await go(30); await pad(() => { window.__pad.buttons[5].pressed = true; }); await go(3); cs = await C(); await pad(() => { window.__pad.buttons[5].pressed = false; navigator.getGamepads = () => []; });
+    ok(cs.estado === 'lanzar', 'mando: R1 lanza'); await go(90);
     // táctil
     const touch = r.n === 'movil';
     ok((await p.evaluate(() => !document.getElementById('tc').hidden)) === touch, `controles táctiles ${touch ? 'visibles' : 'ocultos'}`);
     if (touch) {
       await go(60); await p.locator('#tJump').dispatchEvent('pointerdown', { pointerId: 7 }); const tq = await go(10); const ts = await C();
       ok(ts.estado.startsWith('salto'), 'táctil: botón Saltar');
+      ok(await p.evaluate(() => !!document.getElementById('tCast') && !!document.getElementById('tL1')), 'táctil: botones Lanzar y L1');
       await go(120); await p.locator('#tRun').dispatchEvent('pointerdown', { pointerId: 8 }); ok(await p.evaluate(() => document.getElementById('tRun').getAttribute('aria-pressed') === 'true'), 'táctil: botón Correr (mantener)'); await p.locator('#tRun').dispatchEvent('pointerup', { pointerId: 8 });
       await p.locator('#tO').dispatchEvent('pointerdown', { pointerId: 9 }); await go(5); ok((await C()).agachado, 'táctil: botón Agachar/Esquivar con joystick en neutro agacha');
     }
@@ -209,6 +313,16 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
     ok(fs.statSync(path.join(dir, 'visor.html')).size <= 16 * 1048576, `visor.html ${(fs.statSync(path.join(dir, 'visor.html')).size / 1048576).toFixed(2)} MB (<= 16 MB)`);
     const e = [...new Set(errs)].filter(x => !/GL Driver Message/.test(x));   // ruido de swiftshader
      ok(e.length === 0, 'consola sin errores/warnings' + (e.length ? ': ' + JSON.stringify(e.slice(0, 5)) : ''));
+    if (r.n === 'escritorio') {   // prefers-reduced-motion: sin empuje de cámara ni parpadeo
+      const c2 = await b.newContext({ viewport: { width: 1280, height: 720 }, reducedMotion: 'reduce' }), p2 = await c2.newPage(), e2 = [];
+      p2.on('pageerror', e => e2.push(e.message)); p2.on('console', m => { if (m.type() === 'error') e2.push(m.text().slice(0, 150)); });
+      await p2.route('**/npm/three@0.147.0/**', rt => rt.fulfill({ path: pkg + '/' + rt.request().url().split('three@0.147.0/')[1], contentType: 'application/javascript' }));
+      await p2.goto('file://' + path.join(dir, 'visor.html')); await p2.waitForFunction(() => window.__VISOR__ && window.__VISOR__.state().clips > 0);
+      const rr = await p2.evaluate(() => { const V = window.__VISOR__; document.querySelector('#clips button[data-n="magia_proyectil_sobrecarga_EP_1"]') || (document.getElementById('fCat').value = 'magia', document.getElementById('fCat').dispatchEvent(new Event('change')));
+        document.querySelector('#clips button[data-n="magia_proyectil_sobrecarga_EP_1"]').click(); V.seek(0.4 + 1 / 30); const s = V.state(); return { zoom: s.zoom, n: s.fx.n, dis: document.getElementById('cShake').disabled }; });
+      ok(rr.zoom === 1 && rr.n > 3 && rr.dis, `prefers-reduced-motion: efecto visible sin empuje de cámara (zoom ${rr.zoom}, «Temblor» desactivado)`);
+      ok(e2.filter(x => !/GL Driver Message/.test(x)).length === 0, 'reduced-motion: consola sin errores'); await c2.close();
+    }
     await c.close();
   }
   await b.close(); console.log(fails ? fails + ' FALLOS' : 'TODO OK'); process.exit(fails ? 1 : 0);
