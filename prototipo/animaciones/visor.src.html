@@ -46,6 +46,11 @@ label{display:inline-flex;align-items:center;gap:6px}
 #clips .v{float:right;margin-left:8px}
 .mono{font-variant-numeric:tabular-nums;font-family:ui-monospace,Menlo,Consolas,monospace}
 .small{font-size:12px;color:#9fb0d0}
+#ficha{border:1px solid #2a3142;border-radius:8px;padding:8px 10px;background:#12161f;font-size:13px;overflow-wrap:anywhere}
+#ficha p{margin:4px 0}#ficha ul{margin:6px 0 0;padding-left:18px}#ficha li{margin:6px 0}
+#ficha a{color:#8fb4ff}#ficha .tag{font-size:11px;color:#ffd27a;margin-left:4px}
+#pfVals{margin:4px 0}
+.ck{display:flex;flex-wrap:wrap;gap:6px 14px;margin:6px 0}
 @media (max-width:820px){
   #app{display:block;height:auto}
   #stage{position:sticky;top:0;z-index:5;height:46vh;height:46dvh}
@@ -96,6 +101,20 @@ label{display:inline-flex;align-items:center;gap:6px}
     </div>
     <div id="clips" role="list"></div>
 
+    <h2>Perfil de sensación</h2>
+    <div class="row"><label class="grow">Perfil <select id="sPerfil" aria-label="Perfil de sensación"></select></label></div>
+    <div class="row" id="rowPB" hidden><label class="grow">Perfil de B <select id="sPerfilB" aria-label="Perfil de sensación del clip B"></select></label><button id="bSame" title="Pone en B el mismo clip que A con otro perfil">Mismo clip en B</button></div>
+    <div class="small" id="pfDesc"></div>
+    <div class="small mono" id="pfVals"></div>
+    <div class="ck">
+      <label><input type="checkbox" id="cLunge"> Lunge</label>
+      <label><input type="checkbox" id="cHit"> Hit-stop</label>
+      <label><input type="checkbox" id="cShake"> Temblor</label>
+      <label><input type="checkbox" id="cArma"> Mostrar arma</label>
+    </div>
+    <h2>Ficha de referencia</h2>
+    <div id="ficha"></div>
+
     <h2>Ajuste de fases <span class="small" id="clipName"></span></h2>
     <div class="leg"><span><b class="p1"></b>Anticipación</span><span><b class="p2"></b>Activo</span><span><b class="p3"></b>Recuperación</span></div>
     <div class="small" style="margin-top:8px">Clip original: arrastra los dos marcadores para marcar los puntos de corte.</div>
@@ -126,6 +145,7 @@ label{display:inline-flex;align-items:center;gap:6px}
 'use strict';
 const GLB_B64 = /*__GLB__*/'';
 const GLB_NAME = /*__GLBNAME__*/'';
+const PERFILES = /*__PERFILES__*/null;
 const FPS = 30, FRAME = 1 / FPS, MIN_D = 0.02;
 const $ = id => document.getElementById(id);
 
@@ -167,6 +187,35 @@ function tablaFases(name) {
   return TABLA[a + '|' + p.dir + '|' + p.cfg] || TABLA[a + '|*|' + p.cfg] || null;
 }
 
+/* ---------- perfiles de sensación (perfiles.json) ---------- */
+const PF = PERFILES || { perfiles: {}, videos: {}, cancelacion_recuperacion_pct: {} };
+const PF_KEYS = ['combate', 'original'].concat(Object.keys(PF.perfiles));
+const PF_NAME = { combate: 'COMBATE.md (valores actuales)', original: 'Original (sin re-temporizar)' };
+const EE_K = 1.17, LUNGE_MAX = 1.5;
+function accionPerfil(name) {
+  if (/^guardia_rota/.test(name) || /^tambaleo/.test(name)) return 'guardia_rota';
+  const f = name.split('_')[0].toLowerCase(), p = parseName(name);
+  if (f === 'ataque') return p.dir === 'arr' ? 'ligero_arriba' : p.dir === 'aba' ? 'ligero_abajo' : 'ligero_lateral';
+  return { parada: 'parada_perfecta', bloqueo: 'bloqueo', contraataque: 'contraataque', estocada: 'habilidad', embestida: 'habilidad', remate: 'remate' }[f] || null;
+}
+/* fases, lunge (m) e hit-stop (ms) de un clip bajo un perfil; EE: anticipación y recuperación x1.17, activo x1.0 */
+function perfilDe(clip, key) {
+  const df = defaults(clip), none = { d: df.d.slice(), lunge: 0, hit: 0, ent: false, nota: '' };
+  if (key === 'original') return { d: [df.c[0], df.c[1] - df.c[0], clip.duration - df.c[1]], lunge: 0, hit: 0, ent: false, nota: '' };
+  const pr = PF.perfiles[key], acc = accionPerfil(clip.name), e = pr && acc && pr.acciones[acc];
+  if (!e) return none;
+  const ee = parseName(clip.name).cfg === 'EE', k = ee ? EE_K : 1;
+  return { d: [Math.max(MIN_D, e.anticipacion * k), Math.max(MIN_D, e.activo), Math.max(MIN_D, e.recuperacion * k)], lunge: e.lunge_m || 0, hit: e.hitstop_ms || 0, ent: true, nota: e.notas || '', acc };
+}
+/* curva de lunge 0..1: sube suave en anticipación+activo, se mantiene y vuelve a origen al final de la recuperación (bucle continuo) */
+const ss = u => { u = Math.min(Math.max(u, 0), 1); return u * u * (3 - 2 * u); };
+function lungeCurve(lt, d) {
+  const a = d[0] + d[1];
+  if (lt <= a) return ss(lt / a);
+  const r = (lt - a) / d[2];
+  return r < 0.6 ? 1 : 1 - ss((r - 0.6) / 0.4);
+}
+
 /* ---------- time-warp por tramos (puro) ---------- */
 function srcTime(t, c1, c2, dur, d) {
   const tot = d[0] + d[1] + d[2];
@@ -181,7 +230,7 @@ function srcTime(t, c1, c2, dur, d) {
 
 /* ---------- estado persistente ---------- */
 const LS_KEY = 'fenix_visor_anim_v1';
-let store = { clip: '', loop: true, skel: false, trail: false, fCfg: '', fDir: '', set: {} };
+let store = { clip: '', loop: true, skel: false, trail: false, fCfg: '', fDir: '', set: {}, perfil: 'combate', perfilB: 'fluido_agil', lunge: true, hit: true, shake: true, arma: true };
 try { const s = JSON.parse(localStorage.getItem(LS_KEY) || 'null'); if (s && typeof s === 'object') store = Object.assign(store, s); } catch (e) {}
 if (!store.set || typeof store.set !== 'object') store.set = {};
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(store)); } catch (e) {} }
@@ -225,6 +274,35 @@ const rim = new THREE.DirectionalLight(0xffc9a0, 1.6); rim.position.set(-1, 3.5,
   grid.material.transparent = true; grid.material.opacity = 0.14; grid.material.depthWrite = false; grid.position.y = 0.002; scene.add(grid);
 })();
 
+/* ---------- armas procedurales (solo para juzgar arcos; no son assets del juego) ---------- */
+const matMetal = new THREE.MeshStandardMaterial({ color: 0xc9d2e0, metalness: 0.9, roughness: 0.3 });
+const matDark = new THREE.MeshStandardMaterial({ color: 0x4a3326, roughness: 0.8, metalness: 0 });
+const matGold = new THREE.MeshStandardMaterial({ color: 0xb8923a, metalness: 0.8, roughness: 0.4 });
+const armaGeos = [];
+function mk(geo, mat, x, y, z) { armaGeos.push(geo); const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; return m; }
+function makeSword() {      // empuñadura en el origen, hoja a lo largo de +Y (eje del hueso de la mano)
+  const g = new THREE.Group();
+  g.add(mk(new THREE.CylinderGeometry(0.016, 0.016, 0.2, 8), matDark, 0, 0.0, 0));
+  g.add(mk(new THREE.BoxGeometry(0.17, 0.025, 0.035), matGold, 0, 0.11, 0));
+  g.add(mk(new THREE.BoxGeometry(0.04, 0.82, 0.01), matMetal, 0, 0.53, 0));
+  const tip = mk(new THREE.ConeGeometry(0.02, 0.07, 4), matMetal, 0, 0.975, 0); tip.scale.set(1, 1, 0.25); tip.rotation.y = Math.PI / 4; g.add(tip);
+  g.visible = false; return g;
+}
+function makeShield() {      // escudo circular pequeño (rodela) en el antebrazo/mano
+  const g = new THREE.Group();
+  const d = mk(new THREE.CylinderGeometry(0.27, 0.27, 0.03, 24), matGold, 0, 0, 0); d.rotation.z = Math.PI / 2;
+  const b = mk(new THREE.SphereGeometry(0.06, 12, 8), matMetal, 0.03, 0, 0);
+  g.add(d, b); g.visible = false; return g;
+}
+function syncArma(ch, clip) {
+  if (!ch || !clip) return;
+  const mir = /_\d+m$/.test(clip.name), ee = parseName(clip.name).cfg === 'EE';
+  const hs = mir ? ch.handL : ch.hand, hsh = mir ? ch.hand : ch.handL;
+  if (hs && ch.sword.parent !== hs) hs.add(ch.sword);
+  if (hsh && ch.shield.parent !== hsh) { hsh.add(ch.shield); ch.shield.position.set(mir ? -0.04 : 0.04, 0.1, 0); }
+  ch.sword.visible = !!store.arma && !!hs; ch.shield.visible = !!store.arma && ee && !!hsh; dirty = true;
+}
+
 /* ---------- personajes ---------- */
 const loader = new THREE.GLTFLoader();
 let glbBuf = null, clips = [], H = 1.8;
@@ -235,10 +313,15 @@ function makeChar(gltf, x) {
   const root = gltf.scene; root.position.x = x;
   root.traverse(o => { if (o.isMesh || o.isSkinnedMesh) { o.castShadow = true; o.frustumCulled = false; } });
   scene.add(root);
-  let hand = null;
-  root.traverse(o => { if (o.isBone && !hand && /(^|[_.\-])hand[_.\-]?r(ight)?$|mano.*(der|_r)$|hand[_.]?r\b/i.test(o.name)) hand = o; });
+  let hand = null, handL = null;
+  root.traverse(o => {
+    if (!o.isBone) return;
+    if (!hand && /(^|[_.\-])hand[_.\-]?r(ight)?$|mano.*(der|_r)$|hand[_.]?r\b/i.test(o.name)) hand = o;
+    if (!handL && /(^|[_.\-])hand[_.\-]?l(eft)?$|mano.*(izq|_l)$|hand[_.]?l\b/i.test(o.name)) handL = o;
+  });
   const skel = new THREE.SkeletonHelper(root); skel.visible = store.skel; skel.material.depthTest = false; skel.material.linewidth = 2; skel.renderOrder = 10; scene.add(skel);
-  return { root, mixer: new THREE.AnimationMixer(root), action: null, clip: null, skel, hand, tmp: new THREE.Vector3() };
+  const ch = { root, mixer: new THREE.AnimationMixer(root), action: null, clip: null, skel, hand, handL, tmp: new THREE.Vector3(), sword: makeSword(), shield: makeShield() };
+  return ch;
 }
 function playOn(ch, clip) {
   if (ch.action) ch.action.stop();
@@ -251,33 +334,67 @@ function defaults(clip) {
   if (tb) { const s = tb[0] + tb[1] + tb[2]; return { c: [dur * tb[0] / s, dur * (tb[0] + tb[1]) / s], d: tb.slice(), sp: 1, vote: '', tabla: true }; }
   return { c: [dur / 3, dur * 2 / 3], d: [dur / 3, dur / 3, dur / 3], sp: 1, vote: '', tabla: false };
 }
-function cfgOf(clip) {
-  const df = defaults(clip), s = store.set[clip.name];
-  const o = { c: df.c, d: df.d, sp: 1, vote: '', tabla: df.tabla, def: df };
-  if (s) { if (Array.isArray(s.c) && s.c.length === 2) o.c = s.c.slice(); if (Array.isArray(s.d) && s.d.length === 3) o.d = s.d.slice(); if (typeof s.sp === 'number') o.sp = s.sp; if (s.vote) o.vote = s.vote; }
+function cfgOf(clip, key) {
+  key = key || 'combate';
+  const df = defaults(clip), s = store.set[clip.name], prof = perfilDe(clip, key);
+  const o = { c: df.c.slice(), d: prof.d.slice(), sp: 1, vote: '', tabla: df.tabla, def: df, key, prof };
+  if (s) {
+    if (Array.isArray(s.c) && s.c.length === 2) o.c = s.c.slice();
+    if (Array.isArray(s.d) && s.d.length === 3 && (s.pf || 'combate') === key) o.d = s.d.slice();
+    if (typeof s.sp === 'number') o.sp = s.sp; if (s.vote) o.vote = s.vote;
+  }
   o.c[0] = Math.min(Math.max(o.c[0], 0.001), clip.duration - 0.002); o.c[1] = Math.min(Math.max(o.c[1], o.c[0] + 0.001), clip.duration - 0.001);
   return o;
 }
-function commit(clip, o) { store.set[clip.name] = { c: o.c, d: o.d, sp: o.sp, vote: o.vote }; save(); }
+function commit(clip, o) { store.set[clip.name] = { c: o.c, d: o.d, sp: o.sp, vote: o.vote, pf: o.key }; save(); }
 const same = (a, b) => a.length === b.length && a.every((v, i) => Math.abs(v - b[i]) < 5e-4);
-function modified(clip, o) { return o.vote || !same(o.c, o.def.c) || !same(o.d, o.def.d) || Math.abs(o.sp - 1) > 1e-6; }
+const adjusted = o => !same(o.d, o.prof.d);
+function modified(clip, o) { return o.vote || !same(o.c, o.def.c) || adjusted(o) || Math.abs(o.sp - 1) > 1e-6; }
+const mkX = (clip, key) => ({ clip, cfg: cfgOf(clip, key), shift: 0, hsAct: false, hsLeft: 0, hsDone: false, lt: 0 });
 
 /* ---------- estado de reproducción ---------- */
-let A = null, B = null;           // clips activos {clip, cfg}
+let A = null, B = null;           // clips activos {clip, cfg, shift, hs*}
 let playing = true, t = 0, compare = false;
 const total = x => x ? x.cfg.d[0] + x.cfg.d[1] + x.cfg.d[2] : 0;
-const span = () => compare && B ? Math.max(total(A), total(B)) : total(A);
+const loopOn = () => $('cLoop').checked;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const dcmp = () => compare && B;
+/* en comparar se alinea el inicio de la fase activa: B se retrasa (maxAnt - ant_B) */
+const xOff = x => dcmp() ? Math.max(A.cfg.d[0], B.cfg.d[0]) - x.cfg.d[0] : 0;
+const span = () => dcmp() ? Math.max(xOff(A) + total(A), xOff(B) + total(B)) : total(A);
+const shiftMax = () => dcmp() ? Math.max(A.shift, B.shift) : (A ? A.shift : 0);
+const tShown = () => Math.min(Math.max(t - shiftMax(), 0), span());
+const localT = x => Math.min(Math.max(t - xOff(x) - x.shift, 0), total(x));
+function resetHS() { for (const x of [A, B]) if (x) { x.shift = 0; x.hsAct = false; x.hsLeft = 0; x.hsDone = false; } holdFx(false); }
+function holdFx(on) { cv.style.transform = on && store.shake && !reduceMotion ? `translate(${((Math.random() - .5) * 5).toFixed(1)}px,${((Math.random() - .5) * 5).toFixed(1)}px)` : ''; }
+const lungeZ = x => store.lunge ? Math.min(x.cfg.prof.lunge, LUNGE_MAX) * lungeCurve(x.lt, x.cfg.d) : 0;
 
 function applyPose() {
   const set = (ch, x) => {
-    if (!ch || !x) return; const tt = total(x);
-    const lt = loopOn() ? (tt > 0 ? t % tt : 0) : Math.min(t, tt);
-    ch.action.time = Math.min(srcTime(lt, x.cfg.c[0], x.cfg.c[1], x.clip.duration, x.cfg.d), x.clip.duration - 1e-4); ch.mixer.update(0);
+    if (!ch || !x) return; x.lt = localT(x);
+    ch.action.time = Math.min(srcTime(x.lt, x.cfg.c[0], x.cfg.c[1], x.clip.duration, x.cfg.d), x.clip.duration - 1e-4); ch.mixer.update(0);
+    ch.root.position.z = lungeZ(x);
   };
   set(chars[0], A); if (compare) set(chars[1], B);
   dirty = true;
 }
-const loopOn = () => $('cLoop').checked;
+/* avance de la simulación (lo usa el bucle y las pruebas); detecta fin de fase activa para el hit-stop */
+function advance(dt) {
+  const xs = dcmp() ? [A, B] : [A], sp = A.cfg.sp;
+  t += dt * sp;
+  let hold = false;
+  for (const x of xs) {
+    if (x.hsAct) { x.shift += dt * sp; x.hsLeft -= dt; if (x.hsLeft <= 0) x.hsAct = false; else hold = true; continue; }
+    if (!x.hsDone && store.hit && x.cfg.prof.hit > 0) {
+      const lt = t - xOff(x) - x.shift, ea = x.cfg.d[0] + x.cfg.d[1];
+      if (lt >= ea) { x.shift += lt - ea; x.hsDone = true; x.hsAct = true; x.hsLeft = x.cfg.prof.hit / 1000; hold = true; }
+    }
+  }
+  holdFx(hold);
+  const s = span();
+  if (t - shiftMax() >= s) { if (loopOn()) { t = s > 0 ? (t - shiftMax()) % s : 0; resetHS(); } else { t = s + shiftMax(); setPlay(false); } }
+  applyPose();
+}
 
 /* ---------- trayectoria ---------- */
 const TR_N = 48;
@@ -292,7 +409,7 @@ function rebuildTrail() {
   if (!ch || !ch.hand || !A) { trail.visible = false; return; }
   trail.visible = store.trail;
   if (!store.trail) return;
-  const p = trailGeo.attributes.position, col = trailGeo.attributes.color, tot = total(A), saveT = ch.action.time;
+  const p = trailGeo.attributes.position, col = trailGeo.attributes.color, tot = total(A), saveT = ch.action.time; ch.root.position.z = 0;
   for (let i = 0; i < TR_N; i++) {
     const tt = tot * i / (TR_N - 1);
     ch.action.time = Math.min(srcTime(tt, A.cfg.c[0], A.cfg.c[1], A.clip.duration, A.cfg.d), A.clip.duration - 1e-4);
@@ -305,14 +422,14 @@ function rebuildTrail() {
 
 /* ---------- selección de clip ---------- */
 function selectA(clip, keepT) {
-  A = { clip, cfg: cfgOf(clip) }; playOn(chars[0], clip);
+  A = mkX(clip, store.perfil); playOn(chars[0], clip); syncArma(chars[0], clip); resetHS();
   if (!keepT) t = 0;
   store.clip = clip.name; save();
   refreshUI(); rebuildTrail(); applyPose();
 }
 function selectB(clip) {
-  B = { clip, cfg: cfgOf(clip) };
-  if (chars[1]) playOn(chars[1], clip);
+  B = mkX(clip, store.perfilB); resetHS();
+  if (chars[1]) { playOn(chars[1], clip); syncArma(chars[1], clip); }
   applyPose(); refreshUI();
 }
 
@@ -336,24 +453,31 @@ function refreshUI() {
   $('vOk').setAttribute('aria-pressed', o.vote === 'ok'); $('vNo').setAttribute('aria-pressed', o.vote === 'no');
   document.querySelectorAll('#clips button').forEach(b => { b.setAttribute('aria-pressed', b.dataset.n === A.clip.name); const c = clips.find(c => c.name === b.dataset.n); const v = store.set[b.dataset.n]; b.querySelector('.v').textContent = v && v.vote === 'ok' ? '👍' : v && v.vote === 'no' ? '👎' : ''; });
   $('bar').setAttribute('aria-valuemax', fmt(span()));
-  buildBlock(); updateTime();
+  refreshPerfil(); buildBlock(); updateTime();
 }
 function updateTime() {
-  const s = span();
-  $('head').style.left = (s ? Math.min(t / s, 1) * 100 : 0) + '%';
-  $('tTxt').textContent = `${fmt(Math.min(t, s))} / ${fmt(s)} s`;
-  $('fTxt').textContent = 'f ' + Math.round(Math.min(t, s) * FPS) + '/' + Math.round(s * FPS);
-  $('bar').setAttribute('aria-valuenow', fmt(Math.min(t, s)));
+  const s = span(), ts = tShown();
+  $('head').style.left = (s ? Math.min(ts / s, 1) * 100 : 0) + '%';
+  $('tTxt').textContent = `${fmt(ts)} / ${fmt(s)} s`;
+  $('fTxt').textContent = 'f ' + Math.round(ts * FPS) + '/' + Math.round(s * FPS);
+  $('bar').setAttribute('aria-valuenow', fmt(ts));
+}
+const num = v => String(+v.toFixed(2));
+function lineOf(c, o, pre) {
+  const adj = adjusted(o) ? ` (+ajustes ${o.d.map(fmt).join('/')})` : '';
+  const lg = store.lunge ? num(o.prof.lunge) : 'off', hs = store.hit ? num(o.prof.hit) : 'off';
+  return `${pre}${c.name}: perfil ${o.key}${adj}; lunge ${lg}; hitstop ${hs}; corte ${fmt(o.c[0])}/${fmt(o.c[1])}; velocidad ${o.sp.toFixed(1)}; ${o.vote || 'sin voto'}`;
 }
 function buildBlock() {
   const lines = [];
   for (const c of clips) {
-    const o = cfgOf(c);
-    if (c === (A && A.clip) || modified(c, o)) lines.push(`${c.name}: corte ${fmt(o.c[0])}/${fmt(o.c[1])} → fases ${fmt(o.d[0])}/${fmt(o.d[1])}/${fmt(o.d[2])}; velocidad ${o.sp.toFixed(1)}; ${o.vote || 'sin voto'}`);
+    const isA = c === (A && A.clip), s = store.set[c.name], o = isA ? A.cfg : cfgOf(c, (s && s.pf) || 'combate');
+    if (isA || modified(c, o)) lines.push(lineOf(c, o, ''));
   }
+  if (dcmp()) lines.push(lineOf(B.clip, B.cfg, 'B '));
   $('out').value = lines.join('\n');
 }
-function commitA() { commit(A.clip, A.cfg); const ch = chars[0]; refreshUI(); schedTrail(); applyPose(); }
+function commitA() { commit(A.clip, A.cfg); resetHS(); refreshUI(); schedTrail(); applyPose(); }
 let trTimer = 0; function schedTrail() { cancelAnimationFrame(trTimer); trTimer = requestAnimationFrame(rebuildTrail); }
 
 /* lista de clips con filtros */
@@ -388,7 +512,7 @@ $('fDir').onchange = () => { store.fDir = $('fDir').value; save(); renderList();
 /* transporte */
 function setPlay(v) { playing = v; $('bPlay').textContent = v ? '⏸ Pausa' : '▶ Reproducir'; }
 $('bPlay').onclick = () => setPlay(!playing);
-function stepFrames(n) { setPlay(false); const s = span(); t = Math.min(Math.max(t + n * FRAME, 0), s); applyPose(); updateTime(); }
+function stepFrames(n) { setPlay(false); const ts = tShown(); resetHS(); const s = span(); t = Math.min(Math.max(ts + n * FRAME, 0), s); applyPose(); updateTime(); }
 $('bPrev').onclick = () => stepFrames(-1); $('bNext').onclick = () => stepFrames(1);
 $('cLoop').checked = store.loop !== false;
 $('cLoop').onchange = () => { store.loop = $('cLoop').checked; save(); };
@@ -397,7 +521,7 @@ function dragOn(el, fn) {
   el.addEventListener('pointerdown', e => { el.setPointerCapture(e.pointerId); fn(e); e.preventDefault(); });
   el.addEventListener('pointermove', e => { if (el.hasPointerCapture(e.pointerId)) fn(e); });
 }
-dragOn($('bar'), e => { const r = $('bar').getBoundingClientRect(); setPlay(false); t = Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1) * span(); applyPose(); updateTime(); });
+dragOn($('bar'), e => { const r = $('bar').getBoundingClientRect(); setPlay(false); resetHS(); t = Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1) * span(); applyPose(); updateTime(); });
 $('bar').addEventListener('keydown', e => { if (e.key === 'ArrowLeft') { stepFrames(-1); e.preventDefault(); } else if (e.key === 'ArrowRight') { stepFrames(1); e.preventDefault(); } });
 /* marcadores de corte (tiempo original) */
 function markerDrag(idx) {
@@ -410,7 +534,7 @@ function markerDrag(idx) {
 }
 markerDrag(0); markerDrag(1);
 sl.forEach((s, i) => s.oninput = () => { A.cfg.d[i] = Math.max(MIN_D, +s.value); const m = span(); if (t > m) t = m; commitA(); });
-$('bReset').onclick = () => { const df = defaults(A.clip); A.cfg.c = df.c; A.cfg.d = df.d; A.cfg.sp = 1; commitA(); };
+$('bReset').onclick = () => { const df = defaults(A.clip); A.cfg.c = df.c.slice(); A.cfg.d = A.cfg.prof.d.slice(); A.cfg.sp = 1; commitA(); };
 
 /* cámara */
 function frameDist() { return H * (compare ? 3.0 : 2.1) * (camera.aspect < 0.9 ? 1.5 : 1); }
@@ -428,16 +552,81 @@ $('cTrail').onchange = () => { store.trail = $('cTrail').checked; save(); trail.
 
 /* comparar */
 $('bCmp').onclick = async () => {
-  compare = !compare; $('bCmp').setAttribute('aria-pressed', compare); $('sB').hidden = !compare;
+  compare = !compare; $('bCmp').setAttribute('aria-pressed', compare); $('sB').hidden = !compare; $('rowPB').hidden = !compare;
   if (compare) {
     if (!chars[1]) { chars.push(makeChar(await parseGlb(), 0.9)); chars[1].skel.visible = store.skel; }
     chars[0].root.position.x = -0.9; chars[0].skel.visible = store.skel; chars[1].root.visible = true; chars[1].skel.visible = store.skel;
     const i = clips.indexOf(A.clip); selectB($('sB').value ? clips.find(c => c.name === $('sB').value) || clips[(i + 1) % clips.length] : clips[(i + 1) % clips.length]);
     $('sB').value = B.clip.name; trail.position.x = -0.9;
   } else { chars[0].root.position.x = 0; trail.position.x = 0; if (chars[1]) { chars[1].root.visible = false; chars[1].skel.visible = false; } }
-  t = 0; setView('front'); refreshUI(); applyPose();
+  resetHS(); t = 0; setView('front'); refreshUI(); applyPose();
 };
 $('sB').onchange = () => selectB(clips.find(c => c.name === $('sB').value));
+/* perfiles: selectores, interruptores y ficha */
+function fillPerfil(sel) { sel.innerHTML = ''; PF_KEYS.forEach(k => sel.add(new Option(PF_NAME[k] || k, k))); }
+fillPerfil($('sPerfil')); fillPerfil($('sPerfilB'));
+if (!PF_KEYS.includes(store.perfil)) store.perfil = 'combate'; if (!PF_KEYS.includes(store.perfilB)) store.perfilB = 'fluido_agil';
+$('sPerfil').value = store.perfil; $('sPerfilB').value = store.perfilB;
+$('sPerfil').onchange = () => {
+  store.perfil = $('sPerfil').value; const s = store.set[A.clip.name]; if (s) { delete s.d; delete s.pf; }   // elegir perfil re-temporiza el clip activo
+  save(); const keep = A.cfg.sp; A.cfg = cfgOf(A.clip, store.perfil); A.cfg.sp = keep; resetHS(); const m = span(); if (t > m) t = m;
+  refreshUI(); schedTrail(); applyPose();
+};
+$('sPerfilB').onchange = () => { store.perfilB = $('sPerfilB').value; if (B) { selectB(B.clip); } save(); };
+$('bSame').onclick = () => {
+  if (!compare) return;
+  if (store.perfilB === store.perfil) { store.perfilB = ['tactico_pesado', 'fluido_agil', 'preciso_defensivo'].find(k => k !== store.perfil && PF.perfiles[k]) || 'original'; $('sPerfilB').value = store.perfilB; }
+  $('sB').value = A.clip.name; save(); selectB(A.clip); t = 0;
+};
+const tg = (id, k, fn) => { $(id).checked = !!store[k]; $(id).onchange = () => { store[k] = $(id).checked; save(); if (fn) fn(); refreshUI(); applyPose(); }; };
+tg('cLunge', 'lunge'); tg('cHit', 'hit', resetHS); tg('cShake', 'shake'); tg('cArma', 'arma', () => { chars.forEach(c => c.clip && syncArma(c, c.clip)); });
+if (reduceMotion) { $('cShake').checked = false; $('cShake').disabled = true; $('cShake').parentNode.title = 'Desactivado por prefers-reduced-motion'; }
+
+const RASGOS = {
+  ataque_ligero: ['Dawnwalker: espada direccional de 4 direcciones; golpes medievales «pesados» con anticipación larga y legible.', 'Witcher 3: estilo de baile; pasos y pivotes de cuerpo que persiguen al objetivo; ligero ≈ 0,5–0,7 s [EST].', 'Fallen Order: cadenas fluidas con lunge corto y giro de hombros; ligero ≈ 0,4–0,55 s [EST].'],
+  ataque_fuerte_y_direccional: ['Dawnwalker: la dirección es el dato clave (icono de escudo); calavera roja = imbloqueable, se esquiva.', 'Witcher 3: el fuerte tiene anticipación visible y, si atacas pronto, quedas encerrado en la animación.', 'Fallen Order: el fuerte sacrifica velocidad; no se puede machacar el botón, defensa activa con postura.'],
+  parada_y_bloqueo: ['Dawnwalker: parada pulsando bloquear cuando el icono se pone naranja (≈ 0,2–0,3 s [EST]); no gasta aguante.', 'Witcher 3: mismo botón que el bloqueo, justo al llegar el golpe; el éxito abre contraataque (0,4 s en un mod).', 'Fallen Order: parada de ventana corta («medio segundo o menos»); rompe postura y permite remate.'],
+  remate: ['Dawnwalker: ataques y paradas cargan poderes y remates/ejecuciones.', 'Witcher 3: remates en cámara lenta al matar al último enemigo (≈ 1,5–2,5 s [EST]).', 'Fallen Order: la parada perfecta rompe postura y abre un remate corto, con chispas y retroceso.'],
+  mocap_y_animacion: ['Dawnwalker: captura con espadachines de época y mucho retoque posterior de animadores.', 'Witcher 3: captura con especialista en esgrima; muchísimo material de animación.', 'Fallen Order: animación física mezclada con animación autoral para reacciones.']
+};
+function catsDe(name) {
+  const f = name.split('_')[0].toLowerCase(), p = parseName(name);
+  if (f === 'ataque') return p.dir === 'arr' ? ['ataque_ligero', 'ataque_fuerte_y_direccional'] : ['ataque_ligero'];
+  if (f === 'contraataque') return ['parada_y_bloqueo', 'ataque_ligero'];
+  if (f === 'estocada' || f === 'embestida') return ['ataque_fuerte_y_direccional'];
+  if (f === 'remate') return ['remate'];
+  if (['parada', 'bloqueo', 'guardia', 'tambaleo'].includes(f) && !/^guardia_neu/.test(name)) return ['parada_y_bloqueo'];
+  return [];
+}
+const TIPO = { busqueda_youtube: 'búsqueda de YouTube, no un vídeo concreto', pagina_con_video: 'página con vídeo', articulo_sobre_charla: 'artículo sobre una charla' };
+let fichaKey = '';
+function buildFicha(force) {
+  const key = A.clip.name + '|' + store.perfil; if (!force && key === fichaKey) return; fichaKey = key;
+  const box = $('ficha'); box.textContent = '';
+  const cats = catsDe(A.clip.name), main = cats[0] || 'mocap_y_animacion';
+  const add = (tag, txt, cls) => { const e = document.createElement(tag); e.textContent = txt; if (cls) e.className = cls; box.appendChild(e); return e; };
+  add('p', 'Rasgos de sensación (' + main.replace(/_/g, ' ') + ')', 'small');
+  RASGOS[main].forEach(l => add('p', l));
+  if (A.cfg.prof.nota) add('p', 'Perfil ' + store.perfil + ': ' + A.cfg.prof.nota, 'small');
+  add('p', 'Valores [EST] = estimaciones a partir de descripciones; no hay frame data publicado. Solo enlaces, no se incrusta nada de esos juegos.', 'small');
+  const seen = new Set(), ul = document.createElement('ul');
+  cats.concat(['mocap_y_animacion']).forEach(c => (PF.videos[c] || []).forEach(v => {
+    if (seen.has(v.url) || !/^https:\/\//.test(v.url)) return; seen.add(v.url);
+    const li = document.createElement('li'), a = document.createElement('a');
+    a.href = v.url; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.textContent = v.titulo + ' (' + v.juego + ')';
+    const tag = document.createElement('span'); tag.className = 'tag'; tag.textContent = '[' + (TIPO[v.tipo] || v.tipo) + ']';
+    li.append(a, tag); ul.appendChild(li);
+  }));
+  box.appendChild(ul);
+}
+function refreshPerfil() {
+  const k = store.perfil, pr = PF.perfiles[k], o = A.cfg;
+  $('sPerfil').value = k;
+  $('pfDesc').textContent = pr ? pr.descripcion + ' Inspiración: ' + pr.inspiracion + '.' : k === 'original' ? 'Sin re-temporizar: duraciones del clip original (tramos entre los cortes).' : 'Valores actuales de la tabla de COMBATE.md §1.1 (sin lunge ni hit-stop definidos).';
+  const canc = PF.cancelacion_recuperacion_pct[k];
+  $('pfVals').textContent = o.prof.ent ? `lunge ${num(o.prof.lunge)} m${o.prof.lunge > LUNGE_MAX ? ' (visor limita a ' + LUNGE_MAX + ' m)' : ''} · hit-stop ${num(o.prof.hit)} ms` + (canc ? ` · cancelar a ${canc} % de la recuperación` : '') : 'Este clip no tiene fila en el perfil: usa la tabla de COMBATE.md (sin lunge ni hit-stop).';
+  buildFicha(false);
+}
 
 /* votos y copia */
 function vote(v) { A.cfg.vote = A.cfg.vote === v ? '' : v; commit(A.clip, A.cfg); refreshUI(); }
@@ -469,9 +658,7 @@ function loop(now) {
   requestAnimationFrame(loop);
   const dt = Math.min((now - last) / 1000, 0.1); last = now;
   if (A && playing) {
-    const s = span(); t += dt * A.cfg.sp;
-    if (t >= s) { if (loopOn()) t = s > 0 ? t % s : 0; else { t = s; setPlay(false); } }
-    applyPose(); updateTime();
+    advance(dt); updateTime();
   }
   controls.update();
   if (dirty) { renderer.render(scene, camera); dirty = false; }
@@ -498,11 +685,12 @@ function loop(now) {
 
 window.__VISOR__ = {
   srcTime,
-  state: () => ({ glb: GLB_NAME, clips: clips.length, clip: A && A.clip.name, clipB: compare && B ? B.clip.name : null, playing, loop: loopOn(), compare, t,
-    dur: A && A.clip.duration, total: total(A), cuts: A && A.cfg.c.slice(), d: A && A.cfg.d.slice(), speed: A && A.cfg.sp, vote: A && A.cfg.vote,
+  state: () => ({ glb: GLB_NAME, clips: clips.length, clip: A && A.clip.name, clipB: compare && B ? B.clip.name : null, playing, loop: loopOn(), compare, t: tShown(),
+    dur: A && A.clip.duration, total: total(A), perfil: store.perfil, perfilB: dcmp() ? store.perfilB : null, prof: A && { lunge: A.cfg.prof.lunge, hit: A.cfg.prof.hit, ent: A.cfg.prof.ent }, totalB: dcmp() ? total(B) : null, dB: dcmp() ? B.cfg.d.slice() : null, lt: A && A.lt, ltB: dcmp() ? B.lt : null, hold: !!(A && (A.hsAct || (dcmp() && B.hsAct))), lungeZ: chars[0] ? chars[0].root.position.z : 0, swordVisible: !!(chars[0] && chars[0].sword.visible && chars[0].sword.parent), shieldVisible: !!(chars[0] && chars[0].shield.visible && chars[0].shield.parent), span: span(), cuts: A && A.cfg.c.slice(), d: A && A.cfg.d.slice(), speed: A && A.cfg.sp, vote: A && A.cfg.vote,
     srcAtEnd: A && srcTime(total(A), A.cfg.c[0], A.cfg.c[1], A.clip.duration, A.cfg.d), handBone: !!(chars[0] && chars[0].hand), tabla: A && A.cfg.tabla }),
-  step: n => stepFrames(n),
-  pose: () => { const ch = chars[0]; return ch ? ch.action.time : 0; },
+  step: n => stepFrames(n), advance, lungeCurve, perfilDe: (n, k) => perfilDe(clips.find(c => c.name === n), k),
+  seek: v => { setPlay(false); resetHS(); t = Math.min(Math.max(v, 0), span()); applyPose(); updateTime(); },
+  pose: i => { const ch = chars[i || 0]; return ch ? ch.action.time : 0; },
 };
 </script>
 </body>

@@ -51,12 +51,64 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
     ok((await S()).cuts[0] > before, 'marcador de corte arrastrable');
     // extras
     await p.check('#cSkel'); await p.check('#cTrail'); s = await S(); ok(s.handBone, 'hueso mano derecha detectado (trayectoria)');
-    await p.click('#vOk'); await p.click('#bCopy'); const out = await p.inputValue('#out'); ok(/: corte \d+\.\d\d\/\d+\.\d\d → fases \d+\.\d\d\/\d+\.\d\d\/\d+\.\d\d; velocidad 1\.0; ok/.test(out), 'bloque de valores: ' + out.split('\n')[0]);
+    await p.click('#vOk'); await p.click('#bCopy'); const out = await p.inputValue('#out'); ok(/: perfil combate \(\+ajustes 0\.25\/0\.10\/0\.45\); lunge 0; hitstop 0; corte \d+\.\d\d\/\d+\.\d\d; velocidad 1\.0; ok/.test(out), 'bloque de valores: ' + out.split('\n')[0]);
     await p.fill('#q', 'zzzz'); ok((await p.locator('#clips button').count()) === 0, 'búsqueda filtra'); await p.fill('#q', '');
     await p.reload(); await p.waitForFunction(() => window.__VISOR__ && window.__VISOR__.state().clips > 0); s = await S();
     ok(s.clip === name && s.vote === 'ok' && Math.abs(s.total - 0.8) < 0.02, 'estado restaurado desde localStorage');
     // comparar
     await p.click('#bCmp'); await p.waitForFunction(() => window.__VISOR__.state().clipB, null, { timeout: 10000 }).catch(() => {}); await p.waitForTimeout(300); s = await S(); ok(s.compare && s.clipB && s.clipB !== s.clip, `comparar A=${s.clip} B=${s.clipB}`);
+    await p.click('#bCmp');   // fuera de comparar para probar perfiles con un solo personaje
+    // ---- perfiles
+    const pick = n => p.click(`#clips button[data-n="${n}"]`), perfil = k => p.selectOption('#sPerfil', k);
+    const setIn = (id, v) => p.evaluate(([id, v]) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('input')); }, [id, v]);
+    await pick('ataque_izq_EP_ual1_1');
+    for (const [k, e] of [['tactico_pesado', 0.76], ['fluido_agil', 0.48], ['preciso_defensivo', 0.60], ['combate', 0.60], ['original', 1.57]]) {
+      await perfil(k); s = await S(); const sm = s.d.reduce((a, v) => a + v, 0);
+      ok(s.perfil === k && Math.abs(s.total - e) <= 1 / 30 && Math.abs(s.total - sm) <= 1 / 30, `perfil ${k}: duración ${s.total.toFixed(3)} = suma de fases ${e}`);
+    }
+    await pick('contraataque_EE_ual2_1'); await perfil('fluido_agil'); s = await S();
+    ok(Math.abs(s.total - (0.10 * 1.17 + 0.09 + 0.30 * 1.17)) <= 1 / 30, `regla EE (x1.17 ant/rec): ${s.total.toFixed(3)} s`);
+    ok(s.shieldVisible && s.swordVisible, 'arma y escudo (EE) visibles');
+    await pick('ataque_izq_EP_ual1_1'); s = await S(); ok(s.swordVisible && !s.shieldVisible, 'espada sin escudo en EP');
+    await p.uncheck('#cArma'); s = await S(); ok(!s.swordVisible, 'interruptor «Mostrar arma»'); await p.check('#cArma');
+    await perfil('fluido_agil'); await setIn('d0', 0.22); await p.click('#bCopy'); let cp1 = (await p.inputValue('#out')).split('\n').find(l => l.startsWith('ataque_izq_EP_ual1_1')) || '';
+    ok(/ataque_izq_EP_ual1_1: perfil fluido_agil \(\+ajustes 0\.22\/0\.09\/0\.19\); lunge 0\.5; hitstop 40; /.test(cp1), 'copia con perfil+ajustes+lunge+hitstop: ' + cp1);
+    await perfil('tactico_pesado'); s = await S();
+    ok(Math.abs(s.total - 0.76) <= 1 / 30, 'deslizador manual descartado al cambiar de perfil');
+    // lunge
+    const lz = async v => { await p.evaluate(v => window.__VISOR__.seek(v), v); return (await S()).lungeZ; };
+    const d = s.d; const z0 = await lz(0), zA = await lz(d[0] + d[1]), zE = await lz(s.total), zM = await lz((d[0] + d[1]) / 2);
+    ok(Math.abs(z0) < 1e-6 && Math.abs(zA - 0.35) < 0.01 && Math.abs(zE) < 1e-6 && zM > 0 && zM < zA, `lunge 0.35 m: ${z0.toFixed(2)} -> ${zM.toFixed(2)} -> ${zA.toFixed(2)} -> ${zE.toFixed(2)} (vuelve a origen)`);
+    await p.uncheck('#cLunge'); ok(Math.abs(await lz(d[0] + d[1])) < 1e-6, 'lunge desactivable'); await p.check('#cLunge');
+    // hit-stop determinista con advance()
+    const hs = await p.evaluate(() => {
+      const V = window.__VISOR__; V.seek(0); const out = { frames: 0, poses: [], pos: [], shake: false };
+      for (let i = 0; i < 200 && !V.state().hold; i++) V.advance(1 / 60);
+      for (let i = 0; i < 40 && V.state().hold; i++) { out.frames++; out.poses.push(V.pose(0)); out.shake = out.shake || document.getElementById('cv').style.transform !== ''; V.advance(1 / 60); }
+      out.after = V.pose(0); out.c1 = V.state().cuts[1]; return out;
+    });
+    ok(hs.frames > 0 && Math.abs(hs.frames * 1000 / 60 - 70) <= 1000 / 60 + 1, `hit-stop 70 ms: ${hs.frames} fotogramas a 60 Hz congelados`);
+    ok(hs.poses.every(v => Math.abs(v - hs.poses[0]) < 1e-9 && Math.abs(v - hs.c1) < 2e-3) && hs.after > hs.c1, 'pose congelada en el fin del activo y luego continúa');
+    ok(hs.shake, 'temblor de cámara durante el hit-stop');
+    await p.uncheck('#cHit'); const hs2 = await p.evaluate(() => { const V = window.__VISOR__; V.seek(0); let h = false; for (let i = 0; i < 120; i++) { V.advance(1 / 60); h = h || V.state().hold; } return h; });
+    ok(!hs2, 'hit-stop desactivable'); await p.check('#cHit');
+    // ficha
+    const links = await p.$$eval('#ficha a', as => as.map(a => ({ h: a.href, t: a.target, x: a.textContent, rel: a.rel })));
+    const ftxt = await p.innerText('#ficha');
+    ok(links.length >= 3 && links.every(l => l.h.startsWith('https://') && l.t === '_blank' && /noopener/.test(l.rel) && /\(.+\)/.test(l.x)), `ficha: ${links.length} enlaces (_blank, con título y juego)`);
+    ok(/búsqueda de YouTube/.test(ftxt) && /Dawnwalker/.test(ftxt) && /Witcher 3/.test(ftxt) && /Fallen Order/.test(ftxt), 'ficha: rasgos por juego y búsquedas marcadas');
+    // comparar perfiles
+    await perfil('tactico_pesado'); await p.click('#bCmp'); await p.waitForTimeout(300); await p.click('#bSame'); await p.waitForTimeout(300); s = await S();
+    ok(s.compare && s.clipB === s.clip && s.perfilB !== s.perfil && Math.abs(s.totalB - s.total) > 0.1, `comparar perfiles ${s.perfil} vs ${s.perfilB}: ${s.total.toFixed(2)} vs ${s.totalB.toFixed(2)} s`);
+    const al = await p.evaluate(() => { const V = window.__VISOR__, st = V.state(), off = Math.max(st.d[0], st.dB[0]);
+      V.seek(off); const a = V.state(), pa = V.pose(0), pb = V.pose(1); return { lt: a.lt, ltB: a.ltB, d0: st.d[0], dB0: st.dB[0], pa, pb, c0: st.cuts[0] }; });
+    ok(Math.abs(al.lt - al.d0) < 1e-6 && Math.abs(al.ltB - al.dB0) < 1e-6 && Math.abs(al.pa - al.pb) < 1e-6 && Math.abs(al.pa - al.c0) < 1e-6, 'activo alineado: ambos empiezan el activo en el mismo instante');
+    await p.click('#views [data-v=side]'); await p.evaluate(() => window.__VISOR__.seek(window.__VISOR__.state().d[0] + window.__VISOR__.state().d[1])); await p.waitForTimeout(400);
+    if (r.n === 'escritorio') { await p.evaluate(() => document.getElementById('sPerfil').scrollIntoView({ block: 'start' })); await p.waitForTimeout(200); await p.screenshot({ path: path.join(caps, 'tmp3.png') }); toWebp(path.join(caps, 'tmp3.png'), path.join(caps, 'visor_escritorio_comparar_perfiles.webp')); }
+    await p.click('#bCmp'); await p.evaluate(() => window.__VISOR__.seek(0)); await perfil('combate');
+    ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'sin scroll horizontal (con perfiles)');
+    ok(await p.evaluate(() => { const f = document.getElementById('ficha').getBoundingClientRect(); return f.left >= 15 && f.right <= innerWidth - 15; }), 'ficha con 16 px de margen');
+    await p.click('#bCmp'); await p.waitForTimeout(200); await p.selectOption('#sB', 'ataque_abajo_EP_ual2_1'); await p.waitForTimeout(200);
     await p.click('#views [data-v=front]'); await p.waitForTimeout(500);
     if (r.n === 'escritorio') { await p.screenshot({ path: path.join(caps, 'tmp1.png') }); toWebp(path.join(caps, 'tmp1.png'), path.join(caps, 'visor_escritorio_comparar.webp')); }
     await p.click('#bCmp'); await p.click('#views [data-v=game]'); await p.waitForTimeout(400);
