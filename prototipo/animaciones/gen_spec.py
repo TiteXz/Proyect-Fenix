@@ -61,5 +61,10 @@ par("agachado_parado_{}_ual1_1","","ual1",[P("Crouch_Idle_Loop")],"Agachado para
 par("agachado_andar_{}_ual1_1","","ual1",[P("Crouch_Fwd_Loop")],"Agachado andando","Avance sigiloso agachado",True)
 par("rodar_adelante_{}_ual1_1","","ual1",[P("Roll")],"Voltereta adelante","Voltereta completa con root motion; ver notas (puede resultar acrobática)",cat="esquiva",cfgs=("EP",))
 par("rodar_atras_{}_ual1_1","","ual1",[INV("Roll")],"Voltereta atrás","DERIVADO: Roll en reproducción inversa",cat="esquiva",cfgs=("EP",))
+# ---------------- magia (gen_magia.py): clips de lanzamiento por forma, elemento, fusion, inestabilidad...
+import importlib.util, os
+_sp = importlib.util.spec_from_file_location("gen_magia", os.path.join(os.path.dirname(os.path.abspath(__file__)), "gen_magia.py"))
+_gm = importlib.util.module_from_spec(_sp); _sp.loader.exec_module(_gm)
+C += _gm.build()
 json.dump({"fuentes": {"ual1": u1, "ual2": u2}, "clips": C}, open(out, "w"), indent=1, ensure_ascii=False)
 print(len(C), "clips")

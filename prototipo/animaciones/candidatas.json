@@ -673,5 +673,2361 @@
   "espejo": false,
   "nota": "DERIVADO: Roll en reproducción inversa",
   "desplazamiento_m": 4.99
+ },
+ {
+  "clip": "magia_proyectil_base_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil",
+  "espejo": false,
+  "nota": "Empuje de palma: carga con el codo atras y el tronco girado, estira el brazo y abre la mano al salir el hechizo",
+  "forma": "proyectil",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_area_base_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Area",
+  "espejo": false,
+  "nota": "Arrojar a un punto lejano: el brazo sube atras en arco, el tronco carga y se lanza en zancada marcando el punto con el indice",
+  "forma": "area",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_base_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona",
+  "espejo": false,
+  "nota": "Zona: la mano se alza y baja hasta plantarse abierta en el suelo con la rodilla flexionada",
+  "forma": "zona",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_cono_base_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.23,
+  "bucle": false,
+  "cubre": "Magia: Cono",
+  "espejo": false,
+  "nota": "Chorro: brazo extendido, palma abierta; el tronco barre ~60 grados de derecha a izquierda mientras dura el chorro",
+  "forma": "cono",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.3,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.3
+   ],
+   "activo": [
+    0.3,
+    0.8
+   ],
+   "recuperacion": [
+    0.8,
+    1.2
+   ]
+  }
+ },
+ {
+  "clip": "magia_cono_canalizar_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Idle_Loop + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 2.1,
+  "bucle": true,
+  "cubre": "Magia: Cono sostenido (bucle)",
+  "espejo": false,
+  "nota": "Canalizar el chorro (bucle 2,1 s): brazo extendido, el tronco barre +-26 grados de lado a lado una vez por ciclo y la mano tiembla",
+  "forma": "cono",
+  "variante": "canalizar",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": null,
+  "fases": {
+   "activo": [
+    0.0,
+    2.1
+   ]
+  }
+ },
+ {
+  "clip": "magia_yo_base_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.23,
+  "bucle": false,
+  "cubre": "Magia: Yo",
+  "espejo": false,
+  "nota": "Gesto sobre uno mismo: la mano se lleva al pecho y se cierra en puño, el pecho se llena y se abre la mano al formarse el aura",
+  "forma": "yo",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.5,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.5
+   ],
+   "activo": [
+    0.5,
+    0.8
+   ],
+   "recuperacion": [
+    0.8,
+    1.2
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_fuego_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (fuego)",
+  "espejo": false,
+  "nota": "Fuego: la mano se abre, agarra (garra) y lanza con un latigazo brusco del tronco y paso adelante",
+  "forma": "proyectil",
+  "variante": "fuego",
+  "elemento": "fuego",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_hielo_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (hielo)",
+  "espejo": false,
+  "nota": "Hielo: dedos juntos y rigidos, carga corta y contenida, corte seco con la mano plana; el cuerpo apenas se mueve",
+  "forma": "proyectil",
+  "variante": "hielo",
+  "elemento": "hielo",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_luz_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (luz)",
+  "espejo": false,
+  "nota": "Luz: la palma sube abierta con el pecho erguido, arco amplio y sereno hacia delante; cabeza alta",
+  "forma": "proyectil",
+  "variante": "luz",
+  "elemento": "luz",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_rayo_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (rayo)",
+  "espejo": false,
+  "nota": "Rayo: dos dedos extendidos, casi sin carga y un tiron seco; temblor fino de la mano justo antes y tras el disparo",
+  "forma": "proyectil",
+  "variante": "rayo",
+  "elemento": "rayo",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_tierra_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (tierra)",
+  "espejo": false,
+  "nota": "Tierra: puno cerrado, el pie der. se alza y pisa al salir el hechizo; la cadera baja y el tronco se inclina con peso",
+  "forma": "proyectil",
+  "variante": "tierra",
+  "elemento": "tierra",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_sombra_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (sombra)",
+  "espejo": false,
+  "nota": "Sombra: el brazo cruza el pecho en arco envolvente y se abre en garra; cabeza gacha, movimiento lento y continuo",
+  "forma": "proyectil",
+  "variante": "sombra",
+  "elemento": "sombra",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_aire_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (aire)",
+  "espejo": false,
+  "nota": "Aire: la mano barre de dentro afuera con el brazo abierto y la muñeca girando; el tronco acompaña el arco",
+  "forma": "proyectil",
+  "variante": "aire",
+  "elemento": "aire",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_fuego_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (fuego)",
+  "espejo": false,
+  "nota": "Fuego: la mano abierta agarra (garra) el aire y lo estampa en el suelo de una palmada brusca",
+  "forma": "zona",
+  "variante": "fuego",
+  "elemento": "fuego",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_hielo_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (hielo)",
+  "espejo": false,
+  "nota": "Hielo: mano plana de dedos rigidos, una pausa tensa y se clava en el suelo de un corte vertical contenido",
+  "forma": "zona",
+  "variante": "hielo",
+  "elemento": "hielo",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_luz_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (luz)",
+  "espejo": false,
+  "nota": "Luz: la palma sube al cielo con el pecho abierto y baja serena y amplia hacia el suelo; cabeza alta",
+  "forma": "zona",
+  "variante": "luz",
+  "elemento": "luz",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_rayo_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (rayo)",
+  "espejo": false,
+  "nota": "Rayo: el indice apunta al suelo, tiembla un instante y se clava de un tiron seco",
+  "forma": "zona",
+  "variante": "rayo",
+  "elemento": "rayo",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_tierra_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (tierra)",
+  "espejo": false,
+  "nota": "Tierra: el pie der. sube y pisa con peso mientras el puño cae como un martillo; la cadera se hunde",
+  "forma": "zona",
+  "variante": "tierra",
+  "elemento": "tierra",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_sombra_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (sombra)",
+  "espejo": false,
+  "nota": "Sombra: la garra cruza el pecho y arrastra por el suelo en un barrido envolvente y lento, encorvado",
+  "forma": "zona",
+  "variante": "sombra",
+  "elemento": "sombra",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_aire_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (aire)",
+  "espejo": false,
+  "nota": "Aire: el brazo barra el suelo de dentro afuera en un arco amplio y la muñeca gira; el tronco acompaña",
+  "forma": "zona",
+  "variante": "aire",
+  "elemento": "aire",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_fusion_proyectil_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender)",
+  "duracion": 1.07,
+  "bucle": false,
+  "cubre": "Magia: fusion (2 elementos)",
+  "espejo": false,
+  "nota": "Fusion (2 piezas): las manos se juntan al centro, se frotan y se separan, y salen a la vez empujando hacia delante",
+  "forma": "proyectil",
+  "variante": "fusion_proyectil",
+  "elemento": "cualquiera",
+  "piezas": 2,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "ambas",
+  "t_disparo": 0.5,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.5
+   ],
+   "activo": [
+    0.5,
+    0.65
+   ],
+   "recuperacion": [
+    0.65,
+    1.05
+   ]
+  }
+ },
+ {
+  "clip": "magia_fusion_area_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender)",
+  "duracion": 1.63,
+  "bucle": false,
+  "cubre": "Magia: fusion (2 elementos)",
+  "espejo": false,
+  "nota": "Fusion de area: las manos se juntan y se separan, suben unidas sobre la cabeza y se lanzan hacia delante a la vez",
+  "forma": "area",
+  "variante": "fusion_area",
+  "elemento": "cualquiera",
+  "piezas": 2,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "ambas",
+  "t_disparo": 0.9,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.9
+   ],
+   "activo": [
+    0.9,
+    1.1
+   ],
+   "recuperacion": [
+    1.1,
+    1.6
+   ]
+  }
+ },
+ {
+  "clip": "magia_fusion_potencia_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender)",
+  "duracion": 1.5,
+  "bucle": false,
+  "cubre": "Magia: fusion (2 elementos) + Potencia",
+  "espejo": false,
+  "nota": "Fusion cargada (Potencia): las manos se juntan y se aprietan temblando, anticipacion larga y tensa; sale con un empuje mas fuerte",
+  "forma": "proyectil",
+  "variante": "fusion_potencia",
+  "elemento": "cualquiera",
+  "piezas": 2,
+  "modificador": "Potencia",
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "ambas",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.45
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_multiplicar_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil + Multiplicar",
+  "espejo": false,
+  "nota": "Multiplicar: el brazo carga cruzado y barre en abanico (~55 grados) abriendo la mano; los 3 proyectiles salen a lo largo del barrido",
+  "forma": "proyectil",
+  "variante": "multiplicar",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": "Multiplicar",
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  },
+  "t_disparos": [
+   0.4,
+   0.47,
+   0.55
+  ]
+ },
+ {
+  "clip": "magia_persistencia_canalizar_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Idle_Loop + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 2.1,
+  "bucle": true,
+  "cubre": "Magia: Persistencia / canalizacion",
+  "espejo": false,
+  "nota": "Mantener el hechizo (bucle 2,1 s): brazo tenso al frente, hombro algo alzado, dedos en garra y temblor leve de brazo y mano",
+  "forma": "proyectil",
+  "variante": "canalizar",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": "Persistencia",
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": null,
+  "fases": {
+   "activo": [
+    0.0,
+    2.1
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_inestable_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: proyectil inestable (I 20-50)",
+  "espejo": false,
+  "nota": "Lanzamiento inestable (I 20-50): el brazo tiembla, la mano se aparta, el hombro sube y la cara se contrae en una mueca de esfuerzo",
+  "forma": "proyectil",
+  "variante": "inestable",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "inestable",
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_sobrecarga_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.33,
+  "bucle": false,
+  "cubre": "Magia: proyectil sobrecarga",
+  "espejo": false,
+  "nota": "Sobrecarga: el exceso de potencia lanza el brazo hacia arriba y atras, el tronco se echa atras y el caballero retrocede medio paso (la cadera queda 0,30 m atras: root motion)",
+  "forma": "proyectil",
+  "variante": "sobrecarga",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "sobrecarga",
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.6
+   ],
+   "recuperacion": [
+    0.6,
+    1.3
+   ]
+  },
+  "desplazamiento_m": -0.3
+ },
+ {
+  "clip": "magia_proyectil_contragolpe_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: proyectil contragolpe",
+  "espejo": false,
+  "nota": "Contragolpe: el hechizo muerde al lanzador: sacudida de dolor, la mano se recoge al pecho y la otra la sujeta, se encorva y se tambalea con las rodillas flojas",
+  "forma": "proyectil",
+  "variante": "contragolpe",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "contragolpe",
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.5
+   ],
+   "recuperacion": [
+    0.5,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_fallo_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.13,
+  "bucle": false,
+  "cubre": "Magia: proyectil fallo (chispazo)",
+  "espejo": false,
+  "nota": "Fallo / chispazo: el gesto sale entero pero el hechizo se apaga; la mano se sacude, el brazo cae y los hombros se hunden",
+  "forma": "proyectil",
+  "variante": "fallo",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "fallo",
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.5
+   ],
+   "recuperacion": [
+    0.5,
+    1.1
+   ]
+  }
+ },
+ {
+  "clip": "magia_area_inestable_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: area inestable (I 20-50)",
+  "espejo": false,
+  "nota": "Lanzamiento inestable (I 20-50): el brazo tiembla, la mano se aparta, el hombro sube y la cara se contrae en una mueca de esfuerzo",
+  "forma": "area",
+  "variante": "inestable",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "inestable",
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_area_sobrecarga_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.73,
+  "bucle": false,
+  "cubre": "Magia: area sobrecarga",
+  "espejo": false,
+  "nota": "Sobrecarga: el exceso de potencia lanza el brazo hacia arriba y atras, el tronco se echa atras y el caballero retrocede medio paso (la cadera queda 0,30 m atras: root motion)",
+  "forma": "area",
+  "variante": "sobrecarga",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "sobrecarga",
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.7
+   ]
+  },
+  "desplazamiento_m": -0.3
+ },
+ {
+  "clip": "magia_area_contragolpe_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.93,
+  "bucle": false,
+  "cubre": "Magia: area contragolpe",
+  "espejo": false,
+  "nota": "Contragolpe: el hechizo muerde al lanzador: sacudida de dolor, la mano se recoge al pecho y la otra la sujeta, se encorva y se tambalea con las rodillas flojas",
+  "forma": "area",
+  "variante": "contragolpe",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "contragolpe",
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    0.9
+   ],
+   "recuperacion": [
+    0.9,
+    1.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_area_fallo_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: area fallo (chispazo)",
+  "espejo": false,
+  "nota": "Fallo / chispazo: el gesto sale entero pero el hechizo se apaga; la mano se sacude, el brazo cae y los hombros se hunden",
+  "forma": "area",
+  "variante": "fallo",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "fallo",
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    0.9
+   ],
+   "recuperacion": [
+    0.9,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_sinmana_abortado_EP_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter [0-0.25s] + Spell_Simple_Exit [0.15s-] + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle",
+  "duracion": 0.57,
+  "bucle": false,
+  "cubre": "Magia: sin mana / en recarga",
+  "espejo": false,
+  "nota": "Gesto abortado: la mano empieza a subir, se cierra en puño y baja; el hechizo no sale (sin t_disparo)",
+  "forma": "cualquiera",
+  "variante": "sin_mana",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EP",
+  "mano_lanzadora": "L",
+  "t_disparo": null,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.24
+   ],
+   "recuperacion": [
+    0.24,
+    0.55
+   ]
+  },
+  "estado": "sin_mana_o_recarga"
+ },
+ {
+  "clip": "magia_proyectil_base_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil",
+  "espejo": false,
+  "nota": "Empuje de palma: carga con el codo atras y el tronco girado, estira el brazo y abre la mano al salir el hechizo",
+  "forma": "proyectil",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_area_base_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Area",
+  "espejo": false,
+  "nota": "Arrojar a un punto lejano: el brazo sube atras en arco, el tronco carga y se lanza en zancada marcando el punto con el indice",
+  "forma": "area",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_base_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona",
+  "espejo": false,
+  "nota": "Zona: la mano se alza y baja hasta plantarse abierta en el suelo con la rodilla flexionada",
+  "forma": "zona",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_cono_base_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.23,
+  "bucle": false,
+  "cubre": "Magia: Cono",
+  "espejo": false,
+  "nota": "Chorro: brazo extendido, palma abierta; el tronco barre ~60 grados de derecha a izquierda mientras dura el chorro",
+  "forma": "cono",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.3,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.3
+   ],
+   "activo": [
+    0.3,
+    0.8
+   ],
+   "recuperacion": [
+    0.8,
+    1.2
+   ]
+  }
+ },
+ {
+  "clip": "magia_cono_canalizar_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Idle_Loop + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 2.1,
+  "bucle": true,
+  "cubre": "Magia: Cono sostenido (bucle)",
+  "espejo": false,
+  "nota": "Canalizar el chorro (bucle 2,1 s): brazo extendido, el tronco barre +-26 grados de lado a lado una vez por ciclo y la mano tiembla",
+  "forma": "cono",
+  "variante": "canalizar",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": null,
+  "fases": {
+   "activo": [
+    0.0,
+    2.1
+   ]
+  }
+ },
+ {
+  "clip": "magia_yo_base_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.23,
+  "bucle": false,
+  "cubre": "Magia: Yo",
+  "espejo": false,
+  "nota": "Gesto sobre uno mismo: la mano se lleva al pecho y se cierra en puño, el pecho se llena y se abre la mano al formarse el aura",
+  "forma": "yo",
+  "variante": "base",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.5,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.5
+   ],
+   "activo": [
+    0.5,
+    0.8
+   ],
+   "recuperacion": [
+    0.8,
+    1.2
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_fuego_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (fuego)",
+  "espejo": false,
+  "nota": "Fuego: la mano se abre, agarra (garra) y lanza con un latigazo brusco del tronco y paso adelante",
+  "forma": "proyectil",
+  "variante": "fuego",
+  "elemento": "fuego",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_hielo_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (hielo)",
+  "espejo": false,
+  "nota": "Hielo: dedos juntos y rigidos, carga corta y contenida, corte seco con la mano plana; el cuerpo apenas se mueve",
+  "forma": "proyectil",
+  "variante": "hielo",
+  "elemento": "hielo",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_luz_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (luz)",
+  "espejo": false,
+  "nota": "Luz: la palma sube abierta con el pecho erguido, arco amplio y sereno hacia delante; cabeza alta",
+  "forma": "proyectil",
+  "variante": "luz",
+  "elemento": "luz",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_rayo_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (rayo)",
+  "espejo": false,
+  "nota": "Rayo: dos dedos extendidos, casi sin carga y un tiron seco; temblor fino de la mano justo antes y tras el disparo",
+  "forma": "proyectil",
+  "variante": "rayo",
+  "elemento": "rayo",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_tierra_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (tierra)",
+  "espejo": false,
+  "nota": "Tierra: puno cerrado, el pie der. se alza y pisa al salir el hechizo; la cadera baja y el tronco se inclina con peso",
+  "forma": "proyectil",
+  "variante": "tierra",
+  "elemento": "tierra",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_sombra_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (sombra)",
+  "espejo": false,
+  "nota": "Sombra: el brazo cruza el pecho en arco envolvente y se abre en garra; cabeza gacha, movimiento lento y continuo",
+  "forma": "proyectil",
+  "variante": "sombra",
+  "elemento": "sombra",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_aire_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil (aire)",
+  "espejo": false,
+  "nota": "Aire: la mano barre de dentro afuera con el brazo abierto y la muñeca girando; el tronco acompaña el arco",
+  "forma": "proyectil",
+  "variante": "aire",
+  "elemento": "aire",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_fuego_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (fuego)",
+  "espejo": false,
+  "nota": "Fuego: la mano abierta agarra (garra) el aire y lo estampa en el suelo de una palmada brusca",
+  "forma": "zona",
+  "variante": "fuego",
+  "elemento": "fuego",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_hielo_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (hielo)",
+  "espejo": false,
+  "nota": "Hielo: mano plana de dedos rigidos, una pausa tensa y se clava en el suelo de un corte vertical contenido",
+  "forma": "zona",
+  "variante": "hielo",
+  "elemento": "hielo",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_luz_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (luz)",
+  "espejo": false,
+  "nota": "Luz: la palma sube al cielo con el pecho abierto y baja serena y amplia hacia el suelo; cabeza alta",
+  "forma": "zona",
+  "variante": "luz",
+  "elemento": "luz",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_rayo_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (rayo)",
+  "espejo": false,
+  "nota": "Rayo: el indice apunta al suelo, tiembla un instante y se clava de un tiron seco",
+  "forma": "zona",
+  "variante": "rayo",
+  "elemento": "rayo",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_tierra_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (tierra)",
+  "espejo": false,
+  "nota": "Tierra: el pie der. sube y pisa con peso mientras el puño cae como un martillo; la cadera se hunde",
+  "forma": "zona",
+  "variante": "tierra",
+  "elemento": "tierra",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_sombra_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (sombra)",
+  "espejo": false,
+  "nota": "Sombra: la garra cruza el pecho y arrastra por el suelo en un barrido envolvente y lento, encorvado",
+  "forma": "zona",
+  "variante": "sombra",
+  "elemento": "sombra",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_zona_aire_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: Zona (aire)",
+  "espejo": false,
+  "nota": "Aire: el brazo barra el suelo de dentro afuera en un arco amplio y la muñeca gira; el tronco acompaña",
+  "forma": "zona",
+  "variante": "aire",
+  "elemento": "aire",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_fusion_proyectil_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo L: pose de Idle_Shield_Loop",
+  "duracion": 1.07,
+  "bucle": false,
+  "cubre": "Magia: fusion (2 elementos)",
+  "espejo": false,
+  "nota": "Fusion (2 piezas): las manos se juntan al centro, se frotan y se separan, y salen a la vez empujando hacia delante",
+  "forma": "proyectil",
+  "variante": "fusion_proyectil",
+  "elemento": "cualquiera",
+  "piezas": 2,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "ambas",
+  "t_disparo": 0.5,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.5
+   ],
+   "activo": [
+    0.5,
+    0.65
+   ],
+   "recuperacion": [
+    0.65,
+    1.05
+   ]
+  }
+ },
+ {
+  "clip": "magia_fusion_area_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo L: pose de Idle_Shield_Loop",
+  "duracion": 1.63,
+  "bucle": false,
+  "cubre": "Magia: fusion (2 elementos)",
+  "espejo": false,
+  "nota": "Fusion de area: las manos se juntan y se separan, suben unidas sobre la cabeza y se lanzan hacia delante a la vez",
+  "forma": "area",
+  "variante": "fusion_area",
+  "elemento": "cualquiera",
+  "piezas": 2,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "ambas",
+  "t_disparo": 0.9,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.9
+   ],
+   "activo": [
+    0.9,
+    1.1
+   ],
+   "recuperacion": [
+    1.1,
+    1.6
+   ]
+  }
+ },
+ {
+  "clip": "magia_fusion_potencia_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo L: pose de Idle_Shield_Loop",
+  "duracion": 1.5,
+  "bucle": false,
+  "cubre": "Magia: fusion (2 elementos) + Potencia",
+  "espejo": false,
+  "nota": "Fusion cargada (Potencia): las manos se juntan y se aprietan temblando, anticipacion larga y tensa; sale con un empuje mas fuerte",
+  "forma": "proyectil",
+  "variante": "fusion_potencia",
+  "elemento": "cualquiera",
+  "piezas": 2,
+  "modificador": "Potencia",
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "ambas",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.45
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_multiplicar_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: Proyectil + Multiplicar",
+  "espejo": false,
+  "nota": "Multiplicar: el brazo carga cruzado y barre en abanico (~55 grados) abriendo la mano; los 3 proyectiles salen a lo largo del barrido",
+  "forma": "proyectil",
+  "variante": "multiplicar",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": "Multiplicar",
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  },
+  "t_disparos": [
+   0.4,
+   0.47,
+   0.55
+  ]
+ },
+ {
+  "clip": "magia_persistencia_canalizar_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Idle_Loop + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 2.1,
+  "bucle": true,
+  "cubre": "Magia: Persistencia / canalizacion",
+  "espejo": false,
+  "nota": "Mantener el hechizo (bucle 2,1 s): brazo tenso al frente, hombro algo alzado, dedos en garra y temblor leve de brazo y mano",
+  "forma": "proyectil",
+  "variante": "canalizar",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": "Persistencia",
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": null,
+  "fases": {
+   "activo": [
+    0.0,
+    2.1
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_inestable_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.9,
+  "bucle": false,
+  "cubre": "Magia: proyectil inestable (I 20-50)",
+  "espejo": false,
+  "nota": "Lanzamiento inestable (I 20-50): el brazo tiembla, la mano se aparta, el hombro sube y la cara se contrae en una mueca de esfuerzo",
+  "forma": "proyectil",
+  "variante": "inestable",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "inestable",
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.55
+   ],
+   "recuperacion": [
+    0.55,
+    0.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_sobrecarga_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.33,
+  "bucle": false,
+  "cubre": "Magia: proyectil sobrecarga",
+  "espejo": false,
+  "nota": "Sobrecarga: el exceso de potencia lanza el brazo hacia arriba y atras, el tronco se echa atras y el caballero retrocede medio paso (la cadera queda 0,30 m atras: root motion)",
+  "forma": "proyectil",
+  "variante": "sobrecarga",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "sobrecarga",
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.6
+   ],
+   "recuperacion": [
+    0.6,
+    1.3
+   ]
+  },
+  "desplazamiento_m": -0.3
+ },
+ {
+  "clip": "magia_proyectil_contragolpe_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: proyectil contragolpe",
+  "espejo": false,
+  "nota": "Contragolpe: el hechizo muerde al lanzador: sacudida de dolor, la mano se recoge al pecho y la otra la sujeta, se encorva y se tambalea con las rodillas flojas",
+  "forma": "proyectil",
+  "variante": "contragolpe",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "contragolpe",
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.5
+   ],
+   "recuperacion": [
+    0.5,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_proyectil_fallo_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.13,
+  "bucle": false,
+  "cubre": "Magia: proyectil fallo (chispazo)",
+  "espejo": false,
+  "nota": "Fallo / chispazo: el gesto sale entero pero el hechizo se apaga; la mano se sacude, el brazo cae y los hombros se hunden",
+  "forma": "proyectil",
+  "variante": "fallo",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "fallo",
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.4,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.4
+   ],
+   "activo": [
+    0.4,
+    0.5
+   ],
+   "recuperacion": [
+    0.5,
+    1.1
+   ]
+  }
+ },
+ {
+  "clip": "magia_area_inestable_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: area inestable (I 20-50)",
+  "espejo": false,
+  "nota": "Lanzamiento inestable (I 20-50): el brazo tiembla, la mano se aparta, el hombro sube y la cara se contrae en una mueca de esfuerzo",
+  "forma": "area",
+  "variante": "inestable",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "inestable",
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_area_sobrecarga_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.73,
+  "bucle": false,
+  "cubre": "Magia: area sobrecarga",
+  "espejo": false,
+  "nota": "Sobrecarga: el exceso de potencia lanza el brazo hacia arriba y atras, el tronco se echa atras y el caballero retrocede medio paso (la cadera queda 0,30 m atras: root motion)",
+  "forma": "area",
+  "variante": "sobrecarga",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "sobrecarga",
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    1.0
+   ],
+   "recuperacion": [
+    1.0,
+    1.7
+   ]
+  },
+  "desplazamiento_m": -0.3
+ },
+ {
+  "clip": "magia_area_contragolpe_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.93,
+  "bucle": false,
+  "cubre": "Magia: area contragolpe",
+  "espejo": false,
+  "nota": "Contragolpe: el hechizo muerde al lanzador: sacudida de dolor, la mano se recoge al pecho y la otra la sujeta, se encorva y se tambalea con las rodillas flojas",
+  "forma": "area",
+  "variante": "contragolpe",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "contragolpe",
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    0.9
+   ],
+   "recuperacion": [
+    0.9,
+    1.9
+   ]
+  }
+ },
+ {
+  "clip": "magia_area_fallo_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter + Spell_Simple_Shoot [0-0.5s] + Spell_Simple_Exit + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 1.53,
+  "bucle": false,
+  "cubre": "Magia: area fallo (chispazo)",
+  "espejo": false,
+  "nota": "Fallo / chispazo: el gesto sale entero pero el hechizo se apaga; la mano se sacude, el brazo cae y los hombros se hunden",
+  "forma": "area",
+  "variante": "fallo",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": "fallo",
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": 0.8,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.8
+   ],
+   "activo": [
+    0.8,
+    0.9
+   ],
+   "recuperacion": [
+    0.9,
+    1.5
+   ]
+  }
+ },
+ {
+  "clip": "magia_sinmana_abortado_EE_1",
+  "categoria": "magia",
+  "fuente": "Quaternius UAL1/UAL2 Standard (modificado)",
+  "licencia": "CC0 1.0",
+  "original": "Spell_Simple_Enter [0-0.25s] + Spell_Simple_Exit [0.15s-] + rotaciones aditivas (Blender); brazo fijo R: pose de Sword_Idle, L: pose de Idle_Shield_Loop",
+  "duracion": 0.57,
+  "bucle": false,
+  "cubre": "Magia: sin mana / en recarga",
+  "espejo": false,
+  "nota": "Gesto abortado: la mano empieza a subir, se cierra en puño y baja; el hechizo no sale (sin t_disparo)",
+  "forma": "cualquiera",
+  "variante": "sin_mana",
+  "elemento": "cualquiera",
+  "piezas": 1,
+  "modificador": null,
+  "inestabilidad": null,
+  "config": "EE",
+  "mano_lanzadora": "L",
+  "t_disparo": null,
+  "fases": {
+   "anticipacion": [
+    0.0,
+    0.24
+   ],
+   "recuperacion": [
+    0.24,
+    0.55
+   ]
+  },
+  "estado": "sin_mana_o_recarga"
  }
 ]

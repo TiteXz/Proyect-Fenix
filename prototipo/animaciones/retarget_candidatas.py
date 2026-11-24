@@ -13,7 +13,8 @@ se aplica al hueso homólogo (_l/_r) y la traslación X de la pelvis se invierte
 Extensiones (clips de magia, ver gen_magia.py); todas opcionales, los clips antiguos no las usan:
   "partes": [{"clip","t0","t1","dur"}]  "dur" (s) re-temporiza la parte (muestreo a fotogramas fraccionarios con mezcla)
   "espejo_grupo": ["brazo_l"|"brazo_r"]  refleja solo ese brazo (el resto sin espejo salvo "espejo")
-  "sobre": {"brazo_l": ["ual2","Idle_Shield_Loop"], "brazo_r": ["ual1","Sword_Idle"]}  el brazo sigue una pose fija de otro clip
+  "sobre": {"brazo_l": ["ual2","Idle_Shield_Loop", [[t,w],..]], "brazo_r": ["ual1","Sword_Idle"]}  el brazo sigue una pose fija de otro
+     clip (relativa al hombro); el 3er elemento opcional es el peso de mezcla con el clip base (0 = pose fija, 1 = base)
   "ajustes": [{"b": hueso, "modo": "w"|"l", "k": [[t, rx, ry, rz], ...], "osc": {"amp":[..],"hz":f,"fase":p,"env":[[t,g],..]}}]
      rotaciones aditivas (grados) sobre el movimiento original. modo "w": ejes del personaje (x=derecha, y=delante, z=arriba)
      aplicadas en el pivote del hueso a toda su cadena; modo "l": ejes del propio hueso (dedos). "b":"pelvis_loc" = desplazamiento (m).
@@ -111,7 +112,7 @@ def grupo_huesos(g, nombres):
 
 def poses_sobre(spec):
     """Poses fijas de brazo (hueso -> (rot, loc)) de otros clips, para los brazos que no lanzan (escudo, espada)."""
-    claves = {tuple(v) for c in spec["clips"] for v in (c.get("sobre") or {}).values()}
+    claves = {tuple(v[:2]) for c in spec["clips"] for v in (c.get("sobre") or {}).values()}
     res = {}
     for fuente, clip in claves:
         ob, ab = set(bpy.data.objects), set(bpy.data.actions)
@@ -221,7 +222,7 @@ def main():
         nombres_src = [b.name for b in src.data.bones]
         sname = {t: s_ for s_, t, _ in pairs}
         sobre_rel = {}
-        for ky in {tuple(v) for c in clips for v in (c.get("sobre") or {}).values()}:
+        for ky in {tuple(v[:2]) for c in clips for v in (c.get("sobre") or {}).values()}:
             for bn, (q_, l_) in sobre_poses[ky].items():
                 if bn in src.pose.bones: src.pose.bones[bn].rotation_quaternion = q_
             bpy.context.view_layer.update()
@@ -297,8 +298,11 @@ def main():
                         elif t in mgrupo and pn in DL:   # brazo reflejado: movimiento relativo al hombro, sobre el tronco real
                             DL[t] = DL[pn] @ mq(raw[mirror_name(sname[pn])].inverted() @ raw[mirror_name(s)])
                         elif t in sobre_t and pn in DL:  # brazo que sigue una pose fija: relativo al hombro
-                            ky = tuple(sobre_c["brazo_" + t[-1]])
+                            sv = sobre_c["brazo_" + t[-1]]
+                            ky = tuple(sv[:2])
                             DL[t] = DL[pn] @ (sobre_rel[ky][pn].inverted() @ sobre_rel[ky][t])
+                            if len(sv) > 2:   # peso (0 = pose fija, 1 = movimiento del clip base) segun el tiempo
+                                DL[t] = DL[t].slerp(raw[s], curva(sv[2], fo / FPS, True)[0])
                         else:
                             DL[t] = raw[s]
                     spel = (smw @ src.pose.bones["pelvis"].matrix).to_translation()

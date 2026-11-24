@@ -33,6 +33,13 @@ for c in spec["clips"]:
     if e["bucle"] and e["categoria"] == "locomocion" and base in VEL: e["velocidad_ms"] = VEL[base]
     if e["categoria"] == "esquiva" and base in DESPL: e["desplazamiento_m"] = DESPL[base]
     if c.get("escudo"): e["config_escudo"] = True
+    if c.get("meta"):   # clips de magia (gen_magia.py): campos propios para que el visor/juego sincronicen el efecto
+        m = dict(c["meta"]); e["bucle"] = bool(m.pop("bucle", c.get("bucle")))
+        e["fuente"] = "Quaternius UAL1/UAL2 Standard (modificado)"
+        sob = ", ".join(f"{g[-1].upper()}: pose de {v[1]}" for g, v in (c.get("sobre") or {}).items())
+        e["original"] += " + rotaciones aditivas (Blender)" + (f"; brazo fijo {sob}" if sob else "")
+        e["cubre"] = c["cubre"]
+        e.update(m)
     res.append(e)
 json.dump(res, open(out, "w"), indent=1, ensure_ascii=False)
 print(len(res), "clips ->", out)
