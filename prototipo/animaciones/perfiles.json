@@ -1,0 +1,79 @@
+{
+  "version": 1,
+  "unidades": "segundos para fases, metros para lunge_m, milisegundos para hitstop_ms",
+  "base": "valores EP (solo espada); EE = fases de anticipacion y recuperacion x1.17, activo x1.0",
+  "aviso": "Casi todos los valores son estimaciones [EST] a partir de descripciones cualitativas; no hay frame data publicado. Validar en playtest.",
+  "cancelacion_recuperacion_pct": { "tactico_pesado": 60, "fluido_agil": 30, "preciso_defensivo": 45 },
+  "perfiles": {
+    "tactico_pesado": {
+      "descripcion": "Cada golpe es un compromiso; peso medieval, recuperaciones largas.",
+      "inspiracion": "Dawnwalker (peso medieval, direccional), jefes tipo Souls",
+      "acciones": {
+        "ligero_lateral": { "anticipacion": 0.34, "activo": 0.10, "recuperacion": 0.32, "lunge_m": 0.35, "hitstop_ms": 70, "notas": "giro de cadera amplio, paso adelante marcado" },
+        "ligero_arriba":  { "anticipacion": 0.40, "activo": 0.10, "recuperacion": 0.35, "lunge_m": 0.40, "hitstop_ms": 90, "notas": "tajo vertical con todo el peso" },
+        "ligero_abajo":   { "anticipacion": 0.34, "activo": 0.12, "recuperacion": 0.32, "lunge_m": 0.30, "hitstop_ms": 70, "notas": "barrido bajo" },
+        "parada_perfecta": { "anticipacion": 0.06, "activo": 0.12, "recuperacion": 0.24, "lunge_m": 0.0, "hitstop_ms": 90, "notas": "choque visible, retroceso del enemigo" },
+        "bloqueo":        { "anticipacion": 0.0, "activo": 0.0, "recuperacion": 0.34, "lunge_m": 0.0, "hitstop_ms": 50, "notas": "empuje hacia atras del jugador 0.2 m" },
+        "contraataque":   { "anticipacion": 0.14, "activo": 0.10, "recuperacion": 0.42, "lunge_m": 0.50, "hitstop_ms": 110, "notas": "recompensa fuerte, recuperacion larga" },
+        "habilidad":      { "anticipacion": 0.24, "activo": 0.15, "recuperacion": 0.42, "lunge_m": 3.5, "hitstop_ms": 100, "notas": "estocada de quiebre / embestida" },
+        "remate":         { "anticipacion": 0.30, "activo": 0.60, "recuperacion": 0.55, "lunge_m": 0.8, "hitstop_ms": 140, "notas": "camara lenta breve en el impacto" },
+        "guardia_rota":   { "anticipacion": 0.0, "activo": 0.0, "recuperacion": 1.10, "lunge_m": 0.0, "hitstop_ms": 0, "notas": "tambaleo largo" }
+      }
+    },
+    "fluido_agil": {
+      "descripcion": "Cadenas rapidas y cancelaciones tempranas; ritmo de baile.",
+      "inspiracion": "Fallen Order (cadenas ligeras), Witcher 3 (pasos y pivotes)",
+      "acciones": {
+        "ligero_lateral": { "anticipacion": 0.20, "activo": 0.09, "recuperacion": 0.19, "lunge_m": 0.50, "hitstop_ms": 40, "notas": "pivote de hombros, magnetismo al objetivo" },
+        "ligero_arriba":  { "anticipacion": 0.24, "activo": 0.10, "recuperacion": 0.22, "lunge_m": 0.60, "hitstop_ms": 50, "notas": "" },
+        "ligero_abajo":   { "anticipacion": 0.21, "activo": 0.10, "recuperacion": 0.20, "lunge_m": 0.45, "hitstop_ms": 40, "notas": "" },
+        "parada_perfecta": { "anticipacion": 0.04, "activo": 0.10, "recuperacion": 0.16, "lunge_m": 0.0, "hitstop_ms": 50, "notas": "contraataque casi inmediato" },
+        "bloqueo":        { "anticipacion": 0.0, "activo": 0.0, "recuperacion": 0.26, "lunge_m": 0.0, "hitstop_ms": 30, "notas": "" },
+        "contraataque":   { "anticipacion": 0.10, "activo": 0.09, "recuperacion": 0.30, "lunge_m": 0.80, "hitstop_ms": 60, "notas": "" },
+        "habilidad":      { "anticipacion": 0.16, "activo": 0.14, "recuperacion": 0.32, "lunge_m": 4.0, "hitstop_ms": 70, "notas": "" },
+        "remate":         { "anticipacion": 0.22, "activo": 0.50, "recuperacion": 0.42, "lunge_m": 0.6, "hitstop_ms": 100, "notas": "" },
+        "guardia_rota":   { "anticipacion": 0.0, "activo": 0.0, "recuperacion": 0.90, "lunge_m": 0.0, "hitstop_ms": 0, "notas": "" }
+      }
+    },
+    "preciso_defensivo": {
+      "descripcion": "Parada y lectura direccional; ritmo cercano al actual de COMBATE.md (base recomendada).",
+      "inspiracion": "Dawnwalker (direccion + parada con aviso), Fallen Order (postura y bloqueo)",
+      "acciones": {
+        "ligero_lateral": { "anticipacion": 0.26, "activo": 0.10, "recuperacion": 0.24, "lunge_m": 0.20, "hitstop_ms": 55, "notas": "" },
+        "ligero_arriba":  { "anticipacion": 0.30, "activo": 0.10, "recuperacion": 0.28, "lunge_m": 0.25, "hitstop_ms": 65, "notas": "" },
+        "ligero_abajo":   { "anticipacion": 0.26, "activo": 0.12, "recuperacion": 0.26, "lunge_m": 0.20, "hitstop_ms": 55, "notas": "" },
+        "parada_perfecta": { "anticipacion": 0.05, "activo": 0.12, "recuperacion": 0.18, "lunge_m": 0.0, "hitstop_ms": 80, "notas": "chispa y destello al desviar" },
+        "bloqueo":        { "anticipacion": 0.0, "activo": 0.0, "recuperacion": 0.30, "lunge_m": 0.0, "hitstop_ms": 40, "notas": "" },
+        "contraataque":   { "anticipacion": 0.10, "activo": 0.10, "recuperacion": 0.34, "lunge_m": 0.40, "hitstop_ms": 90, "notas": "" },
+        "habilidad":      { "anticipacion": 0.20, "activo": 0.15, "recuperacion": 0.40, "lunge_m": 4.0, "hitstop_ms": 90, "notas": "" },
+        "remate":         { "anticipacion": 0.25, "activo": 0.55, "recuperacion": 0.50, "lunge_m": 0.7, "hitstop_ms": 120, "notas": "" },
+        "guardia_rota":   { "anticipacion": 0.0, "activo": 0.0, "recuperacion": 1.00, "lunge_m": 0.0, "hitstop_ms": 0, "notas": "" }
+      }
+    }
+  },
+  "videos": {
+    "ataque_ligero": [
+      { "titulo": "Busqueda: Witcher 3 sword combat showcase", "juego": "The Witcher 3", "url": "https://www.youtube.com/results?search_query=witcher+3+sword+combat+showcase", "tipo": "busqueda_youtube" },
+      { "titulo": "Busqueda: Jedi Fallen Order lightsaber combos", "juego": "Star Wars Jedi: Fallen Order", "url": "https://www.youtube.com/results?search_query=jedi+fallen+order+lightsaber+combos", "tipo": "busqueda_youtube" }
+    ],
+    "ataque_fuerte_y_direccional": [
+      { "titulo": "Designing Dawnwalker's combat (entrevista Game Informer)", "juego": "The Blood of Dawnwalker", "url": "https://gameinformer.com/video-interview/2026/07/10/designing-the-blood-of-dawnwalkers-combat-to-be-immersive", "tipo": "pagina_con_video" },
+      { "titulo": "Busqueda: Dawnwalker directional combat", "juego": "The Blood of Dawnwalker", "url": "https://www.youtube.com/results?search_query=blood+of+dawnwalker+directional+combat+parry+gameplay", "tipo": "busqueda_youtube" }
+    ],
+    "parada_y_bloqueo": [
+      { "titulo": "Busqueda: Witcher 3 parry counter timing", "juego": "The Witcher 3", "url": "https://www.youtube.com/results?search_query=witcher+3+parry+counter+timing", "tipo": "busqueda_youtube" },
+      { "titulo": "Busqueda: Jedi Fallen Order parry timing", "juego": "Star Wars Jedi: Fallen Order", "url": "https://www.youtube.com/results?search_query=jedi+fallen+order+parry+timing", "tipo": "busqueda_youtube" }
+    ],
+    "esquiva": [
+      { "titulo": "Resumen del reveal de gameplay (esquiva perfecta, direcciones)", "juego": "The Blood of Dawnwalker", "url": "https://en.bandainamcoent.eu/dawnwalker/news/the-blood-of-dawnwalker-gameplay-reveal-recap", "tipo": "pagina_con_video" }
+    ],
+    "remate": [
+      { "titulo": "Busqueda: Witcher 3 finishers slow motion", "juego": "The Witcher 3", "url": "https://www.youtube.com/results?search_query=witcher+3+finishers+slow+motion", "tipo": "busqueda_youtube" },
+      { "titulo": "Busqueda: Jedi Fallen Order execution finisher", "juego": "Star Wars Jedi: Fallen Order", "url": "https://www.youtube.com/results?search_query=jedi+fallen+order+execution+finisher", "tipo": "busqueda_youtube" }
+    ],
+    "mocap_y_animacion": [
+      { "titulo": "Capturing the animations and combat for The Witcher 3 (Game Informer, 2013)", "juego": "The Witcher 3", "url": "https://www.gameinformer.com/b/features/archive/2013/02/22/capturing-the-animations-and-combat-for-the-witcher-3-wild-hunt.aspx", "tipo": "pagina_con_video" },
+      { "titulo": "GDC 2020: physical animation in Jedi Fallen Order (B. Waszak)", "juego": "Star Wars Jedi: Fallen Order", "url": "https://80.lv/articles/gdc-2020-talk-on-physical-animation-in-star-wars-jedi-fallen-order", "tipo": "articulo_sobre_charla" }
+    ]
+  }
+}
