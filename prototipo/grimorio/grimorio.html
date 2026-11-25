@@ -131,6 +131,7 @@ const eout = x => 1 - Math.pow(1 - x, 3);
 const backOut = x => { const c1 = 1.25, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
 
 /* ------------------------------------------------------------------ datos */
+const HOVER = 0.024;                                                       // altura a la que flota la hoja nueva mientras se forma (m)
 const W = 0.205, H = 0.285, T = 0.046, C = 0.0065, OV = 0.006;          // libro (m): hoja, bloque de páginas, tapa, vuelo de la tapa
 const PW = 640, PH = 890;                                                // lienzo de cada página (px)
 const ELEM = {
@@ -361,6 +362,7 @@ function penAlong(ops, Lmax) { let acc = 0; for (const op of ops) { if (acc + op
 
 // Tiempos de escritura de la hoja (s, relativos al comienzo de la tinta). La GUIA_UI §3.2 pide ≈ 3,2 s; aquí va algo más lento para poder verla.
 const WT = { circ: 2.3, name0: 2.35, name1: 2.95, sub0: 2.85, sub1: 3.25, stat0: 3.05, stat1: 3.4, seal0: 3.55, seal1: 3.8, end: 4.3 };
+const NT = { part: 1.65, settle: 4.6, write: 5.2 };   // hechizo nuevo: comienzo de partículas, hoja que se posa, tinta
 const SPELL_LAYOUT = { cx: PW / 2, cy: 452, D: 410, rowY: 742, rowS: 46, nameY: 156, subY: 198, statY: 812, seal: [PW - 150, PH - 100, 44] };
 const OPS_CACHE = {};
 function spellOps(key) {
@@ -756,11 +758,11 @@ function buildBook() {
       float vn21(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h21(i), h21(i+vec2(1,0)), f.x), mix(h21(i+vec2(0,1)), h21(i+vec2(1,1)), f.x), f.y); }`)
       .replace('#include <map_fragment>', `#include <map_fragment>
       float nz = 0.55*vn21(vUv*vec2(9.0,12.0)) + 0.3*vn21(vUv*vec2(23.0,31.0)) + 0.15*vn21(vUv*70.0);
-      float dd = (nz*0.75 + (1.0 - vUv.x)*0.25) - uReveal;
+      float dd = (nz*0.7 + length(vUv - 0.5)*0.45) - uReveal;
       if (dd > 0.0) discard;
       float edgeGlow = 1.0 - smoothstep(0.0, 0.07, -dd);`)
       .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-      totalEmissiveRadiance += uEdge * edgeGlow * 7.0;`);
+      totalEmissiveRadiance += uEdge * edgeGlow * 2.6;`);
   };
   newSheet = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.985, H * 0.985), newSheetMat); newSheet.visible = false; newSheet.castShadow = true; book.add(newSheet);
   // marcapáginas de tela: pestañas que asoman por el canto derecho (GUIA_UI §2.1)
@@ -787,18 +789,18 @@ function buildBook() {
   hands.l = makeHand(glove, sleeve, trim); hands.l.scale.x = -1; book.add(hands.l);
   hands.r.traverse(o => { if (o.isMesh) o.castShadow = true; });
   // luz del canto (hoja nueva)
-  edgeLight = new THREE.PointLight(0xffaa55, 0, 0.6, 2); edgeLight.position.set(W + 0.04, 0, T / 2 + 0.02); book.add(edgeLight);
+  edgeLight = new THREE.PointLight(0xffaa55, 0, 0.6, 2); edgeLight.position.set(W / 2, 0, T / 2 + 0.07); book.add(edgeLight);
 }
 /* Partículas que forman la hoja: viajan por una curva con remolino y aterrizan sobre la parte que asoma del canto. */
 function buildParticles() {
   const N = 2600, R = mulberry32(99), aS = new Float32Array(N * 3), aC = new Float32Array(N * 3), aE = new Float32Array(N * 3), aR = new Float32Array(N * 4);
   for (let i = 0; i < N; i++) {
-    const u = 0.38 + R() * 0.62, v = R(), ey = (v - 0.5) * H * 0.985, ez = T / 2 - 0.004 + (R() - 0.5) * 0.002;
-    const sx = W / 2 + W * 0.62 + (u - 0.5) * W * 0.985;
+    const u = R(), v = R(), ey = (v - 0.5) * H * 0.985, ez = T / 2 + 0.0012 + HOVER + (R() - 0.5) * 0.002;
+    const sx = W / 2 + (u - 0.5) * W * 0.985;
     aE.set([sx, ey, ez], i * 3);
     const th = R() * 2 * PI, ph = Math.acos(2 * R() - 1), rad = 0.22 + R() * 0.32;
-    const st = [W * 0.8 + Math.sin(ph) * Math.cos(th) * rad, Math.cos(ph) * rad * 0.8, 0.06 + Math.abs(Math.sin(ph) * Math.sin(th)) * rad];
-    if (R() < 0.25) { st[0] = W * 0.9 + (R() - 0.3) * 0.1; st[1] = -H * 0.7 - R() * 0.15; st[2] = 0.02 + R() * 0.08; }   // parte sube del costado (del bolso)
+    const st = [W * 0.55 + Math.sin(ph) * Math.cos(th) * rad, Math.cos(ph) * rad * 0.8, 0.06 + Math.abs(Math.sin(ph) * Math.sin(th)) * rad];
+    if (R() < 0.25) { st[0] = W * 0.95 + (R() - 0.3) * 0.1; st[1] = -H * 0.7 - R() * 0.15; st[2] = 0.02 + R() * 0.08; }   // parte sube del costado (del bolso)
     aS.set(st, i * 3);
     aC.set([lerp(st[0], sx, 0.5) + (R() - 0.5) * 0.18, lerp(st[1], ey, 0.5) + (R() - 0.5) * 0.18, Math.max(st[2], 0.05) + 0.06 + R() * 0.12], i * 3);
     const delay = 0.15 + Math.pow(R(), 0.8) * 1.6 + (1 - u) * 0.15;
@@ -814,7 +816,7 @@ function buildParticles() {
         vec3 a = mix(aStart, aCtrl, e), b = mix(aCtrl, aEnd, e), pos = mix(a, b, e);
         vec3 d = pos - aEnd; float ang = (1.0 - e) * (2.2 + aR.z * 2.5); float cs = cos(ang), sn = sin(ang); d.xz = mat2(cs, -sn, sn, cs) * d.xz; pos = aEnd + d;
         pos += 0.006 * (1.0 - e) * vec3(sin(uT*7.0 + aR.z*40.0), cos(uT*6.0 + aR.z*31.0), sin(uT*5.0 + aR.z*17.0));
-        float after = uT - (aR.x + aR.y); pos.x -= uSlide * step(0.0, after);
+        float after = uT - (aR.x + aR.y); pos.z -= uSlide * step(0.0, after);
         float land = after > 0.0 ? exp(-after * 7.0) : 1.0;
         vA = step(aR.x, uT) * smoothstep(0.0, 0.12, p) * land;
         float flare = after > 0.0 ? exp(-after * 12.0) : 0.0;
@@ -904,22 +906,26 @@ const TL = {
     eval(t, S) { TL.abrir().eval(4.0 - t * (4.0 / 2.8), S); const sp = SPREADS[from || 'hechizos']; S.left = sp[0]; S.right = sp[1]; for (const s of S.sheets) { s.front = sp[1]; s.back = sp[0]; } S.spread = from; },
   }),
   nuevo: (key) => ({
-    name: 'nuevo', dur: 4.0 + WT.end + 0.6, spread: 'nuevo', open: true,
+    // Orden: 1) se pasan las páginas hasta el final del grimorio, 2) las partículas forman la hoja nueva sobre la página
+    // vacía, 3) la hoja se posa y 4) la tinta escribe círculo, nombre y sello.
+    name: 'nuevo', dur: NT.write + WT.end + 0.6, spread: 'nuevo', open: true,
     eval(t, S) {
-      poseSet(S, POSE.read); poseTo(S, POSE.focus, eio(seg(t, 3.7, 4.5)));
+      poseSet(S, POSE.read); poseTo(S, POSE.focus, eio(seg(t, 1.3, 2.2)));
       S.cover = 0; S.blur = 1; S.dim = lerp(0.5, 0.36, smooth(seg(t, 0, 0.8))); S.pitch = -0.2; S.leftHand = 1; S.menuGlow = 1; S.open = true; S.spread = 'hechizos';
-      S.partT = t; S.reveal = seg(t, 0.75, 2.85) * 1.12; S.slide = eio(seg(t, 2.8, 3.3)); S.newOn = t > 0.7 && t < 3.45;
-      S.edge = smooth(seg(t, 0.2, 1.2)) * (1 - seg(t, 3.0, 3.6));
       const fronts = ['hechizos_der', 'hoja_yskavel', 'hoja_silavar'], backs = ['notas_a', 'notas_b', 'nuevo_izq'];
       S.left = 'hechizos_izq'; S.right = 'hechizos_der';
       for (let k = 0; k < 3; k++) {
-        const p = seg(t, 3.15 + 0.3 * k, 3.8 + 0.3 * k);
-        if (p > 0) S.right = k < 2 ? fronts[k + 1] : 'nuevo_der';
+        const p = seg(t, 0.35 + 0.3 * k, 1.0 + 0.3 * k);
+        if (p > 0) S.right = k < 2 ? fronts[k + 1] : 'vacia';
         if (p >= 1) S.left = backs[k];
         if (p > 0 && p < 1) S.sheets.push({ theta: PI * eio(p), curl: 1, front: fronts[k], back: backs[k], lift: 0.0006 * (k + 1) });
       }
-      const tw = t - 4.0; S.write = { key, tw }; S.sparkT = tw;
-      if (t > 4.4) S.spread = 'nuevo';
+      const pt = t - NT.part; S.partT = pt;
+      S.reveal = seg(pt, 0.75, 2.85) * 1.12; S.slide = eio(seg(t, NT.settle, NT.settle + 0.4)); S.newOn = pt > 0.7 && t < NT.settle + 0.45;
+      S.edge = smooth(seg(pt, 0.1, 1.1)) * (1 - seg(t, NT.settle, NT.settle + 0.6));
+      if (t >= NT.settle + 0.45) S.right = 'nuevo_der';
+      const tw = t - NT.write; S.write = { key, tw }; S.sparkT = tw;
+      if (t > NT.part) S.spread = 'nuevo';
       S.shake = tw > WT.seal1 - 0.05 ? Math.exp(-(tw - WT.seal1) * 9) * (tw < WT.seal1 + 0.6 ? 1 : 0) : 0;
       if (t >= this.dur - 0.6) poseTo(S, POSE.read, eio(seg(t, this.dur - 0.6, this.dur)) * 0.5);
     },
@@ -969,10 +975,10 @@ function applyState(S, time) {
   newSheet.visible = S.newOn;
   if (S.newOn) {
     setPage(newSheetMat, 'blanca'); newSheetMat.userData.u.uReveal.value = S.reveal;
-    newSheet.position.set(W / 2 + W * 0.62 * (1 - S.slide), 0, T / 2 - 0.004);
+    newSheet.position.set(W / 2, 0, T / 2 + 0.0012 + HOVER * (1 - S.slide));
     newSheetMat.emissiveIntensity = 0.5;
   }
-  parts.visible = S.partT >= 0 && S.partT < 4.2; partMat.uniforms.uT.value = S.partT; partMat.uniforms.uSlide.value = W * 0.62 * S.slide;
+  parts.visible = S.partT >= 0 && S.partT < 3.6; partMat.uniforms.uT.value = S.partT; partMat.uniforms.uSlide.value = HOVER * S.slide;
   sparks.visible = S.sparkT >= 0 && S.sparkT < WT.end + 1.5; sparkMat.uniforms.uT.value = S.sparkT;
   edgeLight.intensity = S.edge * 0.6;
   hands.l.position.set(0, -0.16 * (1 - S.leftHand), 0.1 * (1 - S.leftHand)); hands.l.visible = S.leftHand > 0.01;
@@ -1127,6 +1133,7 @@ async function init() {
     const img = new Image(); img.src = FONDO || 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='; await img.decode().catch(() => {});
     bgTex = new THREE.Texture(img); bgTex.needsUpdate = true; bgTex.generateMipmaps = true; bgTex.minFilter = THREE.LinearMipmapLinearFilter;
     PARCH = [makeParchment(3, PW, PH), makeParchment(4, PW, PH)];
+    DRAW.vacia = P => { base(P, 'r'); P.g.fillStyle = 'rgba(70,45,20,.22)'; P.g.fillRect(0, 0, PW, PH); };
     DRAW.blanca = P => { base(P, 'r'); P.gg.fillStyle = '#000'; P.gg.fillRect(0, 0, PW, PH); };
     buildRenderer(); buildBook(); buildParticles(); fillSparks(CUR_SPELL); wire(); resize();
     for (const id of ['hechizos_izq', 'hechizos_der', 'blanca']) page(id);

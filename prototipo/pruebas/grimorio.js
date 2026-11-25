@@ -16,7 +16,7 @@ const shots = (process.env.SHOTS || '').split(',').filter(Boolean);
   await p.goto('file://' + html + '?test=1'); await p.waitForFunction(() => window.__GRIMORIO__ && window.__GRIMORIO__.ready, null, { timeout: 60000 });
   const snap = async (name) => { await p.evaluate(() => document.getElementById('panel').style.visibility = 'hidden'); await p.screenshot({ path: path.join(out, name + '.png') }); await p.evaluate(() => document.getElementById('panel').style.visibility = ''); };
   const at = async (t) => p.evaluate(t => window.__GRIMORIO__.setT(t), t);
-  const plan = [['abrir', null, [0.2, 1.0, 1.7, 2.1, 4.0]], ['nuevo', 'asharvel', [1.2, 2.4, 3.3, 3.6, 5.2, 6.6, 7.9, 8.9]]];
+  const plan = [['abrir', null, [0.2, 1.0, 1.7, 2.1, 4.0]], ['nuevo', 'asharvel', [0.7, 1.15, 2.6, 3.4, 4.3, 4.85, 6.6, 9.9]]];
   for (const [n, key, ts] of plan) {
     await p.evaluate(([n, key]) => window.__GRIMORIO__.play(n, key), [n, key]);
     for (const t of ts) { await at(t); if (!shots.length || shots.includes(n)) await snap(`${n}_${String(t).replace('.', '_')}`); }
