@@ -22,6 +22,7 @@ Nota: en `the-swordman.zip` el `_S.png` es el color de la espada y la vaina (no 
 
 | Asset | Fichero | Origen | Autor | Licencia | Modificaciones |
 |---|---|---|---|---|---|
+| Caballo árabe negro con montura (malla, esqueleto y clips `caballo_reposo`, `caballo_paso`, `caballo_trote`, `caballo_galope`) | `animales/caballo.glb` | Propio, generado por `juego/tools/blender/caballo.py` (Blender, sin texturas externas) | Proyecto Fénix | Propia | — |
 | Katana (hoja con sori, hamon, hi, kissaki; tsuba, habaki, seppa, fuchi, tsuka con ito, menuki, kashira) | `armas/katana.glb` | Propia, generada por `juego/tools/blender/katana.py` (Blender 4.2, sin interfaz) | Proyecto Fénix | Propia | Geometria y texturas de hoja, ito y tsuka procedurales (numpy). Hierro y laton derivan de Poly Haven `metal_plate_02` (https://polyhaven.com/a/metal_plate_02, CC0 1.0; Diffuse/normal/ARM a 512 px, teñidos), WebP. ~42 k triangulos |
 
 Para regenerar: `bash scripts/instalar-blender.sh` y después

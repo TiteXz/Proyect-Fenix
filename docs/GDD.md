@@ -147,6 +147,11 @@ Nota: el orquestador recomendó combinar 1 + 4; el usuario aún no ha decidido.
 - `CONTEXTO_PROYECTO.md` deja fuera del MVP «misiones/diálogos complejos» (máx. 1–2 encargos simples): la trama
   principal, los NPCs que «reconocen» al protagonista y la escena final necesitan decidir **qué parte del lore entra en
   el MVP** y cuál se aplaza a fase 2/3 (NPCs modulares llegan en fase 3).
+- **Decisiones del usuario (2026-11-25)** que resuelven los puntos de abajo (detalle en `CONTEXTO_PROYECTO.md`, «Decisiones
+  del usuario»): lore del MVP mínimo (1–2 NPCs que reconocen + escena final sencilla); mundo abierto tras el final y
+  dungeon rejugable con jefe derrotado y botín reducido (responde a §10.9 p. 10); un solo Códice con pestañas elemental /
+  lore; chamán goblin fuera del MVP; un mercader fijo en la Aldea del Vado; bolso mágico de casillas fijas sin peso.
+  Falta volcarlas en §5–§8 al rellenarlas en `/iniciar`.
 - `CONTEXTO_PROYECTO.md` describe la salida del dungeon como «victoria tras el jefe»; el lore pide un **estado
   persistente post-final** (Guardián liberado, mundo abierto) y aclarar si el dungeon se rejuega (pregunta 10).
 - `docs/COMBATE.md` usa «Códice elemental» para fusiones y cuenta ≈ 40 «entradas del Códice» para XP: confirmar que
@@ -168,7 +173,7 @@ Decidido por el usuario: **hay animales y hay NPCs** (§5.1, §5.2). Pendiente:
 | D-3 | Utilidad jugable | ¿Se cazan? ¿Dan materiales (p. ej. para inscripciones de fase 2)? ¿Se pueden atacar con hechizos? | Sin utilidad jugable |
 | D-4 | Lore de la fauna | ¿El deshilachado del tejido afecta a los animales (criaturas alteradas por la magia inestable)? | Sin decidir |
 | D-5 | Papeles de NPC | Además del mercader: ¿dadores de encargos, narradores de lore/leyendas del Guardián, guías, entrenadores de runas? | Mercader confirmado; resto sin decidir |
-| D-6 | Mercaderes en el MVP | ¿Uno fijo (CONTEXTO) o uno por asentamiento (lectura de COMBATE)? ¿En qué asentamiento? | Uno fijo [SUPUESTO de CONTEXTO] |
+| D-6 | Mercaderes en el MVP | ¿Uno fijo (CONTEXTO) o uno por asentamiento (lectura de COMBATE)? ¿En qué asentamiento? | **Decidido (2026-11-25): uno fijo, en la Aldea del Vado** |
 | D-7 | NPC recurrente | ¿Hay un NPC que guíe la trama (p. ej. un erudito de la Pausa)? Enlaza con §10.9 pregunta 5 | Sin decidir |
 | D-8 | Reconocimiento | ¿Qué NPCs «reconocen» al protagonista (§10.4) y cómo se muestra sin diálogos complejos? | Sin decidir |
 | D-9 | Vida de los NPCs | ¿Rutinas con el ciclo día/noche, se mueven entre asentamientos, pueden morir o ser atacados? | Quietos en su asentamiento, no atacables [SUPUESTO] |

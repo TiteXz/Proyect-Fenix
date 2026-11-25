@@ -169,12 +169,18 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - Todos los números de combate (daño, costes, tiempos de recarga, resistencias) y de dungeons/oleadas
   van en `juego/src/config/`; los presupuestos de rendimiento, en un único fichero de config verificable.
 
-## Preguntas abiertas (decide el usuario; detalle en `docs/GDD.md` §10.10)
-- **Lore en el MVP:** qué parte de la trama (NPCs que «reconocen» al protagonista, escena final) entra y cuál pasa a fase 2/3.
-- **Post-final:** estado persistente tras liberar al Guardián y si el dungeon se rejuega (GDD §10.9 p. 10).
-- **Mercaderes:** uno fijo (supuesto actual) o uno por asentamiento (GDD §10.11 D-6).
-- **Códice elemental** (COMBATE, XP) vs **entradas de lore**: ¿mismo apartado o distinto?
-- **Chamán goblin:** figura solo en COMBATE §2.14 (fase 2), no en el MVP **[SUPUESTO: queda fuera]**; ficha pendiente (COMBATE p. 14).
+## Decisiones del usuario (2026-11-25) sobre las antiguas preguntas abiertas
+- **Lore en el MVP:** solo 1–2 NPCs que «reconocen» al protagonista con una frase, y una escena final sencilla. El resto de la trama pasa a fase 2/3.
+- **Post-final:** el mundo sigue abierto tras liberar al Guardián (estado persistente); el dungeon se **rejuega** con el jefe ya derrotado y **botín reducido**.
+- **Mercaderes:** **uno fijo, en la Aldea del Vado** (GDD §10.11 D-6).
+- **Códice vs. lore:** un solo menú, el **Códice**, con dos pestañas (elemental / lore).
+- **Chamán goblin:** fuera del MVP (fase 2, COMBATE §2.14); ficha pendiente.
+- **Bolso mágico:** inventario de **casillas fijas, sin peso** [número de casillas SUPUESTO; detalle en GDD §5].
+- **Fauna y NPCs:** se mantienen los supuestos de GDD §10.11 (fauna en fase 3; NPCs quietos y no atacables).
+- **Ratón en combate:** stick virtual con botón mantenido (COMBATE §1.1 M-1 a M-4).
+- **Créditos de assets:** todo asset que entre en `juego/public/assets/` lleva su entrada en `CREDITOS.md` (lo comprueba
+  `scripts/verificar.sh`), y el MVP incluye una **pantalla de créditos** en el juego (CC-BY obliga a atribuir).
+- **Proceso:** se termina la planificación (`/iniciar`: GDD §1–9, arquitectura, ADR, backlog) antes de escribir código del juego.
 
 ## Glosario
 - **Parry (parada perfecta):** stick hacia el golpe + L1 a tiempo (ventana ≈ 0,2 s); aturde al enemigo. **Bloqueo normal:** con el stick ya mantenido.

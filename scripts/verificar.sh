@@ -5,6 +5,22 @@
 set -uo pipefail
 cd "$(dirname "$0")/../juego"
 
+# Créditos: cada asset de public/assets debe tener su entrada en CREDITOS.md (CC-BY obliga a atribuir).
+# Falta de entrada ⇒ fallo. Licencia «Por confirmar» ⇒ aviso (no publicar hasta confirmarla).
+FALLOS_CREDITOS=0
+if [ -d public/assets ]; then
+  while IFS= read -r f; do
+    rel="${f#public/assets/}"
+    if ! grep -qF "$rel" public/assets/CREDITOS.md 2>/dev/null; then
+      echo "✗ créditos: $rel no aparece en public/assets/CREDITOS.md"; FALLOS_CREDITOS=$((FALLOS_CREDITOS + 1))
+    elif grep -F "$rel" public/assets/CREDITOS.md | grep -qi 'por confirmar'; then
+      echo "⚠ créditos: $rel tiene la licencia por confirmar"
+    fi
+  done < <(find public/assets -type f \( -iname '*.glb' -o -iname '*.gltf' -o -iname '*.ktx2' -o -iname '*.hdr' \
+             -o -iname '*.exr' -o -iname '*.ogg' -o -iname '*.mp3' -o -iname '*.wav' -o -iname '*.woff2' \) | sort)
+  [ "$FALLOS_CREDITOS" -eq 0 ] || { echo "✗ $FALLOS_CREDITOS asset(s) sin créditos"; exit 1; }
+fi
+
 if [ ! -f package.json ]; then
   echo "juego/ aún no tiene package.json: nada que verificar (pendiente F-001)."
   exit 0

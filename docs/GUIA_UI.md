@@ -272,27 +272,28 @@ combate (y ◄ ► ▼ si no se usan para objetos). En combate △ sigue siendo 
 | Alternar configuración (solo fuera de combate) | **Cruceta ▲** | V [SUPUESTO] | Clic en `hud-loadout` |
 | **Dirección de ataque y guardia** [DECISIÓN usuario] | Stick izq. (sin cambios) | **Ratón** (ver abajo); WASD **solo mueve al personaje** | Ratón |
 
-**Dirección con ratón (teclado) [DECISIÓN usuario; mapeo concreto SUPUESTO].** En teclado, la dirección del golpe y de la
+**Dirección con ratón (teclado) [DECISIÓN usuario: stick virtual con botón mantenido, 2026-11-25; números SUPUESTO; reglas exactas en COMBATE §1.1 M-1 a M-4].** En teclado, la dirección del golpe y de la
 guardia (arriba / abajo / izquierda / derecha / neutro) la marca el **ratón**, no WASD. WASD solo desplaza. El mando
 conserva el stick izquierdo. Mapeo mínimo:
 - **Modo dirección = botón mantenido:** mientras clic der. (guardia) o clic izq. (ataque) están pulsados, el movimiento
   del ratón **no gira la cámara**: alimenta un «stick virtual». Al soltar, la cámara vuelve al ratón. Sin botón pulsado el
   ratón maneja la cámara como siempre (con enemigo fijado, la cámara sigue al objetivo y el ratón queda libre).
-- **Stick virtual:** el desplazamiento acumulado se limita a un radio de 60 px y se recentra solo (decae a 0 en 0,6 s sin
-  movimiento) [SUPUESTO]. Zona muerta: < 50 % del radio (30 px) = **neutro**, igual que la zona muerta del stick (COMBATE
-  §1.1). Eje dominante = dirección; diagonales, por el eje mayor.
+- **Stick virtual:** empieza en el centro al pulsar; el desplazamiento acumulado se limita a un radio de 60 px [SUPUESTO] y
+  **no se recentra mientras el botón siga pulsado** (la guardia conserva su dirección). Vuelve al centro al soltar.
+  Zona muerta: < 50 % del radio (30 px) = **neutro**, igual que la zona muerta del stick. Sector: 4 sectores de 90° con
+  histéresis de 10°, como el stick (COMBATE §1.1).
+- **Ataque con clic izq.:** pulsar → trazar → soltar; el ligero sale al soltar y el fuerte al cumplirse el umbral de
+  mantener, cada uno con la dirección vigente en ese instante (COMBATE M-3).
 - **Referencia:** relativa a la **pantalla/cámara** (arriba = ratón hacia arriba), coherente con la dirección del stick y
   con el chevrón del indicador (§5.2). Al fijar enemigo, la referencia es la misma vista.
-- **«Movido justo ahora»** (parada perfecta): el último cambio de dirección cuenta si ocurrió ≤ 150 ms antes del impacto,
-  como con el stick. La dirección vigente al pulsar el botón se toma como inicial (retroactiva, como L1 en COMBATE).
+- **«Movido justo ahora»** (parada perfecta): con clic der. ya pulsado, la entrada en el sector cuenta si ocurrió ≤ 150 ms
+  antes del impacto (COMBATE M-3).
 - **Guardia sin mover el ratón = guardia neutra** (§5.1: bloquea todo, mucho aguante, sin parada perfecta). Para guardia
   direccional hay que desplazar el ratón con clic der. mantenido.
 - **Reflejo en la UI:** con ratón, el HUD muestra un pequeño **indicador de dirección** junto a la mira (cuatro cuñas
   alrededor de un punto; la activa se rellena; neutro = solo el punto), solo mientras hay botón de combate pulsado.
   `data-testid`: `hud-aim-dir` (`data-dir="up|down|left|right|neutral"`). Se alimenta del bus, no del DOM del ratón de la UI.
-- **Ajustes:** sensibilidad de dirección (radio 40–100 px) y zona muerta (30–60 %), remapeo de botones y activar/desactivar
-  el recentrado; persistidos en `localStorage` (try/catch). **Coordinación:** COMBATE §1.1 («Mapeo teclado y ratón») aún
-  lista WASD como dirección y el ratón como alternativa; debe alinearse con esta decisión (lo actualiza `disenador-combate`).
+- **Ajustes:** sensibilidad de dirección (radio 40–100 px) y zona muerta (30–60 %) y remapeo de botones; persistidos en `localStorage` (try/catch). **Coordinación:** alineado con COMBATE §1.1 (M-1 a M-4, C-16) el 2026-11-25.
   Para `programador-motor`: el input de ratón emite una dirección discreta + marca de tiempo, igual que el stick.
 
 Alternativa teclado (si 1–8 choca con atajos de objetos): Q/E/R/T = ranuras 1–4 y Mayús + Q/E/R/T = 5–8. No se

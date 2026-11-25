@@ -208,19 +208,29 @@ los remates: el contraataque tras parada perfecta, invulnerable durante todo su 
 
 **Supuestos del mapeo de ratón** (decididos lo mínimo para no bloquear; a validar en playtest, valores en
 `juego/src/config/combat/direccional.ts`):
-- **M-1. Gesto por movimiento, sin botón extra:** la dirección es el **sentido del desplazamiento relativo** del ratón
-  (con el puntero capturado, *pointer lock*), no la posición del cursor ni un botón mantenido. Se acumula el
-  desplazamiento de los últimos **100 ms**; si su módulo es **≥ 8 px** (escalado por la sensibilidad del ajuste), cuenta
-  como gesto y su sector se calcula con los mismos 4 sectores de 90° y la histéresis de 10° del stick.
+- **M-1. Stick virtual con botón mantenido (decisión del usuario, 2026-11-25; números [SUPUESTO]):** la dirección
+  solo se lee **mientras clic der. o clic izq. están pulsados**. Al pulsar, el stick virtual se pone en el centro; desde
+  ahí se acumula el **desplazamiento relativo** del ratón (*pointer lock*), limitado a un radio de **60 px** (escalado
+  por la sensibilidad del ajuste, 40–100 px). Desplazamiento < **30 px** (50 % del radio, igual que la zona muerta del
+  stick) ⇒ **neutro**; si no, el sector sale de los mismos 4 sectores de 90° con histéresis de 10° del stick. Mientras el
+  botón sigue pulsado **no hay recentrado**: la dirección se mantiene hasta que un movimiento nuevo la cambia. Al soltar
+  todos los botones de combate, el stick virtual vuelve al centro. Sin botón pulsado, el ratón no marca dirección.
 - **M-2. Marco relativo a la cámara/pantalla**, igual que el stick: ratón hacia arriba = arriba, hacia abajo = abajo,
   izq./der. = lado de la pantalla. Respeta la opción «invertir eje Y» del ratón si existe en ajustes.
-- **M-3. Fresco / mantenido / neutro:** al pulsar, gesto que entró en el sector ≤ **150 ms** antes ⇒ fresco; entre 150
-  y **500 ms** ⇒ mantenido; sin gesto en los últimos 500 ms ⇒ **neutro** (guardia neutra con clic der.; R1 neutro =
-  combo por defecto). Con clic der. mantenido la guardia conserva su dirección hasta el siguiente gesto (no vuelve a
-  neutro por estar quieto) y un gesto nuevo la reorienta (0,10 s, como con el stick).
-- **M-4. Cámara:** con objetivo fijado el ratón no orbita la cámara (la cámara mira al enemigo) y solo marca dirección.
-  Sin objetivo fijado el ratón orbita la cámara y a la vez marca dirección; la cámara se congela mientras se mantiene
-  clic der. y durante 0,1 s tras cada clic izq., para que el gesto no gire la vista.
+- **M-3. Lectura según el botón:**
+  - **Guardia (clic der.):** al pulsar, guardia **neutra**; desplazar el ratón la orienta (0,10 s, como con el stick) y
+    se conserva mientras el botón siga pulsado. **Parada perfecta con ratón:** con el ratón el botón va siempre antes que
+    la dirección, así que el instante que cuenta para la ventana (EP 250 ms / EE 200 ms antes del frame activo) es la
+    **entrada en el sector** con el botón ya pulsado; «movido justo ahora» = ese cambio de sector ocurrió ≤ **150 ms**
+    antes del impacto. Si la dirección ya estaba fijada antes (> 150 ms), es bloqueo normal.
+  - **Ataque (clic izq.): pulsar → trazar → soltar.** Se pulsa, se desplaza el ratón y el golpe sale **al soltar** con
+    la dirección vigente en ese instante (ligero). Si el botón sigue pulsado al cumplirse el umbral de «mantener» del
+    fuerte, sale el **fuerte** con la dirección vigente en ese instante. Sin desplazamiento ⇒ **R1 neutro** (combo por
+    defecto). [SUPUESTO: el ligero con ratón sale al soltar, no al pulsar; validar en playtest que la latencia extra no
+    estropea la sensación.]
+- **M-4. Cámara:** mientras clic der. o clic izq. están pulsados, el ratón **no orbita la cámara** (alimenta el stick
+  virtual); al soltar, vuelve a moverla. Con objetivo fijado la cámara mira al enemigo y el ratón queda libre para la
+  dirección igual que sin él. Sustituye a la regla anterior de congelar 0,1 s tras cada clic izq.
 
 #### Convivencia con la habilidad del arma (L1 + R1, `docs/GUIA_UI.md` §5.1)
 - **Decisión del usuario: la habilidad tiene prioridad sobre la defensa.** Si L1 y R1 se pulsan a la vez (ventana de
@@ -276,8 +286,8 @@ de bastón [SUPUESTO] es frontal y se trata como un proyectil (EE lo bloquea de 
 necesitan «recibir remate».
 
 **Notas técnicas (para `programador-motor` / `programador-gameplay`; no se implementan aquí):** la capa de input debe
-guardar la marca de tiempo del último cambio de sector del stick (y del gesto de ratón, con su búfer de desplazamiento
-de 100 ms) por tick de 60 Hz; la cámara debe poder congelar la órbita por ratón según M-4; los remates necesitan
+guardar la marca de tiempo del último cambio de sector del stick (y del stick virtual del ratón, que solo acumula con
+clic der./izq. pulsado, M-1) por tick de 60 Hz; la cámara no orbita con el ratón mientras hay un botón de combate pulsado (M-4); los remates necesitan
 animaciones sincronizadas (alineación de raíz atacante/víctima, ≤ 0,15 s de encaje); la retención de 80 ms debe poder
 resolverse antes por un impacto entrante. Valores en `juego/src/config/combat/direccional.ts` y
 `juego/src/config/combat/configuraciones.ts` (nombres propuestos). **Cambio técnico necesario:** el personaje necesita
@@ -303,7 +313,7 @@ personaje debe admitir dos sets de clips (o capas por mano) sin duplicar el mode
 | C-13 | Imparable | Golpe rojo del jefe con parada perfecta o bloqueo ⇒ daño completo en las dos configuraciones; esquiva con i-frames ⇒ 0 |
 | C-14 | Telegrafiado | Todo ataque cuerpo a cuerpo enemigo emite evento con dirección al empezar la anticipación (≥ 0,55 s antes del activo; jefe fase 2 ≥ 0,5 s) y otro al abrirse la ventana de la configuración equipada (200 ms EE / 250 ms EP); visible en `window.__GAME__` |
 | C-15 | Guardia enemiga (decisión del usuario; números [SUPUESTO]) | Ligero o fuerte en la dirección de la guardia del esqueleto ⇒ rebote sin daño y retroceso 0,3 s; otra dirección ⇒ daño; durante la transición de guardia o mientras el enemigo ataca ⇒ cualquier dirección entra. `window.__GAME__` expone la dirección de guardia de cada enemigo. Con semilla fija, el esqueleto cambia de lado entre 3,0 y 4,5 s (jefe fase 1: 2,5–3,5 s; fase 2: 1,8–2,6 s) y, tras un golpe por el lado abierto, gira hacia él a los 0,6 s (jefe 0,45 / 0,35 s). Estocada de quiebre (EP) ⇒ daño por el lado protegido y la guardia no cambia; Embestida (EE) o fuerte con Tierra en el arma ⇒ sin guardia 2,0 s (jefe 1,0 s). Goblin y cultista ⇒ sin guardia direccional |
-| C-16 | Teclado + ratón (decisión del usuario: dirección con ratón; umbrales [SUPUESTO] M-1 a M-4) | Gesto de ratón de 12 px hacia arriba 100 ms antes de clic der. ⇒ parada arriba (fresco); el mismo gesto 300 ms antes ⇒ bloqueo normal arriba (mantenido); sin gesto en 600 ms ⇒ guardia neutra; gesto de 6 px ⇒ no cuenta. Pulsar W, A, S o D antes del clic no cambia la dirección (solo mueve). Con objetivo fijado, el gesto no rota la cámara; sin objetivo y con clic der. mantenido, tampoco. Con mando, la dirección sigue saliendo del stick izquierdo (C-01, C-02) |
+| C-16 | Teclado + ratón (decisión del usuario: dirección con ratón; umbrales [SUPUESTO] M-1 a M-4) | Mover el ratón sin botón pulsado ⇒ gira la cámara y no cambia la dirección. Clic der. sin mover ⇒ guardia neutra; con clic der. pulsado, 40 px hacia arriba que entran en el sector 100 ms antes del impacto ⇒ parada arriba; los mismos 40 px 300 ms antes ⇒ bloqueo normal arriba, que se mantiene quieto sin volver a neutro; 25 px ⇒ neutro (zona muerta 30 px). Clic izq., 40 px a la izquierda y soltar ⇒ ligero por la izquierda al soltar; clic izq. y soltar sin mover ⇒ R1 neutro. Con un botón de combate pulsado la cámara no gira, con o sin objetivo fijado. Pulsar W, A, S o D no cambia la dirección (solo mueve). Con mando, la dirección sigue saliendo del stick izquierdo (C-01, C-02) |
 | C-17 | Disparador «Al parar» | Se activa con parada perfecta cuerpo a cuerpo (EP y EE) y no con bloqueo normal ni con el desvío de flechas de EP |
 | C-18 | Animaciones mínimas | El catálogo de clips tiene, **por cada configuración** (EP y EE), 4 ataques ligeros direccionales, guardia, parada, bloqueo, defensa frontal de proyectil, contraataque, habilidad y remates, y los clips de enemigo de la tabla (recibir remate en las dos variantes) |
 | C-19 | Cambiar de configuración cambia animaciones y valores | Equipar el escudo desde el libro ⇒ `window.__GAME__` muestra configuración `espadaEscudo`, el clip activo de ligero lateral dura 0,70 s, la ventana de parada es 200 ms, el bloqueo reduce un 80 % y L1 + R1 lanza Embestida; quitarlo ⇒ `espada`, 0,60 s, 250 ms, 60 % y Estocada de quiebre. Lo mismo con el atajo cruceta ▲ (alterna entre las dos), sin estar en campamento (decisión del usuario). Con un enemigo en alerta el cambio se rechaza, por libro o por atajo, y no cambia nada |
@@ -367,7 +377,7 @@ No se borran: quedan como referencia para recuperarlos sin rediseñar desde cero
   configuraciones con dos habilidades (Estocada de quiebre / Embestida) y a equipar el escudo desde la pestaña Armas
   (lo hace `interfaz-ui`).
 - ✔ aplicado (2026-11-23) en `docs/GUIA_VISUAL.md` (requisitos de escudo y sets EP/EE). Original: `docs/GUIA_VISUAL.md` / `artista-3d`: modelo de escudo y dos sets de animaciones del jugador (C-18). **Abierto:** la ejecución (modelo `escudo_jugador.glb` y sets de animación) sigue pendiente para `artista-3d`.
-- **Ratón: gesto por movimiento vs. «stick virtual» con botón mantenido (abierto; `disenador-combate` + `interfaz-ui`).** §1.1 M-1, M-3 y M-4 usan un gesto por desplazamiento relativo del ratón (≥ 8 px en 100 ms) sin botón extra. `docs/GUIA_UI.md` §5.1 usa un «stick virtual» que solo alimenta la dirección mientras clic der. o clic izq. están mantenidos (radio 60 px, zona muerta 30 px, decaimiento 0,6 s). Hay que decidir si la dirección exige botón mantenido o no, y unificar umbrales, la regla de «guardia neutra sin mover» y la congelación de cámara (M-4) en ambos documentos.
+- ✔ aplicado (2026-11-25): decisión del usuario = **stick virtual con botón mantenido**; §1.1 M-1, M-3, M-4 y C-16 reescritos, y `docs/GUIA_UI.md` §5.1 alineada (sin recentrado mientras se mantiene el botón; ataque «pulsar → trazar → soltar»). Original: **Ratón: gesto por movimiento vs. «stick virtual» con botón mantenido (abierto; `disenador-combate` + `interfaz-ui`).** §1.1 M-1, M-3 y M-4 usan un gesto por desplazamiento relativo del ratón (≥ 8 px en 100 ms) sin botón extra. `docs/GUIA_UI.md` §5.1 usa un «stick virtual» que solo alimenta la dirección mientras clic der. o clic izq. están mantenidos (radio 60 px, zona muerta 30 px, decaimiento 0,6 s). Hay que decidir si la dirección exige botón mantenido o no, y unificar umbrales, la regla de «guardia neutra sin mover» y la congelación de cámara (M-4) en ambos documentos.
 - ✔ aplicado (2026-11-23): el pitch de CONTEXTO ya habla de alternar espada y hechizos, no de cambiar de arma. Original: **Contradicción con CONTEXTO:** `contexto/CONTEXTO_PROYECTO.md` (pitch, línea 12) promete «cambiar de arma … en pleno combate», mientras `docs/GUIA_UI.md` (intro y §5.1) elimina el cambio de arma en partida (solo configuración fuera de combate). Decidir cuál prevalece y corregir el pitch o la UI.
 - ✔ aplicado (2026-11-23): CONTEXTO ya dice ratón en teclado / stick en mando. Original: **Contradicción de input:** `contexto/CONTEXTO_PROYECTO.md` (línea 32) dice «Dirección de ataque/parada: WASD o stick izquierdo», mientras §1.1-7 de este documento fija que en teclado WASD solo mueve y la dirección la marca el ratón.
 
