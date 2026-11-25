@@ -1,0 +1,1150 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Visor del grimorio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+/* Visor a pantalla completa: lienzo 3D detrás y un panel de mando flotante. Tema oscuro único (es un visor de escena). */
+:root{
+  --bg:#0c0e12; --panel:rgba(18,17,15,.84); --line:#4a3f2c; --fg:#f1e7d0; --muted:#b9ab8c; --accent:#e2b469; --accent-ink:#1d1408; --chip:#2a2419;
+  --f-display:"Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --f-body:"EB Garamond", Georgia, "Times New Roman", serif;
+  --f-ui:system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font:14px/1.4 var(--f-ui);overflow:hidden;-webkit-text-size-adjust:100%}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+button,select,input{font:inherit;color:inherit}
+button,select{background:var(--chip);border:1px solid var(--line);border-radius:8px;padding:7px 11px;min-height:38px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:disabled{opacity:.45;cursor:default}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+button[aria-pressed=true]{background:#4a3a1e;border-color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#panel{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));width:min(380px,calc(100% - 32px));
+  background:var(--panel);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:grid;gap:10px;z-index:5}
+#panel h1{margin:0;font:600 22px/1.1 var(--f-display);letter-spacing:.02em}
+#panel .sub{margin:2px 0 0;color:var(--muted);font:italic 15px/1.3 var(--f-body)}
+.head{display:flex;align-items:flex-start;gap:10px}
+.head>div{flex:1;min-width:0}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.row>.grow{flex:1;min-width:0}
+.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input[type=range]{width:100%;accent-color:var(--accent);min-height:26px;margin:0}
+.time{font-variant-numeric:tabular-nums;font-size:12px;color:var(--muted);white-space:nowrap}
+#secs button{flex:1 1 auto;padding:6px 8px;font:500 15px/1 var(--f-body)}
+#secs button[aria-current=true]{border-color:var(--accent);background:#3a2e18}
+#body{display:grid;gap:10px}
+#panel,#body,#body>*,.head>div{min-width:0}
+select{max-width:100%;text-overflow:ellipsis}
+#panel.min #body{display:none}
+#tip{position:fixed;pointer-events:none;z-index:6;background:rgba(20,16,10,.9);border:1px solid var(--line);border-radius:6px;padding:3px 8px;font:500 15px var(--f-body);transform:translate(-50%,-140%)}
+#live{position:fixed;left:-9999px}
+#msg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font:italic 18px var(--f-body);color:var(--muted);background:var(--bg);z-index:8}
+.keys{font-size:11.5px;color:var(--muted)}
+@media (max-width:560px){
+  #panel{padding:10px 12px;gap:8px}
+  #panel h1{font-size:19px}
+  .keys{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="cv" aria-label="Vista en primera persona: el protagonista saca y abre el grimorio"></canvas>
+<div id="panel">
+  <div class="head">
+    <div>
+      <h1>Grimorio</h1>
+      <p class="sub">Abrir el menú y grabar una hoja nueva</p>
+    </div>
+    <button id="bMin" aria-expanded="true" aria-controls="body" title="Ocultar o mostrar los controles">Ocultar</button>
+  </div>
+  <div id="body">
+    <div class="row">
+      <button id="bOpen" class="primary">Abrir grimorio</button>
+      <button id="bNew">Nuevo hechizo</button>
+      <button id="bClose">Cerrar</button>
+    </div>
+    <div class="row">
+      <label class="lbl" for="sSpell">Hechizo</label>
+      <select id="sSpell" class="grow" aria-label="Hechizo que se graba">
+        <option value="asharvel">Asharvel · saeta de ceniza tronante</option>
+        <option value="bronystor">Bronystor · muralla de piedra helada y silbante</option>
+        <option value="veshismar">Veshismar · estallido de penumbra ardiente y helada</option>
+      </select>
+    </div>
+    <div class="row">
+      <button id="bPlay" aria-label="Reproducir o pausar" style="min-width:44px">❚❚</button>
+      <input type="range" id="rT" class="grow" min="0" max="1" step="0.001" value="0" aria-label="Momento de la animación">
+      <span class="time" id="tTxt">0,00 / 0,00 s</span>
+    </div>
+    <div class="row">
+      <label class="lbl" for="rSpeed" style="min-width:70px">Velocidad</label>
+      <input type="range" id="rSpeed" class="grow" min="0.1" max="1.5" step="0.05" value="1">
+      <span class="time" id="oSpeed">1,00×</span>
+    </div>
+    <div>
+      <div class="lbl" style="margin-bottom:4px">Marcapáginas</div>
+      <div class="row" id="secs"></div>
+    </div>
+    <div class="row">
+      <button id="bCam" aria-pressed="false">Cámara libre</button>
+      <span class="keys">Teclas: O abrir · N nuevo · 1–5 apartados · Espacio pausa · Esc cerrar</span>
+    </div>
+  </div>
+</div>
+<div id="tip" hidden></div>
+<div id="live" aria-live="polite"></div>
+<div id="msg">Preparando el grimorio…</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+'use strict';
+/* Visor del grimorio (maqueta, no es el juego). Dos animaciones:
+   A) abrir el menú: en primera persona el protagonista saca el libro del costado, lo abre y lo sostiene;
+   B) hechizo nuevo: las partículas forman una hoja que entra en el libro, se pasan las páginas hasta ella
+      y la tinta escribe el círculo de runas, el nombre y el sello (GUIA_UI §3, glifos de GUIA_VISUAL).
+   Todo es función pura del tiempo de la línea temporal: se puede pausar, arrastrar y cambiar la velocidad. */
+const FONDO = /*__FONDO__*/'';
+const $ = id => document.getElementById(id);
+const PI = Math.PI;
+function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const seg = (t, a, b) => clamp((t - a) / (b - a), 0, 1);
+const smooth = x => x * x * (3 - 2 * x);
+const eio = x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const eout = x => 1 - Math.pow(1 - x, 3);
+const backOut = x => { const c1 = 1.25, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+
+/* ------------------------------------------------------------------ datos */
+const W = 0.205, H = 0.285, T = 0.046, C = 0.0065, OV = 0.006;          // libro (m): hoja, bloque de páginas, tapa, vuelo de la tapa
+const PW = 640, PH = 890;                                                // lienzo de cada página (px)
+const ELEM = {
+  101: { n: 'Fuego', ink: '#b4430d', em: '#ff7a2a', est: 'Ardiente · Ardiendo' },
+  102: { n: 'Hielo', ink: '#1f6f96', em: '#8fdcff', est: 'Frío · Escarcha' },
+  103: { n: 'Luz', ink: '#9a6a00', em: '#ffd27a', est: 'Sagrado · Iluminado' },
+  104: { n: 'Rayo', ink: '#5a45b8', em: '#b9a8ff', est: 'Eléctrico · Cargado' },
+  105: { n: 'Tierra', ink: '#7a5426', em: '#c99a5a', est: 'Contundente · Lastrado' },
+  106: { n: 'Sombra', ink: '#5b2f93', em: '#a874ea', est: 'Necrótico · Maldito' },
+  107: { n: 'Aire', ink: '#2f7a68', em: '#bff0e0', est: 'Cortante · Desequilibrado' },
+};
+const RUNA = { 201: 'Proyectil', 202: 'Cono', 203: 'Área', 204: 'Muro', 205: 'Zona', 206: 'Yo', mult: 'Multiplicar', ancla: 'Ancla' };
+for (const k in ELEM) RUNA[k] = ELEM[k].n;
+// Recetas de COMBATE §2.6 (ejemplos 1–3) y tres hechizos ya conocidos para el índice.
+const SPELLS = {
+  asharvel: { name: 'Asharvel', sub: 'saeta de ceniza tronante', el: 101, runes: [201, 101, 101, 104, 'mult'], mana: 51, comp: 9, inest: 25, seed: 0x1a2b },
+  bronystor: { name: 'Bronystor', sub: 'muralla de piedra helada y silbante', el: 105, runes: [204, 102, 105, 107], mana: 44, comp: 8, inest: 15, seed: 0x2b3c },
+  veshismar: { name: 'Veshismar', sub: 'estallido de penumbra ardiente y helada', el: 106, runes: [203, 106, 106, 101, 102, 'ancla'], mana: 50, comp: 11, inest: 40, seed: 0x3c4d },
+  ilenor: { name: 'Ilenor', sub: 'destello sagrado', el: 103, runes: [201, 103], mana: 18, comp: 3, inest: 0, seed: 0x4d5e, slot: 1 },
+  yskavel: { name: 'Yskavel', sub: 'cono de cellisca', el: 102, runes: [202, 102, 102], mana: 28, comp: 5, inest: 15, seed: 0x5e6f, slot: 2 },
+  silavar: { name: 'Silavar', sub: 'ráfaga cortante', el: 107, runes: [201, 107], mana: 18, comp: 3, inest: 0, seed: 0x6f70, slot: 3 },
+};
+const SECTIONS = [
+  { id: 'hechizos', n: 'Hechizos', col: '#7d2219' }, { id: 'bolso', n: 'Bolso', col: '#94631c' }, { id: 'codice', n: 'Códice', col: '#1d5a58' },
+  { id: 'mapa', n: 'Mapa', col: '#3d5b25' }, { id: 'ajustes', n: 'Ajustes', col: '#2b3b62' },
+];
+const SPREADS = { hechizos: ['hechizos_izq', 'hechizos_der'], bolso: ['bolso_izq', 'bolso_der'], codice: ['codice_izq', 'codice_der'], mapa: ['mapa_izq', 'mapa_der'], ajustes: ['ajustes_izq', 'ajustes_der'], nuevo: ['nuevo_izq', 'nuevo_der'] };
+const SPREAD_ORDER = { hechizos: 0, nuevo: 0.5, bolso: 1, codice: 2, mapa: 3, ajustes: 4 };
+
+/* ------------------------------------------------------------------ glifos (GUIA_VISUAL, «Glifos rúnicos») */
+const L = (...p) => ({ t: 'l', p }), CI = (x, y, r) => ({ t: 'c', x, y, r }), Q = (a, b, c) => ({ t: 'q', p: [a, b, c] }), DT = (x, y) => ({ t: 'd', x, y });
+const CAP = [[-0.7, 0], [0.7, 0]], STEM = [[0, 0], [0, 3]], BODY = [[0, 1.6], [0.8, 0.95]];
+const FR = [[-0.8, 0.7], [0.8, 0.7]];
+const GLY = {
+  101: { f: [L(...STEM), L([0, 2.1], [-0.95, 1.05]), L([0, 1.2], [0.95, 0.2])], free: [[0.85, 2.5], [-0.85, 2.7], [-0.8, 0.3]] },
+  102: { f: [L(...STEM), L([-1, 1], [1, 1]), L([0, 2], [-0.8, 2.85]), L([0, 2], [0.8, 2.85])], free: [[-0.75, 0.25], [0.75, 0.25], [0.7, 1.75]] },
+  103: { f: [L([0, 0.75], [0, 3]), CI(0, 0.38, 0.36), L([-0.75, 1.45], [-0.3, 1.45]), L([0.3, 1.45], [0.75, 1.45])], free: [[0.8, 2.4], [-0.8, 2.4], [0.75, 0.2]] },
+  104: { noStem: 1, f: [L([0, 0], [0.8, 1], [-0.8, 2], [0, 3])], free: [[-0.85, 0.45], [0.85, 2.5], [0.8, 2.0]] },
+  105: { f: [L(...STEM), L([-1, 2.35], [-1, 3], [1, 3], [1, 2.35])], free: [[-0.8, 0.7], [0.8, 0.7], [0.75, 1.6]] },
+  106: { f: [L([0, 0], [0, 2.35], [-0.7, 3]), L([0, 0.8], [0.9, 0.8], [0.9, 1.85])], free: [[-0.85, 1.1], [0.8, 2.75], [-0.8, 0.3]] },
+  107: { f: [L(...STEM), Q([0, 0.9], [1.05, 0.55], [0.85, 1.5]), Q([0, 1.95], [1.05, 1.6], [0.85, 2.55])], free: [[-0.8, 1.2], [-0.8, 2.4], [-0.75, 0.3]] },
+  201: { f: [L(...CAP), L(...STEM), L([-0.9, 2], [0, 1], [0.9, 2])], free: [...FR, [0.8, 2.7]] },
+  202: { f: [L(...CAP), L([0, 0], [0, 1.2]), L([-0.9, 3], [0, 1.2], [0.9, 3])], free: [...FR, [0, 2.6]] },
+  203: { f: [L(...CAP), L(...STEM), CI(0, 2, 0.72)], free: [...FR, [-0.9, 3]] },
+  204: { f: [L(...CAP), L(...STEM), L([-1, 1.2], [1, 1.2]), L([-1, 2.2], [1, 2.2])], free: [[-0.75, 0.6], [0.75, 0.6], [0.75, 2.8]] },
+  205: { f: [L(...CAP), L(...STEM), L([-0.9, 2.15], [-0.9, 3], [0.9, 3], [0.9, 2.15])], free: [...FR, [0.75, 1.5]] },
+  206: { f: [L(...CAP), L(...STEM), L([0, 1.1], [0.5, 1.65], [0, 2.2], [-0.5, 1.65], [0, 1.1])], free: [...FR, [0.8, 2.7]] },
+  // Modificador y Control: solo la marca de clase + BODY (su rasgo propio está pendiente en GUIA_VISUAL).
+  mult: { f: [L([0, 0], [0, 2.7]), DT(0, 3.2), L(...BODY)], free: [] },
+  ancla: { f: [L([-0.14, 0], [-0.14, 3]), L([0.14, 0], [0.14, 3]), L(...BODY)], free: [] },
+};
+// Geometría del glifo en unidades de rejilla (y hacia abajo); consumo del RNG según la guía.
+const GCACHE = new Map();
+function glyphGeom(id, seed, variant) {
+  const key = id + ':' + seed + ':' + (variant ? 1 : 0);
+  if (GCACHE.has(key)) return GCACHE.get(key);
+  const def = GLY[id], R = mulberry32(seed >>> 0), j = variant ? 0.075 : 0.022, prims = def.f.slice();
+  if (variant && def.free.length) {
+    const fr = def.free, si = Math.floor(R() * fr.length), s = fr[si];
+    if (R() < 0.5) prims.push(DT(s[0], s[1])); else prims.push(L([s[0], s[1]], [s[0] + (s[0] > 0 ? -0.4 : 0.4), s[1]]));
+    if (!def.noStem && R() < 0.5) prims.push(L([-0.22, 3], [0.22, 3]));
+    if (fr.length > 1 && R() < 0.35) { let k = Math.floor(R() * (fr.length - 1)); if (k >= si) k++; prims.push(DT(fr[k][0], fr[k][1])); }
+  }
+  const jj = () => (R() - 0.5) * 2 * j, lines = [], dots = [];
+  for (const p of prims) {
+    if (p.t === 'l') lines.push(p.p.map(([x, y]) => [x + jj(), y + jj()]));
+    else if (p.t === 'q') {
+      const [a, b, c] = p.p.map(([x, y]) => [x + jj(), y + jj()]), pts = [];
+      for (let i = 0; i <= 12; i++) { const t = i / 12, m = 1 - t; pts.push([m * m * a[0] + 2 * m * t * b[0] + t * t * c[0], m * m * a[1] + 2 * m * t * b[1] + t * t * c[1]]); }
+      lines.push(pts);
+    } else if (p.t === 'c') {
+      const cx = p.x + jj(), cy = p.y + jj(), pts = [];
+      for (let i = 0; i <= 28; i++) { const a = i / 28 * 2 * PI - PI / 2; pts.push([cx + Math.cos(a) * p.r, cy + Math.sin(a) * p.r * (0.2 / 0.24)]); }
+      lines.push(pts);
+    } else dots.push([p.x + jj(), p.y + jj()]);
+  }
+  const g = { lines, dots };
+  GCACHE.set(key, g);
+  return g;
+}
+/* Operaciones de trazo en px: {pts, lw, col:'el'|'fm', len} o {dot:[x,y], r, col, len}. El orden es el orden de escritura. */
+function polyLen(p) { let s = 0; for (let i = 1; i < p.length; i++) s += Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); return s; }
+function glyphOps(id, seed, variant, cx, cy, size, rot, col) {
+  const g = glyphGeom(id, seed, variant), u = 0.2 * size, rh = 0.24 * size, lw = Math.max(1.6, 0.062 * size), cs = Math.cos(rot), sn = Math.sin(rot), ops = [];
+  const tr = ([x, y]) => { const X = x * u, Y = (y - 1.5) * rh; return [cx + X * cs - Y * sn, cy + X * sn + Y * cs]; };
+  for (const l of g.lines) { const pts = l.map(tr); ops.push({ pts, lw, col, len: polyLen(pts) }); }
+  for (const d of g.dots) ops.push({ dot: tr(d), r: lw * 0.75 * 1.4, lw, col, len: lw * 2 });
+  return ops;
+}
+function circleOps(sp, cx, cy, D) {
+  const ops = [], k = D / 300, ring = (r, lw) => { const pts = []; for (let i = 0; i <= 120; i++) { const a = -PI / 2 + i / 120 * 2 * PI; pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]); } ops.push({ pts, lw, col: 'el', len: polyLen(pts) }); };
+  ring(0.47 * D, 2 * k); ring(0.355 * D, 1.5 * k); ring(0.2 * D, 1.2 * k);
+  const r2 = 0.355 * D, hex = (o) => { const pts = []; for (let i = 0; i <= 3; i++) { const a = o + i * 2 * PI / 3; pts.push([cx + Math.cos(a) * r2, cy + Math.sin(a) * r2]); } ops.push({ pts, lw: 1.2 * k, col: 'el', len: polyLen(pts) }); };
+  hex(-PI / 2); hex(PI / 2);
+  const rb = 0.413 * D, gs = 0.118 * D;
+  for (let i = 0; i < 20; i++) {
+    const a = -PI / 2 + i / 20 * 2 * PI;
+    ops.push(...glyphOps(sp.el, sp.el * 31 + i * 104729 + sp.seed, true, cx + Math.cos(a) * rb, cy + Math.sin(a) * rb, gs, a + PI / 2, 'el'));
+    const b = a + PI / 20, rx = cx + Math.cos(b) * rb, ry = cy + Math.sin(b) * rb, s = 0.012 * D, ca = Math.cos(b), sa = Math.sin(b);
+    const pts = [[rx + ca * s, ry + sa * s], [rx - sa * s * 0.6, ry + ca * s * 0.6], [rx - ca * s, ry - sa * s], [rx + sa * s * 0.6, ry - ca * s * 0.6], [rx + ca * s, ry + sa * s]];
+    ops.push({ pts, lw: 1 * k, col: 'el', len: polyLen(pts) });
+  }
+  const n = sp.runes.length, rr = 0.27 * D;
+  sp.runes.forEach((id, i) => { const a = -PI / 2 + i / n * 2 * PI; ops.push(...glyphOps(id, typeof id === 'number' ? id : 300, false, cx + Math.cos(a) * rr, cy + Math.sin(a) * rr, 0.115 * D, a + PI / 2, typeof id === 'number' && id < 200 ? 'el' : 'fm')); });
+  ops.push(...glyphOps(sp.el, sp.el, false, cx, cy, 0.2 * D, 0, 'el'));
+  return ops;
+}
+function rowOps(sp, cx, cy, size) {
+  const n = sp.runes.length, step = size * 0.78, x0 = cx - (n - 1) * step / 2, ops = [];
+  sp.runes.forEach((id, i) => {
+    ops.push(...glyphOps(id, typeof id === 'number' ? id : 300, false, x0 + i * step, cy, size, 0, typeof id === 'number' && id < 200 ? 'el' : 'fm'));
+    if (i < n - 1) { const x = x0 + (i + 0.5) * step, s = size * 0.06; const pts = [[x, cy - s], [x + s, cy], [x, cy + s], [x - s, cy], [x, cy - s]]; ops.push({ pts, lw: 1.2, col: 'fm', len: polyLen(pts) }); }
+  });
+  return ops;
+}
+
+/* ------------------------------------------------------------------ dibujo de páginas (lienzos 2D) */
+const DISPLAY = '"Cormorant Garamond", Georgia, serif', BODYF = '"EB Garamond", Georgia, serif';
+const INK = '#2a1b10', INK2 = '#5c4630', GOLD = '#ffcf85';
+function noiseLayer(w, h, cell, R) {
+  const cw = Math.ceil(w / cell) + 2, ch = Math.ceil(h / cell) + 2, s = document.createElement('canvas'); s.width = cw; s.height = ch;
+  const g = s.getContext('2d'), d = g.createImageData(cw, ch);
+  for (let i = 0; i < cw * ch; i++) { const v = 150 + R() * 105; d.data[i * 4] = v; d.data[i * 4 + 1] = v * 0.97; d.data[i * 4 + 2] = v * 0.9; d.data[i * 4 + 3] = 255; }
+  g.putImageData(d, 0, 0); return s;
+}
+function makeParchment(seed, w, h) {
+  const c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d'), R = mulberry32(seed);
+  g.fillStyle = '#ecdcbc'; g.fillRect(0, 0, w, h);
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = 'high'; g.globalCompositeOperation = 'multiply';
+  for (const [cell, a] of [[220, 0.35], [70, 0.22], [18, 0.14], [3, 0.12]]) { g.globalAlpha = a; g.drawImage(noiseLayer(w, h, cell, R), -cell, -cell, w + 2 * cell, h + 2 * cell); }
+  g.globalAlpha = 1;
+  for (let i = 0; i < 7; i++) {                         // manchas
+    const x = R() * w, y = R() * h, r = 30 + R() * 140, gr = g.createRadialGradient(x, y, r * 0.2, x, y, r);
+    gr.addColorStop(0, 'rgba(170,120,70,0.10)'); gr.addColorStop(0.85, 'rgba(160,110,60,0.06)'); gr.addColorStop(1, 'rgba(150,100,50,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+  }
+  g.lineCap = 'round';
+  for (let i = 0; i < 420; i++) {                       // fibras
+    const x = R() * w, y = R() * h, a = R() * PI, l = 6 + R() * 22;
+    g.strokeStyle = `rgba(110,80,45,${0.05 + R() * 0.07})`; g.lineWidth = 0.6 + R() * 0.8;
+    g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + Math.cos(a) * l * 0.5 + (R() - 0.5) * 6, y + Math.sin(a) * l * 0.5 + (R() - 0.5) * 6, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+  }
+  const edge = (x0, y0, x1, y1, a) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(120,75,35,${a})`); gr.addColorStop(1, 'rgba(120,75,35,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); };
+  edge(0, 0, 0, 46, 0.42); edge(0, h, 0, h - 46, 0.42); edge(0, 0, 40, 0, 0.32); edge(w, 0, w - 40, 0, 0.32);
+  g.globalCompositeOperation = 'source-over';
+  return c;
+}
+let PARCH = null;
+const PAGES = {};
+function newPageObj(id, w) {
+  const c = document.createElement('canvas'); c.width = w || PW; c.height = PH;
+  const gc = document.createElement('canvas'); gc.width = c.width; gc.height = PH;
+  const tex = new THREE.CanvasTexture(c), gt = new THREE.CanvasTexture(gc);
+  tex.encoding = THREE.sRGBEncoding; gt.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+  return { id, c, g: c.getContext('2d'), gc, gg: gc.getContext('2d'), tex, gt, drawn: false, lastTw: null };
+}
+function page(id) {
+  let P = PAGES[id];
+  if (!P) { P = PAGES[id] = newPageObj(id); }
+  if (!P.drawn) { (DRAW[id] || DRAW._blank)(P); P.tex.needsUpdate = true; P.gt.needsUpdate = true; P.drawn = true; }
+  return P;
+}
+function base(P, side) {
+  const g = P.g; g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.drawImage(PARCH[side === 'l' ? 0 : 1], 0, 0);
+  const gr = side === 'l' ? g.createLinearGradient(PW, 0, PW - 110, 0) : g.createLinearGradient(0, 0, 110, 0);
+  gr.addColorStop(0, 'rgba(70,40,15,.42)'); gr.addColorStop(0.35, 'rgba(70,40,15,.14)'); gr.addColorStop(1, 'rgba(70,40,15,0)'); g.fillStyle = gr; g.fillRect(0, 0, PW, PH);
+  P.gg.setTransform(1, 0, 0, 1, 0, 0); P.gg.globalAlpha = 1; P.gg.fillStyle = '#000'; P.gg.fillRect(0, 0, PW, PH);
+  g.textBaseline = 'alphabetic';
+}
+function ornament(g, cx, y, w, col) {
+  g.strokeStyle = col || INK2; g.fillStyle = col || INK2; g.lineWidth = 1.3;
+  g.beginPath(); g.moveTo(cx - w / 2, y); g.lineTo(cx - 12, y); g.moveTo(cx + 12, y); g.lineTo(cx + w / 2, y); g.stroke();
+  g.beginPath(); g.moveTo(cx, y - 6); g.lineTo(cx + 7, y); g.lineTo(cx, y + 6); g.lineTo(cx - 7, y); g.closePath(); g.fill();
+  for (const s of [-1, 1]) { g.beginPath(); g.arc(cx + s * (w / 2 + 5), y, 2.2, 0, 2 * PI); g.fill(); }
+}
+function header(P, title, subs, active) {
+  const g = P.g; g.fillStyle = INK; g.textAlign = 'center';
+  g.font = `600 56px ${DISPLAY}`; g.fillText(title, PW / 2, 104);
+  ornament(g, PW / 2, 124, 300);
+  P.gg.globalAlpha = 0.5; ornament(P.gg, PW / 2, 124, 300, GOLD); P.gg.globalAlpha = 1;
+  if (subs) {
+    g.font = `500 21px ${BODYF}`; const parts = subs, gap = 26; let tw = 0; const ws = parts.map(s => g.measureText(s).width); tw = ws.reduce((a, b) => a + b, 0) + gap * (parts.length - 1);
+    let x = PW / 2 - tw / 2; g.textAlign = 'left';
+    parts.forEach((s, i) => { g.fillStyle = i === active ? INK : INK2; g.globalAlpha = i === active ? 1 : 0.75; g.fillText(s, x, 160); if (i === active) { g.fillRect(x, 166, ws[i], 1.6); } x += ws[i] + gap; });
+    g.globalAlpha = 1;
+  }
+}
+function wrap(g, text, x, y, maxW, lh) {
+  const words = text.split(' '); let line = '';
+  for (const w of words) { const t = line ? line + ' ' + w : w; if (g.measureText(t).width > maxW && line) { g.fillText(line, x, y); y += lh; line = w; } else line = t; }
+  if (line) { g.fillText(line, x, y); y += lh; }
+  return y;
+}
+function inkOf(col, sp) { return col === 'el' ? ELEM[sp.el].ink : INK; }
+function emOf(col, sp) { return col === 'el' ? ELEM[sp.el].em : GOLD; }
+function strokeOp(g, op, upto) {
+  if (op.dot) { g.beginPath(); g.arc(op.dot[0], op.dot[1], op.r, 0, 2 * PI); g.fill(); return op.dot; }
+  const p = op.pts; g.beginPath(); g.moveTo(p[0][0], p[0][1]); let acc = 0, last = p[0];
+  for (let i = 1; i < p.length; i++) {
+    const d = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]);
+    if (upto !== undefined && acc + d > upto) { const f = (upto - acc) / d; last = [p[i - 1][0] + (p[i][0] - p[i - 1][0]) * f, p[i - 1][1] + (p[i][1] - p[i - 1][1]) * f]; g.lineTo(last[0], last[1]); g.stroke(); return last; }
+    acc += d; g.lineTo(p[i][0], p[i][1]); last = p[i];
+  }
+  g.stroke(); return last;
+}
+/* Dibuja ops hasta la longitud L (Infinity = todo). Devuelve la punta de la pluma. glowT: tiempo de escritura para el brillo. */
+function drawOps(P, ops, sp, Lmax, opts) {
+  const g = P.g, gg = P.gg, o = opts || {}; let acc = 0, pen = null;
+  g.lineCap = gg.lineCap = 'round'; g.lineJoin = gg.lineJoin = 'round';
+  for (const op of ops) {
+    if (acc >= Lmax) break;
+    const part = acc + op.len > Lmax ? Lmax - acc : undefined;
+    g.strokeStyle = g.fillStyle = inkOf(op.col, sp); g.lineWidth = op.lw * (o.lw || 1); g.globalAlpha = o.alpha || 0.92;
+    pen = strokeOp(g, op, part);
+    if (o.glow) {
+      const age = part !== undefined ? 0 : (o.tw - (acc + op.len) / o.total * o.dur);
+      const a = o.final ? 0.16 : 0.16 + 0.84 * Math.exp(-Math.max(0, age) / 0.35);
+      gg.strokeStyle = gg.fillStyle = emOf(op.col, sp);
+      gg.globalAlpha = a * 0.35; gg.lineWidth = op.lw * 3.2 * (o.lw || 1); strokeOp(gg, op, part);
+      gg.globalAlpha = a; gg.lineWidth = op.lw * 1.2 * (o.lw || 1); strokeOp(gg, op, part);
+    }
+    acc += op.len;
+  }
+  g.globalAlpha = 1; gg.globalAlpha = 1;
+  return pen;
+}
+function opsTotal(ops) { let s = 0; for (const o of ops) s += o.len; return s; }
+function penAlong(ops, Lmax) { let acc = 0; for (const op of ops) { if (acc + op.len >= Lmax) { if (op.dot) return op.dot; let a = 0; const p = op.pts, u = Lmax - acc; for (let i = 1; i < p.length; i++) { const d = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]); if (a + d >= u) { const f = (u - a) / d; return [p[i - 1][0] + (p[i][0] - p[i - 1][0]) * f, p[i - 1][1] + (p[i][1] - p[i - 1][1]) * f]; } a += d; } return p[p.length - 1]; } acc += op.len; } return null; }
+
+// Tiempos de escritura de la hoja (s, relativos al comienzo de la tinta). La GUIA_UI §3.2 pide ≈ 3,2 s; aquí va algo más lento para poder verla.
+const WT = { circ: 2.3, name0: 2.35, name1: 2.95, sub0: 2.85, sub1: 3.25, stat0: 3.05, stat1: 3.4, seal0: 3.55, seal1: 3.8, end: 4.3 };
+const SPELL_LAYOUT = { cx: PW / 2, cy: 452, D: 410, rowY: 742, rowS: 46, nameY: 156, subY: 198, statY: 812, seal: [PW - 150, PH - 100, 44] };
+const OPS_CACHE = {};
+function spellOps(key) {
+  if (!OPS_CACHE[key]) { const sp = SPELLS[key], Ls = SPELL_LAYOUT; const ops = circleOps(sp, Ls.cx, Ls.cy, Ls.D).concat(rowOps(sp, Ls.cx, Ls.rowY, Ls.rowS)); OPS_CACHE[key] = { ops, total: opsTotal(ops) }; }
+  return OPS_CACHE[key];
+}
+function waxSeal(g, gg, cx, cy, r, sp, p, flash) {
+  if (p <= 0) return;
+  const s = 1 + 0.7 * Math.pow(1 - p, 2), R = mulberry32(sp.seed);
+  g.save(); g.translate(cx, cy); g.scale(s, s); g.globalAlpha = Math.min(1, p * 1.4);
+  g.beginPath();
+  for (let i = 0; i <= 40; i++) { const a = i / 40 * 2 * PI, rr = r * (1 + (R() - 0.5) * 0.09 + (i % 7 === 0 ? 0.06 : 0)); i ? g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr) : g.moveTo(Math.cos(a) * rr, Math.sin(a) * rr); }
+  g.closePath(); const gr = g.createRadialGradient(-r * 0.3, -r * 0.35, r * 0.1, 0, 0, r * 1.05); gr.addColorStop(0, '#b02a1c'); gr.addColorStop(0.6, '#7d160f'); gr.addColorStop(1, '#4a0b07'); g.fillStyle = gr; g.fill();
+  g.strokeStyle = 'rgba(40,5,3,.55)'; g.lineWidth = 2; g.beginPath(); g.arc(0, 0, r * 0.74, 0, 2 * PI); g.stroke();
+  g.strokeStyle = 'rgba(255,170,150,.28)'; g.lineWidth = 1.4; g.beginPath(); g.arc(-0.8, -0.8, r * 0.74, PI * 0.9, PI * 1.7); g.stroke();
+  const ops = glyphOps(sp.el, sp.el, false, 0, 0, r * 1.05, 0, 'el');
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  for (const op of ops) { g.strokeStyle = g.fillStyle = 'rgba(45,6,3,.75)'; g.lineWidth = op.lw * 1.3; strokeOp(g, op); }
+  g.translate(-1, -1); for (const op of ops) { g.strokeStyle = g.fillStyle = 'rgba(255,160,140,.35)'; g.lineWidth = op.lw * 0.7; strokeOp(g, op); }
+  g.restore();
+  if (flash > 0) { gg.save(); gg.globalAlpha = flash; const gr2 = gg.createRadialGradient(cx, cy, 0, cx, cy, r * 2.2); gr2.addColorStop(0, ELEM[sp.el].em); gr2.addColorStop(1, 'rgba(0,0,0,0)'); gg.fillStyle = gr2; gg.fillRect(cx - r * 2.5, cy - r * 2.5, r * 5, r * 5); gg.restore(); }
+}
+/* Hoja de hechizo. tw = segundos desde que empieza la tinta (Infinity = hoja terminada, <0 = hoja en blanco). Devuelve la punta de la pluma. */
+function drawSpellPage(P, key, tw, label) {
+  const sp = SPELLS[key], Ls = SPELL_LAYOUT, g = P.g, gg = P.gg, fin = tw === Infinity;
+  base(P, 'r');
+  if (tw < 0) return null;
+  g.textAlign = 'center'; g.fillStyle = INK2; g.font = `500 18px ${BODYF}`; g.globalAlpha = fin ? 0.8 : 0.8 * seg(tw, 0, 0.3);
+  g.fillText(label || 'Hechizos · Grimorio', PW / 2, 70); g.globalAlpha = 1;
+  const { ops, total } = spellOps(key);
+  let pen = drawOps(P, ops, sp, fin ? Infinity : total * Math.min(1, tw / WT.circ), { glow: true, tw: fin ? 99 : tw, total, dur: WT.circ, final: fin });
+  if (!fin && tw >= WT.circ) pen = null;
+  // nombre (se escribe de izquierda a derecha)
+  const pn = fin ? 1 : seg(tw, WT.name0, WT.name1);
+  if (pn > 0) {
+    g.font = `600 66px ${DISPLAY}`; const w = g.measureText(sp.name).width, x0 = PW / 2 - w / 2;
+    for (const [ctx, col, a] of [[g, INK, 1], [gg, ELEM[sp.el].em, fin ? 0.25 : 0.25 + 0.75 * (1 - seg(tw, WT.name1, WT.name1 + 0.6))]]) {
+      ctx.save(); ctx.beginPath(); ctx.rect(x0 - 10, Ls.nameY - 70, (w + 20) * pn, 100); ctx.clip();
+      ctx.font = `600 66px ${DISPLAY}`; ctx.textAlign = 'center'; ctx.fillStyle = col; ctx.globalAlpha = a; ctx.fillText(sp.name, PW / 2, Ls.nameY); ctx.restore();
+    }
+    if (pn < 1) pen = [x0 + w * pn, Ls.nameY - 22 + Math.sin(pn * 40) * 10];
+  }
+  const ps = fin ? 1 : seg(tw, WT.sub0, WT.sub1);
+  if (ps > 0) { g.globalAlpha = ps; g.font = `italic 400 28px ${BODYF}`; g.fillStyle = INK2; g.textAlign = 'center'; g.fillText(sp.sub, PW / 2, Ls.subY); g.globalAlpha = 1; }
+  const pst = fin ? 1 : seg(tw, WT.stat0, WT.stat1);
+  if (pst > 0) {
+    g.globalAlpha = pst; g.textAlign = 'center';
+    [['Maná', sp.mana], ['Complejidad', sp.comp], ['Inestabilidad', sp.inest + ' %']].forEach(([k, v], i) => {
+      const x = 118 + i * 150; g.fillStyle = INK2; g.font = `500 16px ${BODYF}`; g.fillText(k.toUpperCase(), x, Ls.statY); g.fillStyle = INK; g.font = `600 34px ${DISPLAY}`; g.fillText(String(v), x, Ls.statY + 36);
+    });
+    g.globalAlpha = 1;
+  }
+  const pse = fin ? 1 : seg(tw, WT.seal0, WT.seal1);
+  waxSeal(g, gg, Ls.seal[0], Ls.seal[1], Ls.seal[2], sp, pse, fin ? 0 : (pse > 0 ? 1 - seg(tw, WT.seal1, WT.seal1 + 0.7) : 0));
+  return pen;
+}
+function drawNotes(P, key, side) {
+  const sp = SPELLS[key], g = P.g; base(P, side || 'l');
+  g.save(); const big = glyphOps(sp.el, sp.el, false, PW * 0.62, PH * 0.62, 520, -0.18, 'el'); drawOps(P, big, sp, Infinity, { lw: 1.4, alpha: 0.08 }); g.restore();
+  header(P, 'Notas', null);
+  g.textAlign = 'left'; g.fillStyle = INK; g.font = `600 32px ${DISPLAY}`; g.fillText('Receta de ' + sp.name, 64, 214);
+  let y = 270;
+  const kinds = sp.runes.map(id => typeof id === 'number' ? (id < 200 ? 'Núcleo' : 'Forma') : (id === 'ancla' ? 'Control' : 'Modificador'));
+  sp.runes.forEach((id, i) => {
+    const ops = glyphOps(id, typeof id === 'number' ? id : 300, false, 92, y - 10, 46, 0, typeof id === 'number' && id < 200 ? 'el' : 'fm');
+    drawOps(P, ops, sp, Infinity, { glow: true, final: true });
+    g.fillStyle = INK2; g.font = `500 16px ${BODYF}`; g.fillText(kinds[i].toUpperCase(), 130, y - 18);
+    g.fillStyle = INK; g.font = `500 26px ${BODYF}`; g.fillText(RUNA[id], 130, y + 10); y += 62;
+  });
+  g.fillStyle = INK2; g.font = `italic 400 23px ${BODYF}`;
+  wrap(g, `Domina ${ELEM[sp.el].n.toLowerCase()}: ${ELEM[sp.el].est.toLowerCase()}. Inestabilidad ${sp.inest} %. Grabar con tinta rúnica en altar o campamento.`, 64, Math.max(y + 24, 640), PW - 128, 32);
+}
+const DRAW = {
+  _blank(P) { base(P, P.id.endsWith('_izq') ? 'l' : 'r'); },
+  hechizos_izq(P) {
+    const g = P.g; base(P, 'l'); header(P, 'Hechizos', ['Grimorio', 'Ranuras', 'Mutaciones', 'Importar'], 0);
+    g.textAlign = 'left'; g.fillStyle = INK2; g.font = `500 17px ${BODYF}`; g.fillText('RANURAS EQUIPADAS', 64, 220);
+    for (let i = 0; i < 8; i++) {
+      const x = 64 + i * 64, y = 236, locked = i >= 6, used = i < 3; g.strokeStyle = INK2; g.lineWidth = 1.4; g.globalAlpha = locked ? 0.45 : 1;
+      g.strokeRect(x, y, 50, 50); if (locked) { g.beginPath(); g.moveTo(x + 8, y + 8); g.lineTo(x + 42, y + 42); g.stroke(); }
+      if (used) { const k = ['ilenor', 'yskavel', 'silavar'][i]; drawOps(P, glyphOps(SPELLS[k].el, SPELLS[k].el, false, x + 25, y + 25, 36, 0, 'el'), SPELLS[k], Infinity, { glow: true, final: true }); }
+      g.globalAlpha = 1;
+    }
+    ornament(g, PW / 2, 324, 380);
+    let y = 360;
+    for (const k of ['ilenor', 'yskavel', 'silavar']) {
+      const sp = SPELLS[k]; drawOps(P, circleOps(sp, 112, y + 52, 104), sp, Infinity, { lw: 0.8, glow: true, final: true });
+      g.textAlign = 'left'; g.fillStyle = INK; g.font = `600 38px ${DISPLAY}`; g.fillText(sp.name, 186, y + 44);
+      g.fillStyle = INK2; g.font = `italic 400 22px ${BODYF}`; g.fillText(sp.sub, 186, y + 74);
+      g.font = `500 16px ${BODYF}`; g.fillText(`RANURA ${sp.slot} · MANÁ ${sp.mana}`, 186, y + 100);
+      y += 150;
+    }
+    g.textAlign = 'center'; g.fillStyle = INK2; g.font = `italic 400 20px ${BODYF}`; g.fillText('Tres hechizos grabados', PW / 2, PH - 58);
+  },
+  hechizos_der(P) { drawSpellPage(P, 'ilenor', Infinity); },
+  hoja_yskavel(P) { drawSpellPage(P, 'yskavel', Infinity); },
+  hoja_silavar(P) { drawSpellPage(P, 'silavar', Infinity); },
+  notas_a(P) { drawNotes(P, 'ilenor'); },
+  notas_b(P) { drawNotes(P, 'yskavel'); },
+  nuevo_izq(P) { drawNotes(P, CUR_SPELL); },
+  nuevo_der(P) { drawSpellPage(P, CUR_SPELL, Infinity, 'Hechizos · Hoja nueva'); },
+  bolso_izq(P) {
+    const g = P.g; base(P, 'l'); header(P, 'Bolso', ['Armas', 'Armaduras', 'Objetos y materiales'], 2);
+    g.textAlign = 'right'; g.fillStyle = INK2; g.font = `500 18px ${BODYF}`; g.fillText('TINTA RÚNICA  7', PW - 64, 212);
+    const items = [['Poción de vida', 'pocion', 3], ['Tinta rúnica', 'tinta', 7], ['Esquirla de fuego', 'esq', 2], ['Esquirla de hielo', 'esq', 1], ['Polvo arcano', 'polvo', 4], ['Hierba de vado', 'hoja', 6], ['Esquirla rúnica', 'esq', 1], ['Pan de centeno', 'pan', 2], ['Llave de hierro', 'llave', 1], ['', '', 0], ['', '', 0], ['', '', 0]];
+    items.forEach(([n, ic, q], i) => {
+      const cx = 64 + (i % 3) * 176, cy = 236 + Math.floor(i / 3) * 150; g.strokeStyle = INK2; g.lineWidth = 1.3; g.globalAlpha = n ? 1 : 0.35;
+      g.beginPath(); g.roundRect ? g.roundRect(cx, cy, 160, 134, 8) : g.rect(cx, cy, 160, 134); g.stroke();
+      if (n) { icon(g, ic, cx + 80, cy + 54); g.textAlign = 'center'; g.fillStyle = INK; g.font = `500 19px ${BODYF}`; g.fillText(n, cx + 80, cy + 112); if (q > 1) { g.textAlign = 'right'; g.font = `600 20px ${DISPLAY}`; g.fillText('×' + q, cx + 150, cy + 26); } }
+      g.globalAlpha = 1;
+    });
+  },
+  bolso_der(P) {
+    const g = P.g; base(P, 'r'); header(P, 'Poción de vida', null);
+    icon(g, 'pocion', PW / 2, 300, 3.2);
+    g.textAlign = 'left'; g.fillStyle = INK; g.font = `400 24px ${BODYF}`;
+    let y = wrap(g, 'Agua de manantial, raíz de vado y una gota de luz. Devuelve el aliento a quien la bebe, aunque no el recuerdo.', 70, 470, PW - 140, 34);
+    y += 20; ornament(g, PW / 2, y, 380); y += 50;
+    for (const [k, v] of [['Cura', '35 % de la vida'], ['Uso', '1,2 s, interrumpible'], ['Mercader', 'Aldea del Vado'], ['En el bolso', '3']]) {
+      g.fillStyle = INK2; g.font = `500 17px ${BODYF}`; g.fillText(k.toUpperCase(), 70, y); g.fillStyle = INK; g.font = `500 24px ${BODYF}`; g.textAlign = 'right'; g.fillText(v, PW - 70, y); g.textAlign = 'left'; y += 44;
+    }
+  },
+  codice_izq(P) {
+    const g = P.g; base(P, 'l'); header(P, 'Códice', ['Elemental', 'Fragmentos'], 0);
+    Object.keys(ELEM).forEach((k, i) => {
+      const id = +k, e = ELEM[id], col = i % 2, row = Math.floor(i / 2), x = 70 + col * 262, y = 230 + row * 150;
+      const fake = { el: id };
+      drawOps(P, glyphOps(id, id, false, x + 34, y + 46, 70, 0, 'el'), fake, Infinity, { glow: true, final: true });
+      g.textAlign = 'left'; g.fillStyle = INK; g.font = `600 32px ${DISPLAY}`; g.fillText(e.n, x + 80, y + 40);
+      g.fillStyle = INK2; g.font = `italic 400 19px ${BODYF}`; g.fillText(e.est, x + 80, y + 70);
+    });
+    g.textAlign = 'center'; g.fillStyle = INK2; g.font = `italic 400 20px ${BODYF}`; g.fillText('7 de 7 elementos · 3 de 21 fusiones', PW / 2, PH - 58);
+  },
+  codice_der(P) {
+    const g = P.g; base(P, 'r'); header(P, 'Fragmentos', null);
+    const fr = [['Las estatuas sin rostro', 'En cada plaza de Valdera hay una figura de piedra a la que nadie talló la cara.'], ['La noche de la Pausa', 'Los viejos del vado dicen que aquella noche el río dejó de sonar.'], ['Un caballero conocido', 'La posadera me sirvió sin preguntar mi nombre, como si ya lo supiera.'], null, null];
+    let y = 210;
+    for (const f of fr) {
+      if (f) { g.textAlign = 'left'; g.fillStyle = INK; g.font = `600 30px ${DISPLAY}`; g.fillText(f[0], 70, y); g.fillStyle = INK2; g.font = `400 22px ${BODYF}`; y = wrap(g, f[1], 70, y + 34, PW - 140, 30) + 30; }
+      else { g.textAlign = 'center'; g.fillStyle = INK2; g.globalAlpha = 0.6; g.font = `italic 400 22px ${BODYF}`; g.fillText('— fragmento sin descubrir —', PW / 2, y); g.globalAlpha = 1; y += 60; }
+    }
+  },
+  mapa_izq(P) { mapHalf(P, 0); },
+  mapa_der(P) { mapHalf(P, 1); },
+  ajustes_izq(P) {
+    const g = P.g; base(P, 'l'); header(P, 'Ajustes', null);
+    const rows = [['Volumen general', 0.8], ['Música', 0.6], ['Efectos', 0.9], ['Voces', 0.7], ['Sensibilidad de dirección', 0.5], ['Zona muerta', 0.5]];
+    let y = 220;
+    for (const [n, v] of rows) {
+      g.textAlign = 'left'; g.fillStyle = INK; g.font = `500 24px ${BODYF}`; g.fillText(n, 70, y);
+      g.textAlign = 'right'; g.fillStyle = INK2; g.font = `500 20px ${BODYF}`; g.fillText(n.startsWith('Sens') ? '60 px' : Math.round(v * 100) + ' %', PW - 70, y);
+      g.strokeStyle = INK2; g.lineWidth = 1.2; g.beginPath(); g.moveTo(70, y + 22); g.lineTo(PW - 70, y + 22); g.stroke();
+      g.fillStyle = INK; g.fillRect(70, y + 19, (PW - 140) * v, 6); g.beginPath(); g.arc(70 + (PW - 140) * v, y + 22, 7, 0, 2 * PI); g.fill(); y += 78;
+    }
+    for (const [n, v] of [['Invertir eje Y', 'No'], ['Subtítulos', 'Sí'], ['Reducir movimiento', 'No']]) { g.textAlign = 'left'; g.fillStyle = INK; g.font = `500 24px ${BODYF}`; g.fillText(n, 70, y); g.textAlign = 'right'; g.fillText(v, PW - 70, y); y += 46; }
+  },
+  ajustes_der(P) {
+    const g = P.g; base(P, 'r'); header(P, 'Controles', null);
+    const rows = [['Abrir el libro', 'OPTIONS', 'Esc · P'], ['Apartado', 'R1 / L1', 'Tab · 1–5'], ['Pasar página', 'R2 / L2', 'Q / E'], ['Atacar', 'R1', 'Clic izq.'], ['Bloquear', 'L1', 'Clic der.'], ['Dirección', 'Stick izq.', 'Ratón + clic'], ['Habilidad', 'L1 + R1', 'G'], ['Configuración', 'Cruceta ▲', 'V']];
+    let y = 214; g.font = `500 16px ${BODYF}`; g.fillStyle = INK2; g.textAlign = 'left'; g.fillText('ACCIÓN', 64, y); g.fillText('MANDO', 310, y); g.fillText('TECLADO', 452, y); y += 16;
+    g.strokeStyle = INK2; g.lineWidth = 1; g.beginPath(); g.moveTo(64, y); g.lineTo(PW - 64, y); g.stroke(); y += 40;
+    for (const [a, m, t] of rows) { g.fillStyle = INK; g.font = `500 23px ${BODYF}`; g.fillText(a, 64, y); g.fillStyle = INK2; g.fillText(m, 310, y); g.fillText(t, 452, y); y += 56; }
+  },
+};
+function icon(g, k, x, y, s) {
+  s = s || 1; g.save(); g.translate(x, y); g.scale(s, s); g.strokeStyle = INK; g.fillStyle = INK; g.lineWidth = 2 / s; g.lineCap = 'round'; g.lineJoin = 'round';
+  g.beginPath();
+  if (k === 'pocion') { g.moveTo(-6, -26); g.lineTo(-6, -14); g.bezierCurveTo(-24, -6, -24, 24, 0, 26); g.bezierCurveTo(24, 24, 24, -6, 6, -14); g.lineTo(6, -26); g.moveTo(-9, -26); g.lineTo(9, -26); g.stroke(); g.globalAlpha = 0.25; g.fillStyle = '#9b1f1a'; g.beginPath(); g.moveTo(-17, 6); g.bezierCurveTo(-14, 22, 14, 22, 17, 6); g.closePath(); g.fill(); }
+  else if (k === 'tinta') { g.rect(-14, -6, 28, 30); g.moveTo(-6, -6); g.lineTo(-6, -14); g.lineTo(6, -14); g.lineTo(6, -6); g.moveTo(4, -14); g.quadraticCurveTo(18, -34, 26, -30); g.stroke(); }
+  else if (k === 'esq') { g.moveTo(0, -26); g.lineTo(13, -4); g.lineTo(5, 24); g.lineTo(-9, 18); g.lineTo(-13, -6); g.closePath(); g.moveTo(0, -26); g.lineTo(-1, 20); g.stroke(); }
+  else if (k === 'polvo') { g.arc(0, 4, 18, 0, PI); g.moveTo(-18, 4); g.lineTo(18, 4); g.stroke(); for (let i = 0; i < 7; i++) { g.beginPath(); g.arc(-12 + i * 4, -6 - (i % 3) * 6, 1.6, 0, 2 * PI); g.fill(); } }
+  else if (k === 'hoja') { g.moveTo(0, 26); g.quadraticCurveTo(-22, 0, 0, -26); g.quadraticCurveTo(22, 0, 0, 26); g.moveTo(0, 26); g.lineTo(0, -18); g.stroke(); }
+  else if (k === 'pan') { g.ellipse(0, 4, 24, 15, 0, 0, 2 * PI); g.moveTo(-10, -4); g.lineTo(-4, 6); g.moveTo(2, -6); g.lineTo(8, 4); g.stroke(); }
+  else if (k === 'llave') { g.arc(-14, 0, 9, 0, 2 * PI); g.moveTo(-5, 0); g.lineTo(24, 0); g.lineTo(24, 8); g.moveTo(16, 0); g.lineTo(16, 7); g.stroke(); }
+  g.restore();
+}
+// Mapa de Valdera a doble página (las dos mitades salen del mismo lienzo).
+let MAPC = null;
+function buildMap() {
+  const w = PW * 2, h = PH, c = document.createElement('canvas'); c.width = w; c.height = h; const g = c.getContext('2d');
+  g.drawImage(PARCH[0], 0, 0); g.drawImage(PARCH[1], PW, 0);
+  const R = mulberry32(77), N = 64, grid = new Float32Array(N * N); for (let i = 0; i < N * N; i++) grid[i] = R();
+  const vn = (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, I = (a, b) => grid[(((b % N) + N) % N) * N + (((a % N) + N) % N)]; const u = smooth(xf), v = smooth(yf); return lerp(lerp(I(xi, yi), I(xi + 1, yi), u), lerp(I(xi, yi + 1), I(xi + 1, yi + 1), u), v); };
+  const fbm = (x, y) => { let s = 0, a = 0.5, f = 1; for (let o = 0; o < 5; o++) { s += a * vn(x * f, y * f); a *= 0.5; f *= 2; } return s; };
+  const towns = [['Aldea del Vado', 0.36, 0.52, 1], ['Puerto Gaviota', 0.17, 0.33, 0], ['Caleta', 0.6, 0.83, 0], ['Oasis de Arenal', 0.78, 0.36, 1], ['Refugio del lago', 0.5, 0.24, 1]];
+  const land = (u, v) => { let d = Math.hypot((u - 0.48) * 1.25, (v - 0.52) * 1.6); let s = 0.62 - d + (fbm(u * 5, v * 3.5) - 0.5) * 0.55; for (const t of towns) s += (t[3] ? 0.12 : 0.05) * Math.exp(-((u - t[1]) ** 2 + (v - t[2]) ** 2) / 0.004); const lake = Math.exp(-((u - 0.5) ** 2 * 3 + (v - 0.3) ** 2) / 0.0025); return s - lake * 0.5; };
+  const hsh = (x, y) => { const v = Math.sin(x * 127.1 + y * 311.7) * 43758.5453; return v - Math.floor(v); };
+  const lw = 320, lh = Math.round(320 * h / w), img = g.createImageData(lw, lh), M = new Float32Array(lw * lh);
+  for (let y = 0; y < lh; y++) for (let x = 0; x < lw; x++) { const u = x / lw, v = y / lh, s = land(u, v); M[y * lw + x] = s; const a = smooth(clamp(s * 14 + 0.5, 0, 1)); const des = smooth(seg(u, 0.62, 0.8)) * smooth(seg(0.62, 0.3, v)); const i = (y * lw + x) * 4; img.data[i] = lerp(150, 196, des); img.data[i + 1] = lerp(142, 160, des); img.data[i + 2] = lerp(92, 96, des); img.data[i + 3] = a * 120; }
+  const sc = document.createElement('canvas'); sc.width = lw; sc.height = lh; sc.getContext('2d').putImageData(img, 0, 0);
+  g.save(); g.globalCompositeOperation = 'multiply'; g.imageSmoothingQuality = 'high'; g.drawImage(sc, 0, 0, w, h); g.restore();
+  g.fillStyle = INK; g.strokeStyle = INK;
+  for (let y = 1; y < lh - 1; y++) for (let x = 1; x < lw - 1; x++) {   // costa y rayado del mar
+    const s = M[y * lw + x], X = x / lw * w, Y = y / lh * h;
+    if (s > 0 && (M[y * lw + x - 1] <= 0 || M[y * lw + x + 1] <= 0 || M[(y - 1) * lw + x] <= 0 || M[(y + 1) * lw + x] <= 0)) { g.globalAlpha = 0.85; g.beginPath(); g.arc(X, Y, 1.5, 0, 2 * PI); g.fill(); }
+    else if (s < 0 && s > -0.06 && (x + y * 3) % 7 === 0) { g.globalAlpha = 0.35; g.lineWidth = 1; g.beginPath(); g.moveTo(X - 5, Y); g.lineTo(X + 5, Y); g.stroke(); }
+    else if (s > 0.16 && hsh(x, y) < 0.012) { g.globalAlpha = 0.6; g.lineWidth = 1.4; g.beginPath(); g.moveTo(X - 9, Y + 6); g.lineTo(X, Y - 8); g.lineTo(X + 9, Y + 6); g.stroke(); }
+  }
+  g.globalAlpha = 1;
+  for (const [n, u, v, inland] of towns) {
+    const X = u * w, Y = v * h; g.fillStyle = '#7d1c14'; g.beginPath(); g.arc(X, Y, 7, 0, 2 * PI); g.fill(); g.strokeStyle = INK; g.lineWidth = 1.4; g.beginPath(); g.arc(X, Y, 11, 0, 2 * PI); g.stroke();
+    g.fillStyle = INK; g.font = `${inland && n.startsWith('Aldea') ? 600 : 500} ${n.startsWith('Aldea') ? 30 : 25}px ${DISPLAY}`; g.textAlign = 'center'; g.fillText(n, X, Y - 20);
+  }
+  // camino del jugador y piedras de paso
+  g.setLineDash([6, 7]); g.strokeStyle = INK2; g.lineWidth = 2; g.beginPath(); g.moveTo(0.36 * w, 0.52 * h); g.quadraticCurveTo(0.45 * w, 0.4 * h, 0.5 * w, 0.26 * h); g.moveTo(0.36 * w, 0.52 * h); g.quadraticCurveTo(0.25 * w, 0.45 * h, 0.17 * w, 0.33 * h); g.stroke(); g.setLineDash([]);
+  for (const [u, v] of [[0.42, 0.62], [0.3, 0.4]]) { const X = u * w, Y = v * h; g.fillStyle = '#2f6f86'; g.beginPath(); g.moveTo(X, Y - 10); g.lineTo(X + 7, Y); g.lineTo(X, Y + 10); g.lineTo(X - 7, Y); g.closePath(); g.fill(); }
+  // rosa de los vientos y título
+  const rx = 0.9 * w, ry = 0.82 * h; g.strokeStyle = INK; g.fillStyle = INK; g.lineWidth = 1.3;
+  for (let i = 0; i < 8; i++) { const a = i * PI / 4 - PI / 2, l = i % 2 ? 24 : 46; g.beginPath(); g.moveTo(rx, ry); g.lineTo(rx + Math.cos(a + 0.15) * 10, ry + Math.sin(a + 0.15) * 10); g.lineTo(rx + Math.cos(a) * l, ry + Math.sin(a) * l); g.closePath(); i % 2 ? g.stroke() : g.fill(); }
+  g.beginPath(); g.arc(rx, ry, 30, 0, 2 * PI); g.stroke(); g.font = `600 22px ${DISPLAY}`; g.textAlign = 'center'; g.fillText('N', rx, ry - 52);
+  g.font = `700 64px ${DISPLAY}`; g.textAlign = 'left'; g.fillText('Valdera', 70, 104); g.font = `italic 400 22px ${BODYF}`; g.fillStyle = INK2; g.fillText('Mapa de Bronsil, región del vado', 72, 138);
+  MAPC = c;
+}
+function mapHalf(P, half) {
+  if (!MAPC) buildMap();
+  const g = P.g; base(P, half ? 'r' : 'l'); g.drawImage(MAPC, half * PW, 0, PW, PH, 0, 0, PW, PH);
+  const gr = half ? g.createLinearGradient(0, 0, 90, 0) : g.createLinearGradient(PW, 0, PW - 90, 0); gr.addColorStop(0, 'rgba(70,40,15,.35)'); gr.addColorStop(1, 'rgba(70,40,15,0)'); g.fillStyle = gr; g.fillRect(0, 0, PW, PH);
+}
+
+/* ------------------------------------------------------------------ texturas de cuero, tela y canto */
+function makeNoise2(seed, n) {
+  const R = mulberry32(seed), g = new Float32Array(n * n); for (let i = 0; i < n * n; i++) g[i] = R();
+  return (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), xf = x - xi, yf = y - yi, I = (a, b) => g[(((b % n) + n) % n) * n + (((a % n) + n) % n)], u = smooth(xf), v = smooth(yf); return lerp(lerp(I(xi, yi), I(xi + 1, yi), u), lerp(I(xi, yi + 1), I(xi + 1, yi + 1), u), v); };
+}
+function heightToNormal(h, S, k) {
+  const c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), d = g.createImageData(S, S);
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const xm = (x - 1 + S) % S, xp = (x + 1) % S, ym = (y - 1 + S) % S, yp = (y + 1) % S;
+    let nx = -(h[y * S + xp] - h[y * S + xm]) * k, ny = -(h[ym * S + x] - h[yp * S + x]) * k, nz = 1; const l = Math.hypot(nx, ny, nz); nx /= l; ny /= l; nz /= l;
+    const i = (y * S + x) * 4; d.data[i] = (nx * 0.5 + 0.5) * 255; d.data[i + 1] = (ny * 0.5 + 0.5) * 255; d.data[i + 2] = (nz * 0.5 + 0.5) * 255; d.data[i + 3] = 255;
+  }
+  g.putImageData(d, 0, 0); return c;
+}
+/* Cuero granulado con desgaste en los bordes; art(ctx,S) dibuja el dorado en relieve (máscara). */
+function makeLeather(o) {
+  const S = o.size || 512, nA = makeNoise2(o.seed, 64), nB = makeNoise2(o.seed + 1, 256), nC = makeNoise2(o.seed + 2, 16);
+  let mask = null, maskB = null;
+  if (o.art) {
+    const mc = document.createElement('canvas'); mc.width = mc.height = S; const mg = mc.getContext('2d'); mg.fillStyle = '#000'; mg.fillRect(0, 0, S, S); mg.strokeStyle = mg.fillStyle = '#fff'; o.art(mg, S);
+    mask = mg.getImageData(0, 0, S, S).data;
+    const bc = document.createElement('canvas'); bc.width = bc.height = S; const bg = bc.getContext('2d'); bg.filter = `blur(${S / 400}px)`; bg.drawImage(mc, 0, 0); maskB = bg.getImageData(0, 0, S, S).data;
+  }
+  const h = new Float32Array(S * S), col = document.createElement('canvas'); col.width = col.height = S; const cg = col.getContext('2d'), cd = cg.createImageData(S, S);
+  const orm = document.createElement('canvas'); orm.width = orm.height = S; const og = orm.getContext('2d'), od = og.createImageData(S, S);
+  const [tr, tg, tb] = o.tint, gold = [212, 162, 74];
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    const u = x / S, v = y / S, i = y * S + x;
+    const peb = 1 - Math.abs(2 * nB(u * 256 * (o.grain || 0.5), v * 256 * (o.grain || 0.5)) - 1);
+    const fb = nA(u * 16, v * 16) * 0.6 + nA(u * 32, v * 32) * 0.4, low = nC(u * 4, v * 4);
+    const crease = Math.pow(1 - Math.abs(2 * nA(u * 6 + 11, v * 9) - 1), 14);
+    let hh = 0.5 * peb + 0.35 * fb - 0.35 * crease;
+    if (o.bands) { const b = Math.pow(Math.max(0, Math.cos(v * PI * 2 * 4 + PI)), 18); hh += b * 0.9; }
+    const ed = Math.min(u, v, 1 - u, 1 - v), wear = o.wear ? smooth(clamp(1 - ed / 0.035, 0, 1)) : 0;
+    let m = mask ? mask[i * 4] / 255 : 0, mb = maskB ? maskB[i * 4] / 255 : 0;
+    hh -= mb * 0.7;
+    h[i] = hh;
+    const sh = 0.68 + 0.42 * hh + 0.25 * (low - 0.5) + wear * 0.35;
+    let r = tr * sh, gg = tg * sh, b = tb * sh;
+    if (m > 0) { const gs = 0.7 + 0.4 * peb; m = Math.min(1, m * (0.75 + 0.5 * nA(u * 40, v * 40))); r = lerp(r, gold[0] * gs, m); gg = lerp(gg, gold[1] * gs, m); b = lerp(b, gold[2] * gs, m); }
+    const p = i * 4; cd.data[p] = r; cd.data[p + 1] = gg; cd.data[p + 2] = b; cd.data[p + 3] = 255;
+    od.data[p] = 255; od.data[p + 1] = clamp(lerp(0.66 - 0.18 * hh - wear * 0.12, 0.32, m), 0, 1) * 255; od.data[p + 2] = m * 255; od.data[p + 3] = 255;
+  }
+  cg.putImageData(cd, 0, 0); og.putImageData(od, 0, 0);
+  const map = new THREE.CanvasTexture(col); map.encoding = THREE.sRGBEncoding; map.anisotropy = 8;
+  const nrm = new THREE.CanvasTexture(heightToNormal(h, S, o.normal || 6)), om = new THREE.CanvasTexture(orm);
+  for (const t of [map, nrm, om]) { t.wrapS = t.wrapT = THREE.RepeatWrapping; }
+  return { map, normalMap: nrm, roughnessMap: om, metalnessMap: om };
+}
+function coverArt(g, S) {
+  const m = S * 0.07, lw = S / 200; g.lineWidth = lw * 1.6; g.strokeRect(m, m, S - 2 * m, S - 2 * m); g.lineWidth = lw; g.strokeRect(m + S * 0.022, m + S * 0.022, S - 2 * m - S * 0.044, S - 2 * m - S * 0.044);
+  for (const [cx, cy] of [[m, m], [S - m, m], [m, S - m], [S - m, S - m]]) { g.beginPath(); g.arc(cx, cy, S * 0.028, 0, 2 * PI); g.fill(); }
+  const fake = { el: 103, runes: [201, 202, 203, 204, 205, 206], seed: 9 };
+  const ops = circleOps(fake, S / 2, S * 0.5, S * 0.56);
+  g.lineCap = g.lineJoin = 'round';
+  for (const op of ops) { g.lineWidth = op.lw * 1.8; strokeOp(g, op); }
+  g.font = `600 ${S * 0.06}px ${DISPLAY}`; g.textAlign = 'center'; g.fillText('GRIMORIO', S / 2, S * 0.155);
+}
+function edgeTexture(vertical) {
+  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'), R = mulberry32(vertical ? 5 : 6);
+  g.fillStyle = '#e2cfa6'; g.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 256; i += 2) { const a = 0.08 + R() * 0.22; g.fillStyle = `rgba(110,80,45,${a})`; vertical ? g.fillRect(i, 0, 1, 256) : g.fillRect(0, i, 256, 1); }
+  const gr = vertical ? g.createLinearGradient(0, 0, 0, 256) : g.createLinearGradient(0, 0, 256, 0); gr.addColorStop(0, 'rgba(90,55,25,.35)'); gr.addColorStop(0.15, 'rgba(90,55,25,0)'); gr.addColorStop(0.85, 'rgba(90,55,25,0)'); gr.addColorStop(1, 'rgba(90,55,25,.35)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t;
+}
+function clothTexture(hex, seed) {
+  const S = 256, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), R = mulberry32(seed); g.fillStyle = hex; g.fillRect(0, 0, S, S);
+  for (let y = 0; y < S; y += 2) for (let x = 0; x < S; x += 2) { const w = ((x >> 1) + (y >> 1)) % 2 ? 0.12 : -0.08; g.fillStyle = w > 0 ? `rgba(255,255,255,${w * 0.5 + R() * 0.05})` : `rgba(0,0,0,${-w + R() * 0.06})`; g.fillRect(x, y, 2, 2); }
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+
+/* ------------------------------------------------------------------ escena */
+let renderer, composer, bloom, grade, scene, fp, orbitCam, controls, rig, hold, book, pivot, spine, stackL, stackR, matL, matR;
+let bgMat, bgTex, sun, edgeLight, partMat, parts, sparkMat, sparks, newSheet, newSheetMat, dustMat;
+const sheets = [], ribbons = [], hands = {};
+const tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3();
+let CUR_SPELL = 'asharvel';
+
+function capsule(a, b, r, mat, parent) {
+  const A = new THREE.Vector3(...a), B = new THREE.Vector3(...b), d = B.clone().sub(A), len = d.length();
+  const m = new THREE.Mesh(new THREE.CapsuleGeometry(r, Math.max(0.0001, len), 6, 14), mat);
+  m.position.copy(A).add(B).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
+  m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+function ellipsoid(c, s, mat, parent, rot) {
+  const m = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), mat); m.position.set(...c); m.scale.set(...s); if (rot) m.rotation.set(...rot);
+  m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+/* Mano derecha con guante de cuero: el pulgar sujeta la esquina inferior de la página y los dedos quedan detrás de la tapa. */
+function makeHand(glove, sleeve, trim) {
+  const g = new THREE.Group(), z0 = T / 2, x0 = W;
+  ellipsoid([x0 + 0.013, -H / 2 + 0.014, T / 2 - 0.016], [0.022, 0.036, 0.03], glove, g, [0.2, 0, 0.45]);          // talón que abraza el canto
+  ellipsoid([x0 + 0.004, -H / 2 + 0.024, -C - 0.016], [0.046, 0.05, 0.016], glove, g, [0, 0, 0.35]);            // palma detrás de la tapa
+  for (let i = 0; i < 4; i++) { const y = -H / 2 + 0.032 + i * 0.019; capsule([x0 + 0.006, y, -C - 0.012], [x0 - 0.06 + i * 0.004, y + 0.012, -C - 0.008], 0.0088 - i * 0.0006, glove, g); }
+  ellipsoid([x0 + 0.006, -H / 2 + 0.01, z0 + 0.004], [0.021, 0.024, 0.011], glove, g, [0, 0, 0.7]);              // eminencia del pulgar
+  capsule([x0 + 0.001, -H / 2 + 0.014, z0 + 0.009], [x0 - 0.019, -H / 2 + 0.031, z0 + 0.0115], 0.0112, glove, g);
+  capsule([x0 - 0.019, -H / 2 + 0.031, z0 + 0.0115], [x0 - 0.029, -H / 2 + 0.044, z0 + 0.0095], 0.0101, glove, g);
+  ellipsoid([x0 - 0.019, -H / 2 + 0.031, z0 + 0.0125], [0.0118, 0.0118, 0.0112], glove, g);                       // nudillo
+  const dir = new THREE.Vector3(0.32, -0.62, 0.72).normalize(), w0 = new THREE.Vector3(x0 + 0.02, -H / 2 - 0.008, -0.004);
+  const at = s => w0.clone().addScaledVector(dir, s).toArray();
+  capsule(at(0), at(0.06), 0.03, glove, g);                                                                     // muñeca
+  const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.041, 0.07, 28, 1, true), glove); cuff.position.fromArray(at(0.075)); cuff.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().negate()); cuff.material.side = THREE.DoubleSide; cuff.castShadow = true; g.add(cuff);
+  const band = new THREE.Mesh(new THREE.TorusGeometry(0.0405, 0.0035, 10, 32), trim); band.position.fromArray(at(0.108)); band.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), dir); g.add(band);
+  capsule(at(0.1), at(0.42), 0.043, sleeve, g);                                                                  // manga
+  return g;
+}
+function sheetGeom() {
+  const geo = new THREE.PlaneGeometry(W, H * 0.994, 30, 4); geo.translate(W / 2, 0, 0);
+  const pos = geo.attributes.position; geo.userData.base = Float32Array.from(pos.array);
+  const back = new THREE.BufferGeometry(); back.setIndex(geo.index); back.setAttribute('position', pos);
+  const uv = geo.attributes.uv.clone(); for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i)); back.setAttribute('uv', uv);
+  geo.computeVertexNormals(); back.setAttribute('normal', geo.attributes.normal);
+  return [geo, back];
+}
+function deformSheet(geo, theta, curl, lift) {
+  const pos = geo.attributes.position, b = geo.userData.base, k0 = -curl * Math.sin(theta) * 9;
+  for (let i = 0; i < pos.count; i++) {
+    const s = b[i * 3], y = b[i * 3 + 1], k = k0 * (1 + 0.45 * y / H);
+    let x, z;
+    if (Math.abs(k) < 1e-4) { x = s * Math.cos(theta); z = s * Math.sin(theta); }
+    else { x = (Math.sin(theta + k * s) - Math.sin(theta)) / k; z = -(Math.cos(theta + k * s) - Math.cos(theta)) / k; }
+    pos.setXYZ(i, x, y, z + lift);
+  }
+  pos.needsUpdate = true; geo.computeVertexNormals(); geo.attributes.normal.needsUpdate = true;
+}
+function pageMat(side) {
+  return new THREE.MeshStandardMaterial({ roughness: 0.86, metalness: 0, emissive: 0xffffff, emissiveIntensity: 0, side: side || THREE.FrontSide, envMapIntensity: 0.45 });
+}
+function setPage(mat, id) {
+  const P = page(id); if (mat.map !== P.tex) { mat.map = P.tex; mat.emissiveMap = P.gt; mat.needsUpdate = mat.userData.compiled !== true; mat.userData.compiled = true; mat.userData.page = id; }
+}
+function buildBook() {
+  book = new THREE.Group(); hold.add(book);
+  const cover = makeLeather({ seed: 11, size: 1024, tint: [74, 32, 21], art: coverArt, wear: true, normal: 7 });
+  const plain = makeLeather({ seed: 12, size: 512, tint: [74, 32, 21], wear: true, normal: 6 });
+  const spineT = makeLeather({ seed: 13, size: 512, tint: [68, 30, 20], bands: true, normal: 7 });
+  const leatherMat = t => new THREE.MeshStandardMaterial({ ...t, metalness: 1, roughness: 1, envMapIntensity: 0.8 });
+  const mCover = leatherMat(cover), mPlain = leatherMat(plain), mSpine = leatherMat(spineT);
+  mSpine.side = THREE.DoubleSide;
+  const eV = edgeTexture(true), eH = edgeTexture(false), mEV = new THREE.MeshStandardMaterial({ map: eV, roughness: 0.9, envMapIntensity: 0.45 }), mEH = new THREE.MeshStandardMaterial({ map: eH, roughness: 0.9, envMapIntensity: 0.45 });
+  matL = pageMat(); matR = pageMat();
+  const bw = W + OV, bh = H + 2 * OV;
+  // tapa trasera y bloque derecho (fijos)
+  const boardR = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, C), [mPlain, mPlain, mPlain, mPlain, mPlain, mPlain]); boardR.position.set(bw / 2, 0, -C / 2); book.add(boardR);
+  stackR = new THREE.Mesh(new THREE.BoxGeometry(W, H, T / 2 - 0.0004), [mEV, mEV, mEH, mEH, matR, mEH]); stackR.position.set(W / 2, 0, T / 4); book.add(stackR);
+  // tapa delantera y bloque izquierdo (giran juntos)
+  pivot = new THREE.Group(); pivot.position.set(0, 0, T / 2); book.add(pivot);
+  const boardL = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, C), [mPlain, mPlain, mPlain, mPlain, mPlain, mCover]); boardL.position.set(-bw / 2, 0, -T / 2 - C / 2); pivot.add(boardL);
+  stackL = new THREE.Mesh(new THREE.BoxGeometry(W, H, T / 2 - 0.0004), [mEV, mEV, mEH, mEH, matL, mEH]); stackL.position.set(-W / 2, 0, -T / 4); pivot.add(stackL);
+  // lomo
+  spine = new THREE.Mesh(new THREE.CylinderGeometry(T / 2 + C, T / 2 + C, bh, 40, 1, true, PI / 2, PI), mSpine); spine.position.set(0, 0, T / 2); book.add(spine);
+  // cantoneras de latón
+  const brass = new THREE.MeshStandardMaterial({ color: 0x8c6a3c, metalness: 1, roughness: 0.42 });
+  const tri = new THREE.Shape(); tri.moveTo(0, 0); tri.lineTo(0.034, 0); tri.lineTo(0, 0.034); tri.closePath();
+  const cg = new THREE.ExtrudeGeometry(tri, { depth: 0.0012, bevelEnabled: true, bevelThickness: 0.0008, bevelSize: 0.0012, bevelSegments: 2, curveSegments: 4 });
+  const corner = (parent, x, y, z, sx, sy, sz) => { const m = new THREE.Mesh(cg, brass); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; parent.add(m); };
+  for (const sy of [1, -1]) { corner(pivot, -bw, sy * bh / 2, -T / 2 - C - 0.0006, 1, -sy, -1); corner(book, bw, sy * bh / 2, -C - 0.0006, -1, -sy, -1); }
+  book.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  // hojas que pasan
+  for (let i = 0; i < 5; i++) {
+    const [gf, gb] = sheetGeom(), mf = pageMat(THREE.FrontSide), mb = pageMat(THREE.BackSide);
+    const f = new THREE.Mesh(gf, mf), b = new THREE.Mesh(gb, mb); f.castShadow = b.castShadow = true; f.receiveShadow = b.receiveShadow = true;
+    const grp = new THREE.Group(); grp.position.set(0, 0, T / 2); grp.add(f, b); grp.visible = false; book.add(grp); sheets.push({ grp, gf, mf, mb });
+    f.frustumCulled = b.frustumCulled = false;
+  }
+  // hoja nueva que forman las partículas (disolución con borde luminoso)
+  newSheetMat = pageMat(THREE.DoubleSide);
+  newSheetMat.userData.u = { uReveal: { value: 0 }, uEdge: { value: new THREE.Color() } };
+  newSheetMat.onBeforeCompile = sh => {
+    Object.assign(sh.uniforms, newSheetMat.userData.u);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <common>', `#include <common>
+      uniform float uReveal; uniform vec3 uEdge;
+      float h21(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+      float vn21(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f); return mix(mix(h21(i), h21(i+vec2(1,0)), f.x), mix(h21(i+vec2(0,1)), h21(i+vec2(1,1)), f.x), f.y); }`)
+      .replace('#include <map_fragment>', `#include <map_fragment>
+      float nz = 0.55*vn21(vUv*vec2(9.0,12.0)) + 0.3*vn21(vUv*vec2(23.0,31.0)) + 0.15*vn21(vUv*70.0);
+      float dd = (nz*0.75 + (1.0 - vUv.x)*0.25) - uReveal;
+      if (dd > 0.0) discard;
+      float edgeGlow = 1.0 - smoothstep(0.0, 0.07, -dd);`)
+      .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      totalEmissiveRadiance += uEdge * edgeGlow * 7.0;`);
+  };
+  newSheet = new THREE.Mesh(new THREE.PlaneGeometry(W * 0.985, H * 0.985), newSheetMat); newSheet.visible = false; newSheet.castShadow = true; book.add(newSheet);
+  // marcapáginas de tela: pestañas que asoman por el canto derecho (GUIA_UI §2.1)
+  SECTIONS.forEach((sec, i) => {
+    const c = document.createElement('canvas'); c.width = 256; c.height = 200; const g = c.getContext('2d');
+    g.drawImage(clothTexture(sec.col, 30 + i).image, 0, 0, 256, 200);
+    const gr = g.createLinearGradient(0, 0, 256, 0); gr.addColorStop(0, 'rgba(0,0,0,.35)'); gr.addColorStop(0.25, 'rgba(0,0,0,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 200);
+    g.strokeStyle = 'rgba(255,225,170,.55)'; g.setLineDash([7, 6]); g.lineWidth = 3; g.strokeRect(70, 14, 172, 172); g.setLineDash([]);
+    g.fillStyle = '#f3e2bf'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `600 46px ${DISPLAY}`;
+    const n = sec.n; let fs = 46; while (g.measureText(n).width > 160 && fs > 26) { fs -= 2; g.font = `600 ${fs}px ${DISPLAY}`; } g.fillText(n, 156, 102);
+    const tex = new THREE.CanvasTexture(c); tex.encoding = THREE.sRGBEncoding; tex.anisotropy = 8;
+    const tw = 0.05, th = 0.039, geo = new THREE.PlaneGeometry(tw, th); geo.translate(tw / 2, 0, 0);
+    const m = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.85, side: THREE.DoubleSide, emissive: 0xffd9a0, emissiveIntensity: 0, envMapIntensity: 0.45 });
+    const mesh = new THREE.Mesh(geo, m); mesh.position.set(W - 0.016, H / 2 - 0.034 - i * 0.047, T / 2 - 0.0012 - i * 0.0011); mesh.rotation.y = -0.05;
+    mesh.castShadow = true; mesh.receiveShadow = true; mesh.userData.sec = i; book.add(mesh); ribbons.push(mesh);
+  });
+  // manos
+  const gl = makeLeather({ seed: 21, size: 256, tint: [48, 34, 24], grain: 1.2, normal: 4 });
+  const glove = new THREE.MeshStandardMaterial({ ...gl, metalness: 1, roughness: 1, envMapIntensity: 0.6 });
+  const sleeve = new THREE.MeshStandardMaterial({ map: clothTexture('#2d3646', 41), roughness: 0.95 });
+  sleeve.map.repeat.set(3, 6);
+  const trim = brass;
+  hands.r = makeHand(glove, sleeve, trim); book.add(hands.r);
+  hands.l = makeHand(glove, sleeve, trim); hands.l.scale.x = -1; book.add(hands.l);
+  hands.r.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  // luz del canto (hoja nueva)
+  edgeLight = new THREE.PointLight(0xffaa55, 0, 0.6, 2); edgeLight.position.set(W + 0.04, 0, T / 2 + 0.02); book.add(edgeLight);
+}
+/* Partículas que forman la hoja: viajan por una curva con remolino y aterrizan sobre la parte que asoma del canto. */
+function buildParticles() {
+  const N = 2600, R = mulberry32(99), aS = new Float32Array(N * 3), aC = new Float32Array(N * 3), aE = new Float32Array(N * 3), aR = new Float32Array(N * 4);
+  for (let i = 0; i < N; i++) {
+    const u = 0.38 + R() * 0.62, v = R(), ey = (v - 0.5) * H * 0.985, ez = T / 2 - 0.004 + (R() - 0.5) * 0.002;
+    const sx = W / 2 + W * 0.62 + (u - 0.5) * W * 0.985;
+    aE.set([sx, ey, ez], i * 3);
+    const th = R() * 2 * PI, ph = Math.acos(2 * R() - 1), rad = 0.22 + R() * 0.32;
+    const st = [W * 0.8 + Math.sin(ph) * Math.cos(th) * rad, Math.cos(ph) * rad * 0.8, 0.06 + Math.abs(Math.sin(ph) * Math.sin(th)) * rad];
+    if (R() < 0.25) { st[0] = W * 0.9 + (R() - 0.3) * 0.1; st[1] = -H * 0.7 - R() * 0.15; st[2] = 0.02 + R() * 0.08; }   // parte sube del costado (del bolso)
+    aS.set(st, i * 3);
+    aC.set([lerp(st[0], sx, 0.5) + (R() - 0.5) * 0.18, lerp(st[1], ey, 0.5) + (R() - 0.5) * 0.18, Math.max(st[2], 0.05) + 0.06 + R() * 0.12], i * 3);
+    const delay = 0.15 + Math.pow(R(), 0.8) * 1.6 + (1 - u) * 0.15;
+    aR.set([delay, 0.75 + R() * 0.45, R(), 0.0022 + R() * 0.0035], i * 4);
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(aE, 3)); geo.setAttribute('aStart', new THREE.BufferAttribute(aS, 3)); geo.setAttribute('aCtrl', new THREE.BufferAttribute(aC, 3)); geo.setAttribute('aEnd', new THREE.BufferAttribute(aE, 3)); geo.setAttribute('aR', new THREE.BufferAttribute(aR, 4));
+  partMat = new THREE.ShaderMaterial({
+    uniforms: { uT: { value: -1 }, uScale: { value: 800 }, uColA: { value: new THREE.Color(1.0, 0.8, 0.45) }, uColB: { value: new THREE.Color(1, 0.5, 0.2) }, uSlide: { value: 0 } },
+    vertexShader: `attribute vec3 aStart, aCtrl, aEnd; attribute vec4 aR; uniform float uT, uScale, uSlide; varying float vA; varying vec3 vCol; uniform vec3 uColA, uColB;
+      void main(){
+        float p = clamp((uT - aR.x) / aR.y, 0.0, 1.0), e = p*p*(3.0-2.0*p);
+        vec3 a = mix(aStart, aCtrl, e), b = mix(aCtrl, aEnd, e), pos = mix(a, b, e);
+        vec3 d = pos - aEnd; float ang = (1.0 - e) * (2.2 + aR.z * 2.5); float cs = cos(ang), sn = sin(ang); d.xz = mat2(cs, -sn, sn, cs) * d.xz; pos = aEnd + d;
+        pos += 0.006 * (1.0 - e) * vec3(sin(uT*7.0 + aR.z*40.0), cos(uT*6.0 + aR.z*31.0), sin(uT*5.0 + aR.z*17.0));
+        float after = uT - (aR.x + aR.y); pos.x -= uSlide * step(0.0, after);
+        float land = after > 0.0 ? exp(-after * 7.0) : 1.0;
+        vA = step(aR.x, uT) * smoothstep(0.0, 0.12, p) * land;
+        float flare = after > 0.0 ? exp(-after * 12.0) : 0.0;
+        vCol = mix(uColA, uColB, aR.z) * (1.6 + 4.0 * flare);
+        vec4 mv = modelViewMatrix * vec4(pos, 1.0); gl_Position = projectionMatrix * mv;
+        gl_PointSize = aR.w * uScale / -mv.z * (1.0 + 1.2 * flare) * (vA > 0.002 ? 1.0 : 0.0);
+      }`,
+    fragmentShader: `varying float vA; varying vec3 vCol; void main(){ vec2 q = gl_PointCoord - 0.5; float r = length(q); float a = smoothstep(0.5, 0.0, r); a = a*a; gl_FragColor = vec4(vCol, a * vA); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  parts = new THREE.Points(geo, partMat); parts.frustumCulled = false; parts.visible = false; book.add(parts);
+  // chispas de la pluma y del sello (atributos rellenos por hechizo)
+  const M = 2200, sg = new THREE.BufferGeometry();
+  sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(M * 3), 3)); sg.setAttribute('aV', new THREE.BufferAttribute(new Float32Array(M * 3), 3)); sg.setAttribute('aR', new THREE.BufferAttribute(new Float32Array(M * 4), 4));
+  sparkMat = new THREE.ShaderMaterial({
+    uniforms: { uT: { value: -1 }, uScale: { value: 800 }, uCol: { value: new THREE.Color(1, 0.7, 0.4) }, uCol2: { value: new THREE.Color(1, 0.9, 0.7) } },
+    vertexShader: `attribute vec3 aV; attribute vec4 aR; uniform float uT, uScale; uniform vec3 uCol, uCol2; varying float vA; varying vec3 vCol;
+      void main(){ float age = uT - aR.x; float vis = step(0.0, age) * step(age, aR.y); float f = vis * (1.0 - age / max(aR.y, 0.001));
+        vec3 p = position + aV * age + vec3(0.0, 0.0, 0.05) * age * age;
+        vA = f * f; vCol = mix(uCol, uCol2, aR.z) * (2.0 + 3.0 * f);
+        vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = vis * aR.w * uScale / -mv.z * (0.5 + 0.5 * f); }`,
+    fragmentShader: `varying float vA; varying vec3 vCol; void main(){ vec2 q = gl_PointCoord - 0.5; float a = smoothstep(0.5, 0.0, length(q)); gl_FragColor = vec4(vCol, a * a * vA); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  sparks = new THREE.Points(sg, sparkMat); sparks.frustumCulled = false; sparks.visible = false; book.add(sparks);
+  // motas de polvo en la luz, alrededor de la cámara
+  const DN = 220, dp = new Float32Array(DN * 3), R2 = mulberry32(5); for (let i = 0; i < DN; i++) dp.set([(R2() - 0.5) * 1.2, (R2() - 0.5) * 0.8, -0.2 - R2() * 1.1], i * 3);
+  const dg = new THREE.BufferGeometry(); dg.setAttribute('position', new THREE.BufferAttribute(dp, 3));
+  dustMat = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uScale: { value: 800 }, uK: { value: 0.4 } },
+    vertexShader: `uniform float uTime, uScale; varying float vA; void main(){ vec3 p = position; float s = fract(sin(dot(position.xy, vec2(12.9, 78.2))) * 437.5);
+      p.y = mod(p.y + uTime * (0.006 + 0.01 * s) + 0.4, 0.8) - 0.4; p.x += sin(uTime * 0.3 + s * 20.0) * 0.03;
+      vec4 mv = modelViewMatrix * vec4(p, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = (0.0012 + 0.0016 * s) * uScale / -mv.z; vA = 0.4 + 0.6 * sin(uTime * (0.6 + s) + s * 30.0) * 0.5 + 0.3; }`,
+    fragmentShader: `uniform float uK; varying float vA; void main(){ float a = smoothstep(0.5, 0.0, length(gl_PointCoord - 0.5)); gl_FragColor = vec4(1.0, 0.86, 0.62, a * vA * uK); }`,
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  });
+  const dust = new THREE.Points(dg, dustMat); dust.frustumCulled = false; rig.add(dust);
+}
+/* Chispas: rastro de la pluma (cada 1/60 s) y estallido del sello. Puntos en coordenadas del libro. */
+function pagePxToBook(px, py) { return [px / PW * W, (0.5 - py / PH) * H, T / 2 + 0.0015]; }
+function fillSparks(key) {
+  const sp = SPELLS[key], { ops, total } = spellOps(key), R = mulberry32(sp.seed + 7), g = sparks.geometry;
+  const P = g.attributes.position.array, V = g.attributes.aV.array, A = g.attributes.aR.array, max = P.length / 3; let n = 0;
+  const push = (p, v, birth, life, size) => { if (n >= max) return; P.set(p, n * 3); V.set(v, n * 3); A.set([birth, life, R(), size], n * 4); n++; };
+  for (let t = 0; t < WT.name1; t += 1 / 60) {
+    let pen = null;
+    if (t < WT.circ) pen = penAlong(ops, total * t / WT.circ);
+    else if (t >= WT.name0) { const pn = seg(t, WT.name0, WT.name1); pen = [PW / 2 - 130 + 260 * pn, SPELL_LAYOUT.nameY - 22 + Math.sin(pn * 40) * 10]; }
+    if (!pen) continue;
+    const b = pagePxToBook(pen[0], pen[1]);
+    for (let k = 0; k < 3; k++) push(b, [(R() - 0.5) * 0.05, (R() - 0.5) * 0.05, 0.01 + R() * 0.04], t, 0.35 + R() * 0.5, 0.0016 + R() * 0.0026);
+  }
+  const s = SPELL_LAYOUT.seal, sb = pagePxToBook(s[0], s[1]);
+  for (let k = 0; k < 220; k++) { const a = R() * 2 * PI, sp2 = 0.05 + R() * 0.2; push(sb, [Math.cos(a) * sp2, Math.sin(a) * sp2, 0.02 + R() * 0.12], WT.seal1 - 0.05 + R() * 0.05, 0.4 + R() * 0.7, 0.002 + R() * 0.003); }
+  g.setDrawRange(0, n); g.attributes.position.needsUpdate = g.attributes.aV.needsUpdate = g.attributes.aR.needsUpdate = true;
+  const e = new THREE.Color(ELEM[sp.el].em).convertSRGBToLinear();
+  sparkMat.uniforms.uCol.value.copy(e); partMat.uniforms.uColB.value.copy(e);
+}
+
+/* ------------------------------------------------------------------ líneas temporales (estado puro en función de t) */
+const POSE = {
+  hidden: { p: [0.17, -0.62, -0.30], r: [-1.28, 0.32, 0.55] },
+  present: { p: [0.035, -0.12, -0.46], r: [-0.3, -0.07, 0.05] },
+  read: { p: [0, -0.15, -0.45], r: [-0.62, 0, 0] },
+  focus: { p: [-0.065, -0.14, -0.415], r: [-0.62, 0.04, 0] },
+};
+function blankState() {
+  return { hp: [0, 0, 0], hr: [0, 0, 0], cover: PI, pitch: 0, blur: 0, dim: 1, left: 'hechizos_izq', right: 'hechizos_der', sheets: [], partT: -1, slide: 0, reveal: 0, newOn: false, edge: 0, sparkT: -1, write: null, leftHand: 0, menuGlow: 0, shake: 0, open: false, spread: null };
+}
+function poseTo(S, P, t) { for (let i = 0; i < 3; i++) { S.hp[i] = lerp(S.hp[i], P.p[i], t); S.hr[i] = lerp(S.hr[i], P.r[i], t); } }
+function poseSet(S, P) { poseTo(S, P, 1); }
+const TL = {
+  abrir: () => ({
+    name: 'abrir', dur: 4.0, spread: 'hechizos', open: true,
+    eval(t, S) {
+      poseSet(S, POSE.hidden); poseTo(S, POSE.present, eout(seg(t, 0.25, 1.45))); poseTo(S, POSE.read, eio(seg(t, 2.0, 3.15)));
+      const c = seg(t, 1.45, 2.55); S.cover = clamp(PI * (1 - backOut(c)), -0.04, PI);
+      const maxTheta = PI - S.cover - 0.02;
+      for (let k = 0; k < 3; k++) { const p = seg(t, 1.5 + 0.08 * k, 2.45 + 0.16 * k); if (p > 0 && p < 1) S.sheets.push({ theta: Math.min(PI * eio(p), maxTheta), curl: 0.9, front: 'hechizos_der', back: 'hechizos_izq', lift: 0.0006 * (k + 1) }); }
+      S.blur = smooth(seg(t, 0.5, 1.9)); S.dim = lerp(1, 0.5, S.blur);
+      S.pitch = lerp(0, -0.2, eio(seg(t, 1.0, 3.0)));
+      S.leftHand = eout(seg(t, 2.3, 3.0)); S.menuGlow = seg(t, 2.6, 3.6); S.open = t > 1.45; S.spread = 'hechizos';
+    },
+  }),
+  cerrar: (from) => ({
+    name: 'cerrar', dur: 2.8, spread: null, open: false,
+    eval(t, S) { TL.abrir().eval(4.0 - t * (4.0 / 2.8), S); const sp = SPREADS[from || 'hechizos']; S.left = sp[0]; S.right = sp[1]; for (const s of S.sheets) { s.front = sp[1]; s.back = sp[0]; } S.spread = from; },
+  }),
+  nuevo: (key) => ({
+    name: 'nuevo', dur: 4.0 + WT.end + 0.6, spread: 'nuevo', open: true,
+    eval(t, S) {
+      poseSet(S, POSE.read); poseTo(S, POSE.focus, eio(seg(t, 3.7, 4.5)));
+      S.cover = 0; S.blur = 1; S.dim = lerp(0.5, 0.36, smooth(seg(t, 0, 0.8))); S.pitch = -0.2; S.leftHand = 1; S.menuGlow = 1; S.open = true; S.spread = 'hechizos';
+      S.partT = t; S.reveal = seg(t, 0.75, 2.85) * 1.12; S.slide = eio(seg(t, 2.8, 3.3)); S.newOn = t > 0.7 && t < 3.45;
+      S.edge = smooth(seg(t, 0.2, 1.2)) * (1 - seg(t, 3.0, 3.6));
+      const fronts = ['hechizos_der', 'hoja_yskavel', 'hoja_silavar'], backs = ['notas_a', 'notas_b', 'nuevo_izq'];
+      S.left = 'hechizos_izq'; S.right = 'hechizos_der';
+      for (let k = 0; k < 3; k++) {
+        const p = seg(t, 3.15 + 0.3 * k, 3.8 + 0.3 * k);
+        if (p > 0) S.right = k < 2 ? fronts[k + 1] : 'nuevo_der';
+        if (p >= 1) S.left = backs[k];
+        if (p > 0 && p < 1) S.sheets.push({ theta: PI * eio(p), curl: 1, front: fronts[k], back: backs[k], lift: 0.0006 * (k + 1) });
+      }
+      const tw = t - 4.0; S.write = { key, tw }; S.sparkT = tw;
+      if (t > 4.4) S.spread = 'nuevo';
+      S.shake = tw > WT.seal1 - 0.05 ? Math.exp(-(tw - WT.seal1) * 9) * (tw < WT.seal1 + 0.6 ? 1 : 0) : 0;
+      if (t >= this.dur - 0.6) poseTo(S, POSE.read, eio(seg(t, this.dur - 0.6, this.dur)) * 0.5);
+    },
+  }),
+  turn: (from, to) => {
+    const fw = SPREAD_ORDER[to] > SPREAD_ORDER[from], A = SPREADS[from], B = SPREADS[to];
+    return {
+      name: 'pasar', dur: 0.85, spread: to, open: true,
+      eval(t, S) {
+        poseSet(S, POSE.read); S.cover = 0; S.blur = 1; S.dim = 0.5; S.pitch = -0.2; S.leftHand = 1; S.menuGlow = 1; S.open = true; S.spread = t >= 0.85 ? to : from;
+        const p = eio(seg(t, 0, 0.85));
+        if (fw) { S.left = p >= 1 ? B[0] : A[0]; S.right = B[1]; if (p < 1) S.sheets.push({ theta: PI * p, curl: 0.75, front: A[1], back: B[0], lift: 0.0008 }); }
+        else { S.left = B[0]; S.right = p >= 1 ? B[1] : A[1]; if (p < 1) S.sheets.push({ theta: PI * (1 - p), curl: -0.75, front: B[1], back: A[0], lift: 0.0008 }); }
+      },
+    };
+  },
+};
+const play = { tl: TL.abrir(), t: 0, playing: false, speed: 1, queue: [] };
+function start(tl, autoplay) { play.tl = tl; play.t = 0; play.playing = autoplay !== false; if (tl.name === 'nuevo') { CUR_SPELL = tl.key || CUR_SPELL; } syncUI(); }
+
+/* ------------------------------------------------------------------ aplicar estado */
+const S0 = blankState();
+let bob = 0, lastAnnounce = '';
+function holdScale() { return Math.max(1, 1.3 / fp.aspect); }
+function applyState(S, time) {
+  const k = holdScale();
+  hold.position.set(S.hp[0] * k, S.hp[1] * k + 0.006 * Math.sin(time * 1.1), S.hp[2] * k);
+  hold.rotation.set(S.hr[0] + 0.012 * Math.sin(time * 0.9), S.hr[1] + 0.01 * Math.sin(time * 0.63), S.hr[2] + 0.008 * Math.sin(time * 0.77));
+  book.position.x = -W / 2 * clamp(S.cover / PI, 0, 1);
+  pivot.rotation.y = S.cover; spine.rotation.y = S.cover / 2;
+  setPage(matL, S.left); setPage(matR, S.right);
+  const glowOf = id => (id === 'nuevo_der' && S.write) ? 2.4 : 0.55 * S.menuGlow;
+  matL.emissiveIntensity = glowOf(S.left); matR.emissiveIntensity = glowOf(S.right);
+  for (let i = 0; i < sheets.length; i++) {
+    const sh = sheets[i], d = S.sheets[i];
+    if (!d) { sh.grp.visible = false; continue; }
+    sh.grp.visible = true; deformSheet(sh.gf, d.theta, d.curl, d.lift); setPage(sh.mf, d.front); setPage(sh.mb, d.back);
+    sh.mf.emissiveIntensity = glowOf(d.front); sh.mb.emissiveIntensity = glowOf(d.back);
+  }
+  if (S.write) {
+    const P = PAGES.nuevo_der || page('nuevo_der'), tw = S.write.tw;
+    const key = S.write.key + '|' + (tw < 0 ? -1 : Math.min(tw, WT.end + 1).toFixed(3));
+    if (P.lastTw !== key) { drawSpellPage(P, S.write.key, Math.min(tw, WT.end + 1) >= WT.end ? Infinity : tw, 'Hechizos · Hoja nueva'); if (tw >= WT.end) { P.g.globalAlpha = 1; } P.tex.needsUpdate = true; P.gt.needsUpdate = true; P.lastTw = key; P.drawn = true; }
+    if (tw >= WT.seal1 && lastAnnounce !== S.write.key) { const sp = SPELLS[S.write.key]; $('live').textContent = `Hechizo grabado: ${sp.name}, ${sp.sub}`; lastAnnounce = S.write.key; }
+    if (tw < WT.seal1) lastAnnounce = '';
+  }
+  newSheet.visible = S.newOn;
+  if (S.newOn) {
+    setPage(newSheetMat, 'blanca'); newSheetMat.userData.u.uReveal.value = S.reveal;
+    newSheet.position.set(W / 2 + W * 0.62 * (1 - S.slide), 0, T / 2 - 0.004);
+    newSheetMat.emissiveIntensity = 0.5;
+  }
+  parts.visible = S.partT >= 0 && S.partT < 4.2; partMat.uniforms.uT.value = S.partT; partMat.uniforms.uSlide.value = W * 0.62 * S.slide;
+  sparks.visible = S.sparkT >= 0 && S.sparkT < WT.end + 1.5; sparkMat.uniforms.uT.value = S.sparkT;
+  edgeLight.intensity = S.edge * 0.6;
+  hands.l.position.set(0, -0.16 * (1 - S.leftHand), 0.1 * (1 - S.leftHand)); hands.l.visible = S.leftHand > 0.01;
+  for (const r of ribbons) r.material.emissiveIntensity = r === hovered ? 0.35 : 0;
+  bgMat.uniforms.uBlur.value = S.blur; bgMat.uniforms.uDim.value = S.dim;
+  const pitch = S.pitch + 0.004 * Math.sin(time * 1.3) + S.shake * 0.004 * Math.sin(time * 90);
+  fp.rotation.set(pitch, 0.003 * Math.sin(time * 0.7), 0);
+  rig.position.y = 1.62 + 0.0025 * Math.sin(time * 2.2);
+  bgMat.uniforms.uOff.value.set(-0.003 * Math.sin(time * 0.7), pitch * 0.32);
+  dustMat.uniforms.uTime.value = time; dustMat.uniforms.uK.value = 0.25 + 0.35 * S.blur;
+}
+
+/* ------------------------------------------------------------------ fondo, render y postproceso */
+function buildRenderer() {
+  renderer = new THREE.WebGLRenderer({ canvas: $('cv'), antialias: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  scene = new THREE.Scene();
+  rig = new THREE.Group(); rig.position.set(0, 1.62, 0); scene.add(rig);
+  fp = new THREE.PerspectiveCamera(52, 1, 0.02, 60); rig.add(fp);
+  hold = new THREE.Group(); rig.add(hold);
+  orbitCam = new THREE.PerspectiveCamera(40, 1, 0.01, 60);
+  // fondo: captura de la Aldea del Vado; desenfoque por mip + 12 muestras; se invierte el ACES para que el etalonaje la deje como estaba
+  bgMat = new THREE.ShaderMaterial({
+    uniforms: { tBg: { value: bgTex }, uBlur: { value: 0 }, uDim: { value: 1 }, uOff: { value: new THREE.Vector2() }, uAspect: { value: 1 }, uImgAspect: { value: 16 / 9 }, uExpo: { value: 1.1 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.9999, 1.0); }',
+    fragmentShader: `uniform sampler2D tBg; uniform float uBlur, uDim, uAspect, uImgAspect, uExpo; uniform vec2 uOff; varying vec2 vUv;
+      vec3 invAces(vec3 y){ y = clamp(y, 0.0, 0.94); const float a=2.51, b=0.03, c=2.43, d=0.59, e=0.14; vec3 A = y*c - a, B = y*d - b, Cc = y*e; return (-B - sqrt(max(B*B - 4.0*A*Cc, 0.0))) / (2.0*A); }
+      void main(){
+        vec2 uv = vUv - 0.5; float sa = uAspect / uImgAspect; if (sa > 1.0) uv.y /= sa; else uv.x *= sa; uv = uv / 1.1 + 0.5 + uOff;
+        vec3 c = vec3(0.0); float r = uBlur * 0.016, bias = uBlur * 3.5;
+        for (int i = 0; i < 12; i++) { float a = float(i) * 2.39996, rr = r * sqrt((float(i) + 0.5) / 12.0); c += texture2D(tBg, uv + vec2(cos(a), sin(a)) * rr, bias).rgb; }
+        c /= 12.0; c = pow(c, vec3(2.2));
+        gl_FragColor = vec4(invAces(c) / uExpo * uDim, 1.0); }`,
+    depthWrite: false, depthTest: false,
+  });
+  const bg = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), bgMat); bg.frustumCulled = false; bg.renderOrder = -1000; scene.add(bg);
+  // luz de tarde y relleno de cielo
+  scene.add(new THREE.HemisphereLight(0xc9dcff, 0x6b5b3a, 0.28));
+  sun = new THREE.DirectionalLight(0xffe0b0, 0.95); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+  const sc = sun.shadow.camera; sc.left = -0.4; sc.right = 0.4; sc.top = 0.4; sc.bottom = -0.4; sc.near = 0.2; sc.far = 4; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.0015; sun.shadow.radius = 3;
+  scene.add(sun, sun.target);
+  const fill = new THREE.DirectionalLight(0x9fb8ff, 0.12); fill.position.set(1, 0.5, 1); scene.add(fill);
+  const pm = new THREE.PMREMGenerator(renderer); const eq = bgTex.clone(); eq.mapping = THREE.EquirectangularReflectionMapping; eq.encoding = THREE.sRGBEncoding; eq.needsUpdate = true;
+  scene.environment = pm.fromEquirectangular(eq).texture; pm.dispose();
+  // postproceso: HDR → bloom → etalonaje (ACES, viñeta, grano)
+  const isGL2 = renderer.capabilities.isWebGL2;
+  const rt = new THREE.WebGLRenderTarget(2, 2, { type: THREE.HalfFloatType, samples: isGL2 ? 4 : 0 });
+  composer = new THREE.EffectComposer(renderer, rt);
+  composer.addPass(new THREE.RenderPass(scene, fp));
+  bloom = new THREE.UnrealBloomPass(new THREE.Vector2(256, 256), 0.6, 0.55, 1.4); composer.addPass(bloom);
+  grade = new THREE.ShaderPass({
+    uniforms: { tDiffuse: { value: null }, time: { value: 0 }, exposure: { value: 1.1 }, vig: { value: 0.35 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: `uniform sampler2D tDiffuse; uniform float time, exposure, vig; varying vec2 vUv;
+      vec3 aces(vec3 x){ const float a=2.51, b=0.03, c=2.43, d=0.59, e=0.14; return clamp((x*(a*x+b))/(x*(c*x+d)+e), 0.0, 1.0); }
+      float rnd(vec2 c){ return fract(sin(dot(c, vec2(12.9898, 78.233))) * 43758.5453); }
+      void main(){ vec3 c = aces(texture2D(tDiffuse, vUv).rgb * exposure);
+        vec2 q = vUv - 0.5; float v = smoothstep(0.95, 0.25, length(q * vec2(1.1, 1.0))); c *= mix(1.0 - vig, 1.0, v);
+        c = pow(c, vec3(1.0 / 2.2)); c += (rnd(vUv * 1733.0 + fract(time) * 91.0) - 0.5) * 0.02; gl_FragColor = vec4(c, 1.0); }`,
+  });
+  composer.addPass(grade);
+  controls = new THREE.OrbitControls(orbitCam, renderer.domElement); controls.enabled = false; controls.enableDamping = true; controls.minDistance = 0.15; controls.maxDistance = 2;
+}
+function resize() {
+  const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); composer.setSize(w, h);
+  for (const c of [fp, orbitCam]) { c.aspect = w / h; c.updateProjectionMatrix(); }
+  bloom.resolution.set(w / 2, h / 2);
+  const sc = h * renderer.getPixelRatio() / (2 * Math.tan(fp.fov * PI / 360));
+  partMat.uniforms.uScale.value = sparkMat.uniforms.uScale.value = dustMat.uniforms.uScale.value = sc;
+  bgMat.uniforms.uAspect.value = w / h;
+}
+
+/* ------------------------------------------------------------------ interacción */
+let hovered = null, freeCam = false;
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function curSpread() { return play.tl.spread && play.t >= play.tl.dur ? play.tl.spread : null; }
+function goSection(i) {
+  const to = SECTIONS[i].id, from = curSpread();
+  if (from) { if (from !== to) start(TL.turn(from, to)); return; }
+  if (!(play.tl.name === 'abrir' && play.playing)) start(TL.abrir());
+  play.queue = [() => TL.turnTo(i)];
+}
+TL.turnTo = i => { const from = curSpread() || 'hechizos', to = SECTIONS[i].id; return from === to ? null : TL.turn(from, to); };
+function openBook() { if (curSpread()) return; start(TL.abrir()); }
+function closeBook() { const from = curSpread(); if (!from) return; start(TL.cerrar(from)); }
+function newSpell() {
+  CUR_SPELL = $('sSpell').value; const P = PAGES.nuevo_izq; if (P) P.drawn = false; fillSparks(CUR_SPELL);
+  const tl = TL.nuevo(CUR_SPELL); tl.key = CUR_SPELL;
+  if (!curSpread()) { start(TL.abrir()); play.queue = [() => tl]; } else start(tl);
+}
+function syncUI() {
+  const open = !!curSpread();
+  $('bClose').disabled = !open && !(play.tl.open && play.playing);
+  const cur = curSpread();
+  [...$('secs').children].forEach((b, i) => { b.setAttribute('aria-current', cur === SECTIONS[i].id ? 'true' : 'false'); });
+  $('bPlay').textContent = play.playing ? '❚❚' : '▶';
+}
+function fmt(x) { return x.toFixed(2).replace('.', ','); }
+function onPointer(e, click) {
+  if (freeCam) return;
+  const r = renderer.domElement.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, fp); const hit = curSpread() ? ray.intersectObjects(ribbons, false)[0] : null;
+  hovered = hit ? hit.object : null; const tip = $('tip');
+  if (hovered) { tip.hidden = false; tip.textContent = SECTIONS[hovered.userData.sec].n; tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px'; renderer.domElement.style.cursor = 'pointer'; }
+  else { tip.hidden = true; renderer.domElement.style.cursor = ''; }
+  if (click && hovered) goSection(hovered.userData.sec);
+}
+function setFree(v) {
+  freeCam = v; $('bCam').setAttribute('aria-pressed', String(v)); controls.enabled = v; composer.passes[0].camera = v ? orbitCam : fp;
+  if (v) { const c = new THREE.Vector3(W * 0.0, 0, 0); book.localToWorld(c); fp.getWorldPosition(orbitCam.position); controls.target.copy(c); controls.update(); }
+}
+function wire() {
+  SECTIONS.forEach((s, i) => { const b = document.createElement('button'); b.textContent = s.n; b.addEventListener('click', () => goSection(i)); $('secs').appendChild(b); });
+  $('bOpen').onclick = openBook; $('bClose').onclick = closeBook; $('bNew').onclick = newSpell;
+  $('bPlay').onclick = () => { if (!play.playing && play.t >= play.tl.dur) play.t = 0; play.playing = !play.playing; syncUI(); };
+  $('rT').addEventListener('input', e => { play.playing = false; play.t = +e.target.value * play.tl.dur; syncUI(); });
+  $('rSpeed').addEventListener('input', e => { play.speed = +e.target.value; $('oSpeed').textContent = fmt(play.speed) + '×'; });
+  $('bCam').onclick = () => setFree(!freeCam);
+  $('bMin').onclick = () => { const m = $('panel').classList.toggle('min'); $('bMin').textContent = m ? 'Controles' : 'Ocultar'; $('bMin').setAttribute('aria-expanded', String(!m)); };
+  const cv = renderer.domElement;
+  cv.addEventListener('pointermove', e => onPointer(e, false)); cv.addEventListener('click', e => onPointer(e, true));
+  addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.key === ' ') { e.preventDefault(); $('bPlay').click(); }
+    else if (e.key === 'o' || e.key === 'O') openBook(); else if (e.key === 'n' || e.key === 'N') newSpell(); else if (e.key === 'Escape') closeBook();
+    else if (e.key >= '1' && e.key <= '5') goSection(+e.key - 1);
+  });
+  addEventListener('resize', resize);
+}
+
+/* ------------------------------------------------------------------ bucle */
+let last = 0;
+function frame(now) {
+  requestAnimationFrame(frame);
+  const time = now / 1000, dt = Math.min(0.1, last ? time - last : 0); last = time;
+  if (play.playing) { play.t += dt * play.speed; if (play.t >= play.tl.dur) { play.t = play.tl.dur; play.playing = false; const nx = play.queue.shift(); if (nx) { const tl = nx(); if (tl) start(tl); } syncUI(); } }
+  step(time);
+}
+function step(time) {
+  const S = blankState(); play.tl.eval(play.t, S); applyState(S, time);
+  $('rT').value = play.tl.dur ? play.t / play.tl.dur : 0; $('tTxt').textContent = `${fmt(play.t)} / ${fmt(play.tl.dur)} s`;
+  // sol relativo al libro
+  book.getWorldPosition(tmpV); sun.target.position.copy(tmpV); sun.position.copy(tmpV).add(tmpV2.set(-0.9, 1.4, 0.55)); sun.target.updateMatrixWorld();
+  if (freeCam) controls.update();
+  grade.uniforms.time.value = time;
+  composer.render();
+}
+async function init() {
+  try {
+    if (!window.THREE || !THREE.EffectComposer) throw new Error('No se pudo cargar three.js (hace falta conexión para la CDN).');
+    await Promise.race([Promise.all(['600 40px "Cormorant Garamond"', 'italic 500 40px "Cormorant Garamond"', '400 20px "EB Garamond"', 'italic 400 20px "EB Garamond"', '500 20px "EB Garamond"'].map(f => document.fonts.load(f))), new Promise(r => setTimeout(r, 3500))]);
+    const img = new Image(); img.src = FONDO || 'data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=='; await img.decode().catch(() => {});
+    bgTex = new THREE.Texture(img); bgTex.needsUpdate = true; bgTex.generateMipmaps = true; bgTex.minFilter = THREE.LinearMipmapLinearFilter;
+    PARCH = [makeParchment(3, PW, PH), makeParchment(4, PW, PH)];
+    DRAW.blanca = P => { base(P, 'r'); P.gg.fillStyle = '#000'; P.gg.fillRect(0, 0, PW, PH); };
+    buildRenderer(); buildBook(); buildParticles(); fillSparks(CUR_SPELL); wire(); resize();
+    for (const id of ['hechizos_izq', 'hechizos_der', 'blanca']) page(id);
+    const q = new URLSearchParams(location.search);
+    window.__GRIMORIO__ = {
+      play: (n, key) => { if (key) $('sSpell').value = key; if (n === 'abrir') start(TL.abrir()); else if (n === 'nuevo') { CUR_SPELL = $('sSpell').value; if (PAGES.nuevo_izq) PAGES.nuevo_izq.drawn = false; fillSparks(CUR_SPELL); const tl = TL.nuevo(CUR_SPELL); tl.key = CUR_SPELL; start(tl); } else if (n === 'cerrar') start(TL.cerrar('hechizos')); },
+      turn: (from, to) => start(TL.turn(from, to)),
+      setT: t => { play.playing = false; play.t = t; step(performance.now() / 1000); },
+      state: () => ({ tl: play.tl.name, t: play.t, dur: play.tl.dur, playing: play.playing, spread: curSpread(), calls: renderer.info.render.calls }),
+      setFree, ready: true,
+    };
+    if (innerWidth < 560) $('bMin').click();
+    $('msg').hidden = true;
+    if (q.get('test') === '1') { play.playing = false; step(0); }
+    else { start(TL.abrir()); requestAnimationFrame(frame); }
+  } catch (e) { $('msg').hidden = false; $('msg').textContent = e.message; console.error(e); }
+}
+init();
+</script>
+</body>
+</html>

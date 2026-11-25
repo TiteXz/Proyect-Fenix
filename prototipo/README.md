@@ -31,6 +31,7 @@ Si cambias `maqueta.src.html`, vuelve a generar `maqueta.html` con el comando de
 | `build.py` | Genera el HTML final incrustando texturas, el caballero GLB, `vfx.js` y `magia/magia.js` |
 | `pruebas/*.js` | Pruebas con Playwright: carga sin errores, vista de frente, combate (fuego, luz, martillo, correr atacando), hechizo de luz; `magia.js` verifica los criterios MQ-01..MQ-14 y saca las capturas `vfx/capturas/magia_*.webp` (`node prototipo/pruebas/magia.js prototipo/dist prototipo/.three/package [dirCapturas] [mq\|cap]`) |
 | `capturas/` | Capturas de referencia (render en Blender, poses, combate) |
+| `grimorio/` | **Visor del grimorio** (`grimorio.html`, generado por `build_grimorio.py` desde `grimorio.src.html`): en primera persona el protagonista saca y abre el libro-menú (marcapáginas laterales: Hechizos, Bolso, Códice, Mapa, Ajustes) y la animación de hechizo nuevo (partículas que forman la hoja, se pasan las páginas y la tinta escribe círculo, nombre y sello). Línea temporal con pausa, arrastre y velocidad; `?test=1` + `window.__GRIMORIO__`. Prueba: `node prototipo/pruebas/grimorio.js`; capturas en `grimorio/capturas/` |
 | `exterior/` | Escena exterior «Camino de la Aldea del Vado» (ver abajo): `BRIEF.md` (director-arte), `assets/` (CC0 de Poly Haven, `CREDITOS.md`), `src/{terreno,edificios,aldea}.js` (código de la escena), `capturas/*.webp` |
 | `pruebas/exterior.js`, `pruebas/terreno.test.js` | Prueba de la aldea (carga, renderer.info por preset, capturas C1/C2/C3 y jinete, dispose) y prueba en Node del modelo de terreno |
 
