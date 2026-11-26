@@ -6,7 +6,7 @@ para ajustar con simulación y pruebas de juego. Los valores definitivos vivirá
 
 ---
 
-## 1. Combate del MVP — PENDIENTE (se rellena en /iniciar)
+## 1. Combate del MVP
 
 Resumen de lo ya fijado en `contexto/CONTEXTO_PROYECTO.md`:
 - **Recursos:** Vida, Aguante (ataque fuerte, esquiva, bloqueo; se recupera rápido sin atacar) y Maná (hechizos, regeneración lenta).
@@ -29,7 +29,8 @@ Resumen de lo ya fijado en `contexto/CONTEXTO_PROYECTO.md`:
     esquivan o se **desvían con la hoja** (desvío frontal **sin dirección** y con ventana corta; ver §1.1). Así se
     respeta la decisión de que lo direccional es solo cuerpo a cuerpo (desvío validado por el usuario).
 - **Enemigos:** esqueleto guerrero, goblin arquero, cultista mago y jefe caballero no-muerto (2 fases).
-- Pendiente: fases de ataque, fórmula de daño, ventanas de esquiva/parry, tabla DPS/TTK y curva por oleada.
+- Números del MVP (recursos, fórmula, espada, defensa, hechizos, interacciones, enemigos, balance y curva por oleada):
+  §1.4–§1.12 (rellenado en /iniciar, 2026-11-26). Lo que no decidió el usuario es [SUPUESTO].
 
 ### 1.1 Combate cuerpo a cuerpo direccional (decisión del usuario)
 
@@ -83,8 +84,9 @@ las dos; cambian el ritmo, la defensa y los costes.
 - *Esqueletos:* EE aporta contundente (Embestida, contraataque); EP depende de Luz o Tierra.
 
 Resultado buscado: EP para quien domina la parada y combina magia; EE para quien bloquea y encara grupos con
-enemigos a distancia. Se valida con la simulación de DPS/TTK cuando se rellene §1 (riesgo: si la parada resulta
-fácil, EP domina; se ajustaría la ventana de 250 ms o la reducción del −60 %).
+enemigos a distancia. Validado con la simulación de §1.11: EP mata antes a goblins y cultistas y EE a esqueletos, y
+EE recibe menos daño solo con espada (riesgo: si la parada resulta fácil, EP domina; se ajustaría la ventana de
+250 ms o la reducción del −60 %).
 
 #### Habilidad del arma (L1 + R1) por configuración (validadas por el usuario; números a ajustar en playtest)
 | | Estocada de quiebre (EP) | Embestida (EE) |
@@ -94,8 +96,10 @@ fácil, EP domina; se ajustaría la ventana de 250 ms o la reducción del −60 
 | Duración (anticipación / activo / recuperación) | 0,75 s (0,20 / 0,15 / 0,40) | 1,10 s (0,25 / 0,45 / 0,40) |
 | Papel | Duelo y castigo contra un enemigo que telegrafía; premia leer la anticipación | Grupos y control: abre esqueletos y aparta al jefe |
 
-Las dos siguen la decisión del usuario: sin bloqueo ni parada durante la habilidad (los golpes recibidos entran
-completos) e ignoran la dirección del stick. Ninguna tiene i-frames.
+Las dos siguen las decisiones del usuario: sin bloqueo ni parada durante la habilidad e ignoran la dirección del
+stick. **Invulnerabilidad (decisión del usuario, 2026-11-26):** el jugador es invulnerable durante **toda** la
+habilidad, del primer tick de la anticipación al último de la recuperación (Estocada 0,75 s = 45 ticks; Embestida
+1,10 s = 66 ticks), igual que en remates y contraataque (§1.7).
 
 #### Lectura de la dirección [SUPUESTO salvo lo marcado como decisión]
 | Regla | Valor |
@@ -115,9 +119,9 @@ completos) e ignoran la dirección del stick. Ninguna tiene i-frames.
 | **Bloqueo normal** (decisión) | Dirección = la del golpe pero **mantenida**, o pulsación fuera de la ventana | **EP (hoja):** daño −60 %, aguante 0,9 × daño bruto. **EE (escudo):** daño −80 %, aguante 0,6 × daño bruto. No aturde |
 | Guardia mal orientada | Dirección ≠ la del golpe | Golpe completo + tambaleo 0,3 s |
 | **Guardia neutra** (decisión; L1 sin stick, inclinación < 0,5) | Cualquier dirección | Bloquea **todo** el daño (100 %, también con solo espada) y gasta **mucho** aguante: EP 2,5 × bruto, EE 2,0 × bruto [SUPUESTO]. **Nunca** parada perfecta ni contraataque. No aturde. Con EE también cubre proyectiles de frente (100 %, mismo coste); con EP no |
-| L1 + R1 a la vez (decisión) | Ambas en ≤ 80 ms | Habilidad de la configuración; sin bloqueo ni parada; los golpes recibidos durante ella entran completos |
+| L1 + R1 a la vez (decisión) | Ambas en ≤ 80 ms | Habilidad de la configuración; sin bloqueo ni parada; el jugador es **invulnerable** durante toda la habilidad (decisión del usuario, 2026-11-26) |
 | Rotura de guardia | El aguante llega a 0 bloqueando | Tambaleo 1,0 s, sin guardia |
-| Golpe imparable (jefe) | Señal roja (ver telegrafiado) | No se bloquea ni se para: solo esquiva |
+| Golpe imparable (jefe) | Señal roja (ver telegrafiado) | No se bloquea ni se para: solo esquiva o una acción invulnerable (§1.7) |
 | Antispam | Ventana de parada abierta sin parar nada | La siguiente pulsación en < 400 ms solo puede ser bloqueo normal |
 
 #### Defensa contra proyectiles (sin dirección) (validada por el usuario; números a ajustar en playtest)
@@ -139,17 +143,24 @@ interrumpen. La ventana de invulnerabilidad es exactamente la duración del clip
 (se lee del mismo dato, no es un valor aparte). Pasados los 0,8 s sin pulsar R1, el enemigo sigue abierto pero R1 es un
 ataque normal, sin invulnerabilidad.
 
-**Remates / ejecuciones:** un enemigo es **ejecutable** si está aturdido (parada perfecta, Aturdido, Derribado,
-Congelado o abierto por la Estocada de quiebre) **o** con vida ≤ 15 % aunque **no** esté aturdido (enemigos
-normales; decisión del usuario). R1 a ≤ 2,5 m y de frente
-(±60°) ⇒ remate de la configuración en lugar del ligero (icono sobre el enemigo; detalle de UI para `interfaz-ui`).
-Prioridad: remate > contraataque > ataque.
-Daño del remate: mata si vida ≤ 15 %; si no, × 3 del ataque fuerte. **Invulnerabilidad (decisión del usuario):** el
-jugador es invulnerable durante **toda** la animación de remate o ejecución (humanoide ≤ 1,4 s, jefe ≤ 2,5 s), **aunque
-haya otros enemigos cerca**: sus golpes y proyectiles no le hacen daño ni le interrumpen. Interpretación del
-orquestador, pendiente de confirmar: el usuario dijo «invulnerable al atacar» respondiendo a la pregunta de los
-remates; **no** hay invulnerabilidad en los ataques normales (ligero, fuerte, habilidades). Única excepción además de
-los remates: el contraataque tras parada perfecta, invulnerable durante todo su golpe (decisión del usuario; C-09). **Jefe:** solo remate de cierre en fase 2 con vida ≤ 10 % tras una parada perfecta; antes, solo contraataque.
+**Remates / ejecuciones:** un enemigo normal es **ejecutable** si está **aturdido** por Embestida (o Aturdido de
+Rayo en fase 2), **Derribado**, **Congelado** o **abierto por la Estocada de quiebre**, **o** si tiene vida ≤ 15 % aunque
+no esté aturdido (decisión del usuario). La **parada perfecta** deja al enemigo **abierto para el contraataque**, no
+para el remate (salvo que ya tenga vida ≤ 15 %): así el contraataque de C-09 existe contra enemigos normales y no
+compite con el remate [corrección de diseño 2026-11-26; antes la parada también hacía ejecutable y el contraataque solo
+podía darse contra el jefe]. R1 a ≤ 2,5 m y de frente (±60°) ⇒ remate de la configuración en lugar del ligero (icono
+sobre el enemigo; detalle de UI para `interfaz-ui`). Prioridad: remate > contraataque > ataque.
+Daño del remate: mata si vida ≤ 15 %; si no, **× 2 del ataque fuerte** [SUPUESTO; corrige × 3, que con la simulación
+de §1.11 dejaba a un esqueleto con vida llena por debajo del 15 % tras cualquier aturdimiento]. **Jefe:** solo remate de cierre en fase 2
+con vida ≤ 10 % tras una parada perfecta (lo mata); antes, solo contraataque.
+
+**Invulnerabilidad del jugador (decisión del usuario, 2026-11-26; CONTEXTO «Combate cuerpo a cuerpo direccional»):**
+invulnerable durante **todo** el clip, del primer tick de la anticipación al último de la recuperación, aunque haya
+otros enemigos cerca, en exactamente cuatro acciones: **remate** (humanoide ≤ 1,4 s, jefe ≤ 2,5 s), **contraataque**
+tras parada perfecta (EP 0,60 s, EE 0,70 s), **Estocada de quiebre** (0,75 s) y **Embestida** (1,10 s). Los ataques
+**ligero y fuerte normales no** son invulnerables, tampoco el R1 normal pasados los 0,8 s de la parada. La duración se
+lee del clip de la configuración activa (no es un valor aparte) y se alarga con su hit-stop. Qué significa y la
+esquiva: §1.7.
 
 #### Ataque direccional
 - R1 (ligero) y mantener R1 (fuerte) usan la dirección leída al pulsar. **R1 neutro** = sigue el combo por defecto
@@ -235,11 +246,14 @@ los remates: el contraataque tras parada perfecta, invulnerable durante todo su 
 #### Convivencia con la habilidad del arma (L1 + R1, `docs/GUIA_UI.md` §5.1)
 - **Decisión del usuario: la habilidad tiene prioridad sobre la defensa.** Si L1 y R1 se pulsan a la vez (ventana de
   simultaneidad de §5.1, 80 ms [SUPUESTO]), **no hay bloqueo ni parada**: se ejecuta la habilidad de la configuración
-  (Estocada de quiebre o Embestida) y nada más. Un golpe recibido durante la habilidad **no se bloquea** (entra completo).
+  (Estocada de quiebre o Embestida) y nada más. Un golpe que llega **durante** la habilidad no hace daño
+  (invulnerable, decisión del usuario 2026-11-26); uno que impactó **antes** de que empezara (en la retención) entra
+  completo.
 - Si L1 llega solo (R1 no aparece en 80 ms), la dirección y la marca de tiempo de la parada se toman de la **pulsación
   original** (retroactiva), así que la ventana (200 ms EE / 250 ms EP) no pierde nada. Igual para el desvío de flechas de EP.
 - Golpe que impacta **durante** la retención: su resolución espera al cierre de la ventana (≤ 80 ms). Si llega R1 ⇒
-  habilidad y el golpe entra completo; si no ⇒ se resuelve como defensa con la pulsación original de L1.
+  habilidad y ese golpe entra completo (impactó antes del primer tick de la habilidad); si no ⇒ se resuelve como
+  defensa con la pulsación original de L1.
 - La habilidad del arma ignora la dirección del stick.
 - Riesgo: el contraataque (R1 tras parar) solo se confunde con L1 + R1 si se pulsa a < 80 ms de L1; tras una parada
   no ocurre porque L1 ya está mantenido > 80 ms (§5.1: entonces R1 es siempre ataque).
@@ -252,6 +266,8 @@ Cada animación del jugador existe en **dos variantes** (EP y EE); el set se eli
 | Ataque ligero | izq. / der. | 0,60 (0,25 / 0,10 / 0,25) | 0,70 (0,30 / 0,10 / 0,30) |
 | Ataque ligero | arriba | 0,68 (0,30 / 0,10 / 0,28) | 0,80 (0,35 / 0,10 / 0,35) |
 | Ataque ligero | abajo | 0,64 (0,26 / 0,12 / 0,26) | 0,75 (0,30 / 0,12 / 0,33) |
+| Ataque fuerte (las 0,20 s iniciales comparten pose con el ligero, §1.6) | 4 | 1,00 (0,50 / 0,12 / 0,38) | 1,10 (0,55 / 0,12 / 0,43) |
+| Esquiva (4 direcciones relativas a la cámara) | 4 | 0,45 | 0,45 |
 | Guardia (pose en bucle; EP hoja cruzada, EE escudo alzado) | 4 + neutra | entrada 0,08 | entrada 0,10 |
 | Parada perfecta (desvío con la hoja / con el escudo) | 4 | 0,35 (0,05 / 0,10 / 0,20) | 0,40 (0,05 / 0,10 / 0,25) |
 | Bloqueo normal (impacto en guardia) | 4 | 0,30 | 0,25 |
@@ -307,19 +323,19 @@ personaje debe admitir dos sets de clips (o capas por mano) sin duplicar el mode
 | C-07 | Antispam | Pulsar L1 fresco sin golpe y otra vez a los 300 ms ⇒ no puede haber parada perfecta (ni desvío de EP); a los 400 ms ⇒ sí |
 | C-08 | Rotura de guardia | Bloquear con aguante insuficiente ⇒ aguante 0 y tambaleo 1,0 s |
 | C-09 | Contraataque (decisiones del usuario: × 1,5 e invulnerable) | R1 a ≤ 0,8 s tras la parada perfecta direccional ⇒ contraataque × 1,5 del ligero, sin aguante (EE además empuja 1 m con daño contundente); a 0,85 s ⇒ ataque normal. Invulnerabilidad: con un segundo esqueleto golpeando y un goblin disparando en el tick 1, en el último tick del clip (EP tick 36 / 0,60 s; EE tick 42 / 0,70 s) ⇒ 0 daño y el contraataque no se interrumpe; el mismo golpe un tick después del final del clip ⇒ daño normal; la duración de la invulnerabilidad es igual a la del clip de contraataque de la configuración activa |
-| C-10 | Ejecutable (decisión del usuario) | Esqueleto con vida 15 % **sin aturdir**, aturdido o abierto por Estocada de quiebre ⇒ R1 de frente a ≤ 2,5 m lanza remate; 16 % sin aturdir ⇒ ataque normal; jefe solo en fase 2 ≤ 10 % tras parada |
-| C-11 | Remate | Vida ≤ 15 % ⇒ muerte; aturdido con más vida ⇒ daño × 3 del fuerte; jugador invulnerable durante toda la animación (decisión del usuario): con 2 esqueletos y 1 goblin golpeando y disparando durante el remate ⇒ 0 daño y la animación no se interrumpe; un ligero o un fuerte normal con un enemigo golpeando ⇒ el jugador sí recibe daño (no hay invulnerabilidad al atacar fuera de remates y del contraataque, C-09) |
-| C-12 | L1 + R1 a la vez = habilidad, sin defensa (decisión del usuario) | L1 fresco a izq. y R1 a 50 ms con golpe izq. llegando a 30 ms ⇒ habilidad, sin parada ni bloqueo, golpe con daño completo; golpe durante la habilidad ⇒ daño completo; L1 solo y golpe a 50 ms ⇒ parada con la marca de tiempo original; R1 a 90 ms ⇒ no es habilidad |
+| C-10 | Ejecutable (decisión del usuario; fuentes [SUPUESTO]) | Esqueleto con vida 15 % **sin aturdir**, aturdido por Embestida, Congelado o abierto por Estocada de quiebre ⇒ R1 de frente a ≤ 2,5 m lanza remate; 16 % sin aturdir ⇒ ataque normal; tras parada perfecta con vida 50 % ⇒ R1 lanza **contraataque**, no remate; tras parada con vida 15 % ⇒ remate; jefe solo en fase 2 ≤ 10 % tras parada |
+| C-11 | Remate | Vida ≤ 15 % ⇒ muerte; aturdido con más vida ⇒ daño × 2 del fuerte (esqueleto zona 1: 24 × 2 × 0,8 − 1 = 37,4); jugador invulnerable durante toda la animación (decisión del usuario): con 2 esqueletos y 1 goblin golpeando y disparando durante el remate ⇒ 0 daño y la animación no se interrumpe; un ligero o un fuerte normal con un enemigo golpeando ⇒ el jugador sí recibe daño (solo hay invulnerabilidad en remate, contraataque, Estocada y Embestida; C-09, C-25) |
+| C-12 | L1 + R1 a la vez = habilidad, sin defensa (decisión del usuario) | L1 fresco a izq. y R1 a 50 ms con golpe izq. llegando a 30 ms ⇒ habilidad, sin parada ni bloqueo, y ese golpe (anterior al primer tick de la habilidad) entra con daño completo; golpe que llega durante la habilidad ⇒ 0 daño (invulnerable, C-25); L1 solo y golpe a 50 ms ⇒ parada con la marca de tiempo original; R1 a 90 ms ⇒ no es habilidad |
 | C-13 | Imparable | Golpe rojo del jefe con parada perfecta o bloqueo ⇒ daño completo en las dos configuraciones; esquiva con i-frames ⇒ 0 |
 | C-14 | Telegrafiado | Todo ataque cuerpo a cuerpo enemigo emite evento con dirección al empezar la anticipación (≥ 0,55 s antes del activo; jefe fase 2 ≥ 0,5 s) y otro al abrirse la ventana de la configuración equipada (200 ms EE / 250 ms EP); visible en `window.__GAME__` |
 | C-15 | Guardia enemiga (decisión del usuario; números [SUPUESTO]) | Ligero o fuerte en la dirección de la guardia del esqueleto ⇒ rebote sin daño y retroceso 0,3 s; otra dirección ⇒ daño; durante la transición de guardia o mientras el enemigo ataca ⇒ cualquier dirección entra. `window.__GAME__` expone la dirección de guardia de cada enemigo. Con semilla fija, el esqueleto cambia de lado entre 3,0 y 4,5 s (jefe fase 1: 2,5–3,5 s; fase 2: 1,8–2,6 s) y, tras un golpe por el lado abierto, gira hacia él a los 0,6 s (jefe 0,45 / 0,35 s). Estocada de quiebre (EP) ⇒ daño por el lado protegido y la guardia no cambia; Embestida (EE) o fuerte con Tierra en el arma ⇒ sin guardia 2,0 s (jefe 1,0 s). Goblin y cultista ⇒ sin guardia direccional |
 | C-16 | Teclado + ratón (decisión del usuario: dirección con ratón; umbrales [SUPUESTO] M-1 a M-4) | Mover el ratón sin botón pulsado ⇒ gira la cámara y no cambia la dirección. Clic der. sin mover ⇒ guardia neutra; con clic der. pulsado, 40 px hacia arriba que entran en el sector 100 ms antes del impacto ⇒ parada arriba; los mismos 40 px 300 ms antes ⇒ bloqueo normal arriba, que se mantiene quieto sin volver a neutro; 25 px ⇒ neutro (zona muerta 30 px). Clic izq., 40 px a la izquierda y soltar ⇒ ligero por la izquierda al soltar; clic izq. y soltar sin mover ⇒ R1 neutro. Con un botón de combate pulsado la cámara no gira, con o sin objetivo fijado. Pulsar W, A, S o D no cambia la dirección (solo mueve). Con mando, la dirección sigue saliendo del stick izquierdo (C-01, C-02) |
 | C-17 | Disparador «Al parar» | Se activa con parada perfecta cuerpo a cuerpo (EP y EE) y no con bloqueo normal ni con el desvío de flechas de EP |
-| C-18 | Animaciones mínimas | El catálogo de clips tiene, **por cada configuración** (EP y EE), 4 ataques ligeros direccionales, guardia, parada, bloqueo, defensa frontal de proyectil, contraataque, habilidad y remates, y los clips de enemigo de la tabla (recibir remate en las dos variantes) |
+| C-18 | Animaciones mínimas | El catálogo de clips tiene, **por cada configuración** (EP y EE), 4 ataques ligeros y 4 fuertes direccionales, 4 esquivas, guardia, parada, bloqueo, defensa frontal de proyectil, contraataque, habilidad y remates, y los clips de enemigo de la tabla (recibir remate en las dos variantes) |
 | C-19 | Cambiar de configuración cambia animaciones y valores | Equipar el escudo desde el libro ⇒ `window.__GAME__` muestra configuración `espadaEscudo`, el clip activo de ligero lateral dura 0,70 s, la ventana de parada es 200 ms, el bloqueo reduce un 80 % y L1 + R1 lanza Embestida; quitarlo ⇒ `espada`, 0,60 s, 250 ms, 60 % y Estocada de quiebre. Lo mismo con el atajo cruceta ▲ (alterna entre las dos), sin estar en campamento (decisión del usuario). Con un enemigo en alerta el cambio se rechaza, por libro o por atajo, y no cambia nada |
 | C-20 | Costes por configuración | Ligero / fuerte: EP 10 / 22 de aguante, EE 12 / 25; esquiva EE = base + 5; lanzamiento de Proyectil (0,4 s) con EP ⇒ 0,34 s, con EE ⇒ 0,40 s |
-| C-21 | Habilidades | Estocada de quiebre: −30 aguante, recarga 6 s, perforante × 1,8 del ligero; contra enemigo en anticipación ⇒ ataque cancelado y abierto 0,8 s. Embestida: −35 aguante, recarga 8 s, contundente × 1,0, empuje 2 m, aturde 0,6 s a ≤ 3 enemigos en un cono frontal de 90°. Con recarga activa o sin aguante ⇒ no se lanza, y aun así no hay defensa (C-12) |
-| C-22 | Ninguna configuración domina | Script de simulación (cuando exista §1): contra el mismo objetivo sin defender, DPS de EP > EE; en el escenario «goblin + esqueleto», daño recibido por EE < EP. Si una configuración gana en los dos, el test falla |
+| C-21 | Habilidades | Estocada de quiebre: −30 aguante, recarga 6 s, perforante × 1,8 del ligero; contra enemigo en anticipación ⇒ ataque cancelado y abierto 0,8 s. Embestida: −35 aguante, recarga 8 s, contundente × 1,0, empuje 2 m, aturde 0,6 s a ≤ 3 enemigos en un cono frontal de 90°. Con recarga activa o sin aguante ⇒ no se lanza, y aun así no hay defensa ni invulnerabilidad (C-12) |
+| C-22 | Ninguna configuración domina | Simulación de §1.11 (solo espada, semillas 0–19): contra el mismo objetivo sin defender, DPS de EP > EE; en la oleada 2 (3 esqueletos + 2 goblins), daño recibido por EE < EP. Si una configuración gana en los dos, el test falla |
 | C-23 | Guardia neutra (decisión del usuario; multiplicadores [SUPUESTO]) | L1 con inclinación < 0,5 contra golpe de 20 bruto desde cualquier dirección ⇒ 0 daño; aguante −50 (EP, 2,5 ×) o −40 (EE, 2,0 ×); nunca parada perfecta ni contraataque, aunque L1 sea fresco y esté dentro de la ventana; R1 a 0,3 s después ⇒ ataque normal. Aguante insuficiente ⇒ rotura de guardia (C-08) |
 | C-24 | Fintas del jefe (decisión del usuario; detalle [SUPUESTO]) | Fase 1 ⇒ 0 fintas. Fase 2 con semilla fija y 30 ataques ⇒ como máximo 1 finta por ciclo de 3 ataques, ninguna en dos ciclos seguidos, ninguna en el imparable ni en el primer combo de la fase; nunca con «abajo» como lado falso. Cada finta emite `finta` con lado falso y lado real en `window.__GAME__`, y la dirección real se fija ≥ 0,40 s antes del activo. L1 fresco hacia el lado real a 250 ms (EP) sin pulsación previa ⇒ parada perfecta; L1 fresco hacia el lado falso y reorientar al real ⇒ bloqueo normal (antispam), nunca daño completo |
 
@@ -337,8 +353,7 @@ personaje debe admitir dos sets de clips (o capas por mano) sin duplicar el mode
    intervalos de cambio por enemigo. Estocada de quiebre (atraviesa) y Embestida (rompe): validadas.
 1.1-4. **RESUELTO — Remates:** se puede rematar con vida ≤ 15 % aunque el enemigo no esté aturdido, e invulnerabilidad
    total durante la animación de remate o ejecución aunque haya otros enemigos cerca (decisiones del usuario; C-10,
-   C-11). Interpretación pendiente de confirmar: «invulnerable al atacar» se refiere solo a los remates, no a los
-   ataques normales.
+   C-11). Confirmado (2026-11-26): los ataques ligero y fuerte normales **no** son invulnerables (1.1-10).
 1.1-5. **RESUELTO — Fintas del jefe en fase 2:** sí las hace (decisión del usuario). Aspecto, límites y equidad: [SUPUESTO] (telegrafiado; C-24).
 1.1-6. **RESUELTO — L1 + R1:** se mantiene la combinación con ventana de 80 ms; la habilidad tiene prioridad y no hay
    defensa durante ella (decisión del usuario; C-12).
@@ -351,6 +366,9 @@ personaje debe admitir dos sets de clips (o capas por mano) sin duplicar el mode
    Los números finos se ajustan en playtest.
 1.1-9. **RESUELTO — Invulnerabilidad en el contraataque:** sí, igual que en los remates (decisión del usuario). Dura
    todo el golpe de contraataque (EP 0,60 s, EE 0,70 s), no solo la fase activa; ventana = duración del clip (C-09).
+1.1-10. **RESUELTO — Invulnerabilidad en las habilidades (decisión del usuario, 2026-11-26):** Estocada de quiebre y
+   Embestida son invulnerables durante todo su clip; ligero y fuerte normales no. Lista cerrada: remate, contraataque,
+   Estocada, Embestida (§1.7; C-25).
 
 ### 1.2 Reserva para más adelante (decisión del usuario: fuera «por ahora»)
 No se borran: quedan como referencia para recuperarlos sin rediseñar desde cero.
@@ -368,18 +386,241 @@ No se borran: quedan como referencia para recuperarlos sin rediseñar desde cero
   DPS/TTK.
 
 ### 1.3 Pendiente de sincronizar
-- ✔ aplicado (2026-11-23) en `contexto/CONTEXTO_PROYECTO.md`. Original: `contexto/CONTEXTO_PROYECTO.md` debe actualizarse (lo hace `optimizador-prompt`). Ya recoge espada + escudo
-  opcional y martillo/arco en reserva; falta reflejar el ajuste de interacciones, ya validado por el usuario (esqueletos
-  débiles a contundente vía Tierra y escudo; escudos y flechas según la configuración).
-- La maqueta `prototipo/` sigue teniendo martillo, arco y escudo (con sus habilidades Embestida / Terremoto / Andanada y
-  el cambio de arma 1-2-3) y **no se toca**: no es el juego.
-- ✔ aplicado (2026-11-23) en `docs/GUIA_UI.md`. Original: `docs/GUIA_UI.md` (cabecera y §5.1) dice «espada (sin escudo)», «habilidad de la espada (única)» y deja la cruceta ▲ libre: debe usar ▲ como atajo para alternar la configuración fuera de combate, y pasar a dos
-  configuraciones con dos habilidades (Estocada de quiebre / Embestida) y a equipar el escudo desde la pestaña Armas
-  (lo hace `interfaz-ui`).
-- ✔ aplicado (2026-11-23) en `docs/GUIA_VISUAL.md` (requisitos de escudo y sets EP/EE). Original: `docs/GUIA_VISUAL.md` / `artista-3d`: modelo de escudo y dos sets de animaciones del jugador (C-18). **Abierto:** la ejecución (modelo `escudo_jugador.glb` y sets de animación) sigue pendiente para `artista-3d`.
-- ✔ aplicado (2026-11-25): decisión del usuario = **stick virtual con botón mantenido**; §1.1 M-1, M-3, M-4 y C-16 reescritos, y `docs/GUIA_UI.md` §5.1 alineada (sin recentrado mientras se mantiene el botón; ataque «pulsar → trazar → soltar»). Original: **Ratón: gesto por movimiento vs. «stick virtual» con botón mantenido (abierto; `disenador-combate` + `interfaz-ui`).** §1.1 M-1, M-3 y M-4 usan un gesto por desplazamiento relativo del ratón (≥ 8 px en 100 ms) sin botón extra. `docs/GUIA_UI.md` §5.1 usa un «stick virtual» que solo alimenta la dirección mientras clic der. o clic izq. están mantenidos (radio 60 px, zona muerta 30 px, decaimiento 0,6 s). Hay que decidir si la dirección exige botón mantenido o no, y unificar umbrales, la regla de «guardia neutra sin mover» y la congelación de cámara (M-4) en ambos documentos.
-- ✔ aplicado (2026-11-23): el pitch de CONTEXTO ya habla de alternar espada y hechizos, no de cambiar de arma. Original: **Contradicción con CONTEXTO:** `contexto/CONTEXTO_PROYECTO.md` (pitch, línea 12) promete «cambiar de arma … en pleno combate», mientras `docs/GUIA_UI.md` (intro y §5.1) elimina el cambio de arma en partida (solo configuración fuera de combate). Decidir cuál prevalece y corregir el pitch o la UI.
-- ✔ aplicado (2026-11-23): CONTEXTO ya dice ratón en teclado / stick en mando. Original: **Contradicción de input:** `contexto/CONTEXTO_PROYECTO.md` (línea 32) dice «Dirección de ataque/parada: WASD o stick izquierdo», mientras §1.1-7 de este documento fija que en teclado WASD solo mueve y la dirección la marca el ratón.
+- **`artista-3d`:** modelo `escudo_jugador.glb` y los dos sets de animación EP/EE (C-18; ahora con 4 fuertes y 4
+  esquivas por configuración). Requisitos ya en `docs/GUIA_VISUAL.md`.
+- **`disenador-juego`:** cambios pedidos al GDD en §1.12.
+- **`optimizador-prompt`:** la invulnerabilidad de CONTEXTO («Pendiente de volcar») ya está volcada en §1.1 y §1.7.
+- **`interfaz-ui`:** iconos distintos de **remate** y **contraataque** sobre el enemigo (ya no coinciden tras una parada,
+  §1.1); señal en el borde de pantalla del goblin tensando y del círculo del cultista fuera de cuadro (§1.10); barra de
+  barrera del cultista.
+
+### 1.4 Recursos (`juego/src/config/combat/recursos.ts`) — **acepta** GDD §4.1 [SUPUESTO]
+| Recurso | Máx. (mejora, §1.11) | Regeneración | Retardo antes de regenerar | Reglas |
+|---|---|---|---|---|
+| Vida | 100 (+15 por Vigor; máx. 145) | No | — | Poción +40 en 1,0 s; Destello +20; descanso al 100 % |
+| Aguante | 100 (+15 por Fuelle) | 30/s; con guardia mantenida 15/s | 0,8 s desde el último gasto; **1,5 s** tras rotura de guardia | Una acción con coste > aguante actual no empieza; el bloqueo sí (rompe la guardia, C-08). Nunca < 0 |
+| Maná | 100 (+15 por Pozo arcano) | 2/s siempre, también lanzando | 0 | Se paga al terminar el lanzamiento; interrumpido ⇒ no se paga ni entra en recarga |
+
+Comprobación: la barra de aguante da 10 ligeros EP (8 EE) o 6 esquivas EP; de 0 a 100 en 0,8 + 3,3 = 4,1 s; atacar
+sin parar se sostiene un ≈ 50 % del tiempo (combo de 1,8 s y pausa de 1,8 s). El maná da 5 Bolas de fuego seguidas y
+luego 1 cada 10 s: la magia es ráfaga y control, la espada el daño sostenido. Entre oleadas aguante y maná vuelven al
+100 % y la vida no (GDD §7.4; ver riesgo en §1.11).
+
+### 1.5 Fórmula de daño (`juego/src/config/combat/formula.ts`)
+```
+daño = max(1, base × multiplicadorTipo × multiplicadorEstado × crítico − defensa)
+base = daño del ataque (§1.6) o hechizo (§1.8) × (1 + 0,08 × nivel de Filo o de Potencia elemental)
+       (en enemigos: su golpe × multiplicador de daño de la zona, GDD §6.2)
+daño recibido por el jugador = daño × (1 − reducción de bloqueo)   (§1.1; el jugador tiene defensa 0 en el MVP)
+```
+| Término | Regla |
+|---|---|
+| multiplicadorTipo | Tabla tipo × enemigo (§1.9). El jugador recibe × 1,0 de todo en el MVP |
+| multiplicadorEstado | Del estado **previo** al golpe, que luego se consume: Congelado + golpe físico × 1,5 (contundente × 2); Congelado + fuego × 2 (Vapor). Si no hay estado aplicable, 1 |
+| crítico | × 1,5 si el golpe entra por la **espalda** del objetivo (cono trasero de ±45°); si no, × 1,0. Sin azar (determinismo) |
+| defensa | Plana por enemigo (§1.10) |
+| Excepciones | **Ardiendo** ignora defensa y crítico. La **barrera** del cultista absorbe antes que la vida; el daño físico cuenta × 2 contra ella y lo que sobra pasa a la vida sin duplicar |
+| Redondeo | La lógica trabaja con decimales; la UI muestra enteros (redondeo hacia arriba) |
+
+Ejemplos de test (zona 1): ligero EP a esqueleto 12 × 0,8 − 1 = **8,6**; contraataque EE a esqueleto
+18 × 1,5 − 1 = **26**; Bola de fuego a goblin congelado 18 × 1,25 × 2 = **45**; ligero por la espalda a cultista
+12 × 1,2 × 1,5 = **21,6**; golpe de esqueleto en zona 3 a EE bloqueando 14 × 1,3 × 0,2 = **3,64**.
+
+### 1.6 Espada (`juego/src/config/combat/espada.ts` + `configuraciones.ts`) [SUPUESTO salvo decisiones de §1.1]
+| Ataque | Daño base, tipo | Aguante EP / EE | Fases EP / EE (s) | Alcance y hitbox | Retroceso | Hit-stop |
+|---|---|---|---|---|---|---|
+| Ligero, golpes 1–2 | 12 cortante | 10 / 12 | Tabla de animaciones (lateral 0,60 / 0,70) | Lateral: arco 120°, radio 2,2 m, alto 0,3–1,9 m. Arriba: caja 0,8 × 2,4 m vertical. Abajo: arco 90°, radio 2,0 m, alto 0–1,0 m | 0,3 m | 60 ms |
+| Ligero, golpe 3 (cierre) | 15 (× 1,25) cortante | 10 / 12 | Igual que su dirección | Igual | 0,5 m | 60 ms |
+| Fuerte | 24 cortante | 22 / 25 | 1,00 (0,50 / 0,12 / 0,38) / 1,10 (0,55 / 0,12 / 0,43) | Arco 150°, radio 2,5 m (arriba: caja 1,0 × 2,6 m) | 0,8 m + tambaleo 0,4 s (no al jefe; interrumpe anticipaciones) | 75 ms |
+| Contraataque | 18 (× 1,5 del ligero); EP cortante, EE **contundente** | 0 | 0,60 / 0,70 | Arco 120°, radio 2,3 m | EP 0,5 m / EE 1,0 m | 75 ms |
+| Estocada de quiebre (EP) | 21,6 (× 1,8) perforante | 30 | 0,75 (0,20 / 0,15 / 0,40) | Cápsula de radio 0,5 m y 2,8 m al final de un arranque de 4 m | 0,5 m | 75 ms |
+| Embestida (EE) | 12 (× 1,0) contundente | 35 | 1,10 (0,25 / 0,45 / 0,40) | Cono de 90° y 2,0 m por delante durante el activo; máx. 3 | 2 m + aturdido 0,6 s | 75 ms |
+| Remate | Mata si vida ≤ 15 %; si no, 48 (× 2 del fuerte) cortante | 0 | Tabla de animaciones | Sincronizado, sin hitbox | — | 90 ms en el impacto |
+
+- **Combo:** R1 desde el inicio de la recuperación hasta **0,35 s** después del final del clip (más el buffer de
+  0,15 s del GDD) encadena el siguiente golpe; si no, vuelve al golpe 1. La dirección se elige en cada golpe; R1 neutro
+  sigue der. → izq. → arriba. El fuerte no forma parte del combo (lo reinicia).
+- **Fuerte con mando:** R1 empieza la anticipación del ligero; si sigue pulsado a los **0,20 s**, se ramifica al fuerte
+  (sus 0,50 s de anticipación incluyen esos 0,20 s). Con ratón manda M-3.
+- **Cancelación (acepta GDD §3.3, precisada):** la esquiva cancela la recuperación del **ligero** desde el **60 %** del
+  clip y nunca antes del final del activo (EP lateral: desde 0,36 s; el activo acaba en 0,35 s). Fuerte, contraataque,
+  habilidades y remate no se cancelan. Los últimos 0,15 s de la esquiva se cancelan en ataque.
+- **Hit-stop (acepta GDD §3.3: ligero 60 ms, fuerte 75 ms, parada perfecta 90 ms, remate 90 ms, jugador golpeado
+  60 ms; añade habilidades y contraataque 75 ms):** es **local**: congela el reloj de clip del atacante y de la víctima;
+  el resto del mundo sigue. Un golpe que toca a varios aplica un solo hit-stop. Los ticks de hit-stop alargan el clip y,
+  con él, la invulnerabilidad. **Cambio técnico (`programador-motor`):** reloj de animación y de fases por entidad.
+
+### 1.7 Esquiva, bloqueo, parada e invulnerabilidad (`juego/src/config/combat/defensa.ts`)
+| Acción | Ventana | Invulnerable | Coste | Nota |
+|---|---|---|---|---|
+| **Esquiva** (acepta GDD §3.3) | 0,45 s, 3,5 m, en 4 direcciones relativas a la cámara | Ticks 3–18 (0,05–0,30 s) | 15 aguante (EE 20) | Evita imparables; dispara «Al esquivar» (2.3) solo si los i-frames evitan un golpe |
+| Parada perfecta | EP 250 ms / EE 200 ms antes del activo, dirección fresca | No (anula ese golpe) | 0 | Abre 1,2 s (jefe 0,6 s) para el contraataque (§1.1) |
+| Bloqueo normal | Mientras L1 | No | EP 0,9 × / EE 0,6 × bruto | EP −60 %, EE −80 % |
+| Guardia neutra | Mientras L1 sin dirección | No | EP 2,5 × / EE 2,0 × bruto | 100 % del daño |
+| Desvío de flecha (EP) | L1 ≤ 150 ms antes del impacto | No | 8 | Solo flechas, frontal ±45° |
+| Remate, contraataque, Estocada, Embestida (decisión del usuario) | Clip completo (más su hit-stop) | **Sí** | El de la acción | Lista cerrada |
+
+**Invulnerable** significa: ningún daño, estado ni acumulación nuevos, ni empuje ni interrupción; el proyectil que
+toca al jugador se consume. Un Ardiendo aplicado **antes** sigue corriendo. Las cuatro acciones invulnerables también
+evitan el imparable del jefe (consecuencia de la decisión; riesgo en §1.11).
+
+### 1.8 Hechizos del MVP (`juego/src/config/combat/hechizos.ts`) [SUPUESTO en números]
+Datos cerrados en el MVP; en la fase 2 se reexpresan como recetas predefinidas (§2.1) **conservando estos números**.
+Lanzar: el jugador anda al 50 %; un golpe recibido (no invulnerable) interrumpe sin gastar maná. La recarga empieza al
+terminar el lanzamiento. EP lanza un 15 % más rápido (§1.1). Mejoras de §1.11 sobre daño y coste.
+
+| | Bola de fuego | Lanza de escarcha | Destello sagrado |
+|---|---|---|---|
+| Maná / recarga | 20 / 1,5 s | 16 / 1,0 s | 30 / 8,0 s |
+| Lanzamiento EE (EP) | 0,45 s (0,38 s) | 0,35 s (0,30 s) | 0,50 s (0,43 s) |
+| Forma | Proyectil 25 m/s, alcance 30 m, explota al impactar (radio 2,5 m) | Proyectil 40 m/s, alcance 30 m, un objetivo | Pulso centrado en el jugador, radio 5 m, instantáneo |
+| Daño | 18 ardiente a todos en el radio | 10 frío | 15 sagrado a enemigos (× 1,5 a no-muertos por tipo) |
+| Estado | **Ardiendo** 4 s: min(3 % vida máx., 3)/s × multTipo fuego; renueva, no acumula | **Escarcha +2**: −15 % de velocidad (movimiento y animación) por acumulación, 5 s; a 3 ⇒ **Congelado** 2 s (jefe 1 s) e inmune a Escarcha 3 s después | **Iluminado** 6 s: revela y quita 1 buff al aplicarse (la barrera del cultista); **cura 20** al jugador |
+| Papel | Grupos y goblins; detona Congelado (Vapor × 2) | Preparar: 2 lanzas = Congelado ⇒ remate o Vapor; control del jefe | Esqueletos y jefe; curación; rompe la barrera del cultista |
+
+Ajuste a §2.4 para el MVP: Ardiendo tiene tope de 3/s (para que el % de vida máx. no derrita al jefe) y la Lanza aplica
+2 acumulaciones (dato del hechizo; en la fase 2, una por pieza de Hielo del núcleo).
+
+**Adquisición (acepta la propuesta del GDD §6.1; encaja con §2.12–§2.13):**
+| Hechizo | Cómo | Tinta | Dónde se graba |
+|---|---|---|---|
+| Bola de fuego | Ya grabada al empezar | 0 | — |
+| Lanza de escarcha | Runa aprendida en el Santuario del Arroyo | 1 | En el santuario (cuenta como altar rúnico, ver §1.12) o en cualquier punto de descanso |
+| Destello sagrado | Pergamino del mercader (200 monedas; objeto clave) | 1 | Punto de descanso o altar rúnico |
+
+Coherencia con §2.13: grabar cuesta 1 tinta; solo en altares y campamentos (el punto de descanso cuenta como
+campamento, GDD §4.2); sin tinta queda como **borrador** visible y no equipable (M-48); cada grabación = 1 hoja del
+libro. §2.12 (inscripciones) es de la fase 2, así que en el MVP la tinta solo sirve para esto: las 2 tintas iniciales
+bastan justas y el mercader vende 3 al día (15 monedas), así que no hay bloqueo. En el MVP hay 3 ranuras de hechizo (las
+6–8 de §2.11 son de la fase 2) y no hay grimorio libre ni mutación.
+
+### 1.9 Interacciones (`juego/src/config/combat/interacciones.ts`)
+**Elemento × estado del objetivo** (recarga de reacción por objetivo 1,5 s, §2.5):
+| Golpe ↓ / estado → | Sin estado | Escarcha (1–2) | Congelado | Ardiendo |
+|---|---|---|---|---|
+| Fuego (Bola) | Aplica Ardiendo | **Derrite:** quita la Escarcha, sin extra | **Vapor: × 2** y consume Congelado | Renueva |
+| Hielo (Lanza) | +2 Escarcha | +2 (a 3 ⇒ Congelado) | Sin efecto extra | **Apaga** Ardiendo y aplica +2 |
+| Luz (Destello) | Iluminado | Iluminado | Iluminado | Iluminado |
+| Espada (física) | — | — | **× 1,5** (contundente × 2) y consume Congelado | — |
+
+**Tipo de daño × enemigo** (multiplicadorTipo; > 1 debilidad, < 1 resistencia):
+| Enemigo | Cortante | Contundente | Perforante | Ardiente | Frío | Sagrado | Defensa |
+|---|---|---|---|---|---|---|---|
+| Esqueleto guerrero | 0,8 | **1,5** | 0,5 | 1,0 | 1,0 | **1,5** | 1 |
+| Goblin arquero | 1,0 | 1,0 | **1,25** | **1,25** | 1,0 | 1,0 | 0 |
+| Cultista mago | **1,2** | 1,0 | **1,25** | 0,5 | **1,25** | 1,0 | 0 |
+| Jefe caballero no-muerto | 0,9 | **1,25** | 0,75 | 0,8 | 1,0 | **1,5** | 3 |
+
+Esqueleto: valores validados por el usuario (§1); su escudo reduce × 0,5 los proyectiles **físicos** de frente (en el
+MVP no hay ninguno del jugador; Tierra y Aire llegan en la fase 2).
+
+### 1.10 Enemigos (`juego/src/config/combat/enemigos.ts`) [SUPUESTO; valores de zona 1, ×zona del GDD §6.2]
+| Enemigo | Vida / vel. | Ataques (daño · fases o cadencia · alcance) | Señal previa | Cómo se contrarresta |
+|---|---|---|---|---|
+| **Esqueleto guerrero** | 60 / 3,5 m/s | Tajo direccional 14 · tabla de animaciones (anticipación ≥ 0,55 s) · 2,2 m. Uno cada 3,0–3,5 s si tiene el turno de ataque. Guardia direccional (§1.1) | Postura y chevrón por dirección; destello de la ventana de parada | Parada ⇒ contraataque (EE contundente: el mejor); Embestida ⇒ remate; Destello; atacar el lado abierto |
+| **Goblin arquero** | 30 / 5,0 m/s (menos que correr) | Flecha 10 · tensar 0,8 s, una cada 2,5 s · 25 m, 30 m/s. Si el jugador está a < 6 m huye a 10–14 m; acorralado, empujón 6 (0,5 / 0,1 / 0,4) | Cuerda que cruje, brillo en la punta e indicador en el borde de pantalla al tensar | Bola de fuego (debilidad + área), EE bloquea de frente, EP desvía o esquiva; Estocada cierra 4 m |
+| **Cultista mago** | 45 / 3,0 m/s | Bola de fuego enemiga 14 + Ardiendo · círculo 0,8 s, una cada 4 s · 20 m/s. **Barrera** sobre sí o un aliado a ≤ 12 m: absorbe 30, 8 s, círculo 1,0 s, recarga 12 s. A ≤ 2,5 m: empujón de bastón 8 + empuje 2 m (0,5 / 0,1 / 0,5) | Círculo de runas con color del elemento (§2.14, ≥ 0,5 s) | Un golpe de espada durante el círculo lo **interrumpe** (recarga 3 s); la espada rompe la barrera (× 2); Destello la quita; Lanza (débil a frío); resiste fuego |
+| **Jefe caballero no-muerto** | 800 (fase 2 al 50 %) / 4,0 m/s | Fase 1: tajo direccional 22 (0,70 / 0,20 / 0,70), uno cada 3,2 s; cada 4.º ataque, **imparable** 35 (0,90 / 0,25 / 0,65). Fase 2: combo de 2 golpes de 16 con fintas (§1.1), uno cada 2,6 s; imparable cada 4.º. Transición: 3 s sin recibir control, grito que empuja 3 m | Chevrones, fintas legibles (§1.1); imparable en rojo con sonido propio | Parada ⇒ contraataque; Destello (× 1,5); Lanza × 2 ⇒ Congelado 1 s ⇒ Bola (Vapor); Embestida rompe la guardia 1 s; esquiva el imparable |
+
+- **El jefe no usa multiplicador de zona;** los enemigos normales del dungeon usan los de la amenaza 2 (× 1,25 vida,
+  × 1,15 daño; GDD §6.3).
+- **Turnos de ataque (necesarios para el balance; cambio técnico para `programador-gameplay`):** como máximo **1
+  enemigo cuerpo a cuerpo** en ataque a la vez y **1 tirador** (goblin o cultista) tensando o lanzando a la vez; los
+  demás rodean a ≥ 4 m o se recolocan. El turno pasa al siguiente al acabar la recuperación. Sin turnos, las oleadas 4–5
+  no se pueden superar ni con la mejor estrategia (§1.11). Detección 15 m (cultista y goblin 25 m).
+
+### 1.11 Balance: DPS, TTK, zonas, mejoras y oleadas
+**Método.** Simulación a 60 Hz, determinista, 20 semillas por caso (script en
+`juego/tools/sim-balance.ts`, a crear por `qa-tester` leyendo los datos de `config/combat/`). Modelo [SUPUESTO]:
+jugador competente (parada 50 % EP / 40 % EE, 40 % / 32 % contra el jefe; 15 % de golpes al lado protegido; 15 % de esquivas fallidas), turnos de ataque 1 + 1, aguante y maná como §1.4.
+
+**DPS por acción** (daño tras fórmula / duración de la acción; hechizos: / (lanzamiento + recarga); zona 1):
+| Acción | Esqueleto | Goblin | Cultista | Jefe | Límite sostenido |
+|---|---|---|---|---|---|
+| Ligero EP (combo) | 15,7 | 21,7 | **26,0** | 14,5 | Aguante: ≈ 50 % del tiempo; 1,3 de daño por aguante |
+| Fuerte EP | 18,2 | 24,0 | 28,8 | 18,6 | Aguante: 1,1 de daño por aguante; no se cancela |
+| Ligero EE (combo) | 13,4 | 18,6 | 22,3 | 12,4 | Igual que EP, −15 % |
+| Estocada (EP) | 13,1 | **36,0** | **36,0** | 17,6 | Recarga 6 s |
+| Embestida (EE) | 15,5 | 10,9 | 10,9 | 10,9 | Recarga 8 s; abre remate (37,4 a esqueleto) |
+| Contraataque EP / EE | 22,3 / **37,1** | 30,0 / 25,7 | 36,0 / 25,7 | 22,0 / **27,9** | Solo tras parada |
+| Bola de fuego | 8,7 | **11,5** | 4,6 | 5,8 | Maná: 0,9 de daño por maná + área + Ardiendo |
+| Lanza de escarcha | 6,7 | 7,4 | 9,3 | 5,2 | Maná: 0,6 por maná + Congelado (remate o Vapor) |
+| Destello sagrado | 2,5 (21,5 por uso) | 1,8 | 1,8 | 2,3 | Maná: 0,5 por maná + cura 20 + quita barrera |
+
+Ninguna acción es la mejor en todo: la Estocada destaca contra goblin y cultista y es la peor contra el esqueleto
+(perforante × 0,5); el contraataque EE domina contra el esqueleto; la Bola es el mejor hechizo contra goblins y el peor
+contra el cultista; el fuerte gana en DPS bruto pero pierde en daño por aguante y no se cancela.
+
+**TTK por estrategia** (s, enemigo solo, zona 1, sin mejoras; «mixto» = espada + los 3 hechizos con prioridad por
+enemigo; objetivo entre paréntesis):
+| Enemigo (objetivo) | EP espada | EE espada | EP mixto | EE mixto | Solo Bola | Solo Lanza | Solo Destello |
+|---|---|---|---|---|---|---|---|
+| Esqueleto (4–7) | 6,0 | **2,5**¹ | 3,9 | 1,6¹ | 5,0 | 8,0 | 16,9 |
+| Goblin (3–5, con acercarse) | 4,1 | 6,5 | 3,8 | 3,7 | **2,0** | 2,6 | 8,4 |
+| Cultista (3–7) | **3,7** | 7,0 | 3,2 | 6,8 | 21,2 | 6,7 | 16,9 |
+| Jefe (90–130) | 122 | 125 | **96** | 106 | 295 | no lo mata | 580 |
+¹ Con la Embestida lista al empezar; en oleada, con su recarga, el esqueleto cuesta ≈ 6,5 s a EE y ≈ 7,8 s a EP.
+
+**Zonas (GDD §6.2) — equilibradas, se aceptan.** EP mixto contra esqueleto: 3,9 / 5,8 / 6,9 s en las amenazas 1 / 2 / 3
+(EE espada contra cultista: 7,0 / 8,3 / 9,7 s). Con todas las mejoras, la amenaza 3 queda como la 2 sin mejoras
+(esqueleto 5,1 s), y Vigor 3 compensa el daño × 1,3 (golpes de esqueleto para caer: 7,1 base ⇒ 8,0). La amenaza 3 sin
+mejoras es dura pero posible: encaja con «sin bloqueo por zona».
+
+**Mejoras (GDD §8.3) — equilibradas, se aceptan.** Filo y Potencia (+8 %/nivel) bajan el TTK ≈ 7 % por nivel (jefe EP
+mixto 96 ⇒ 67 s con todo; EE 106 ⇒ 74 s). Vigor, Fuelle y Pozo (+15) valen +1 golpe recibido, +1,5 ligeros o +0,75
+Bolas por nivel. Economía (−8 %, 2 niveles) da +19 % de lanzamientos. Ninguna domina; Filo es la de mejor relación
+precio/efecto, como debe ser la primera compra.
+
+**Oleadas del dungeon (GDD §7.4; amenaza 2) — composición aceptada con turnos de ataque.** Tiempo (s) y daño neto
+recibido (con la cura del Destello cuando se usa):
+| Oleada | Vida enemiga total | EP espada | EE espada | EP mixto | EE mixto | Objetivo |
+|---|---|---|---|---|---|---|
+| 1 · 4 esq. | 300 | 31 / 34 | 26 / 14 | 25 / −37 | 20 / −42 | 20–35 s |
+| 2 · 3 esq. + 2 gob. | 300 | 76 / 119 | 43 / 56 | 36 / 2 | 30 / 0 | 30–55 s |
+| 3 · 4 esq. + 2 gob. + 1 cult. | 431 | 104 / 149 | 81 / 111 | 51 / 3 | 56 / 10 | 45–80 s |
+| 4 · 4 esq. + 3 gob. + 2 cult. | 525 | 355 / 678 | 148 / 248 | 70 / 46 | 87 / 59 | 65–110 s |
+| 5 · 6 esq. + 3 gob. + 2 cult. | 675 | 366 / 688 | 163 / 256 | 85 / 43 | 99 / 51 | 80–125 s |
+
+Con mezcla de espada y magia, el dungeon completo dura ≈ 4,5–5 min más ≈ 1,5–2 min de jefe. **Sin turnos** (2 + 2), EP
+mixto sube a 137 s / 230 de daño en la oleada 4. **Solo espada** no es viable en las oleadas 4–5 (sobre todo EP): es
+intencionado (pilar 2), pero es el mayor riesgo de frustración.
+
+**Riesgos de balance.**
+1. **Vida que no se rellena entre oleadas:** sin Destello, el daño acumulado de EP mixto en las 5 oleadas es
+   ≈ 250–300 (necesita 4–5 pociones; las monedas de las oleadas, 335, pagan 7 en el altar). Con Destello queda en ≈ 60.
+2. **Invulnerabilidad de las habilidades:** Estocada cada 6 s y Embestida cada 8 s son i-frames garantizados (11–12 %
+   del tiempo) y evitan el imparable. Si en playtest sustituyen a la esquiva, subir la recarga (8 / 10 s) antes que
+   quitar la decisión.
+3. **Embestida + remate** mata un esqueleto en 2,5 s: limitado por la recarga de 8 s; vigilar en grupos.
+4. **Parada:** las tasas de parada son supuestos; si el jugador medio para menos del 30 %, EP pierde frente a EE en todo.
+5. **Daño del jefe:** EP mixto recibe ≈ 113 netos en 96 s (necesita 1–2 pociones). Si cuesta demasiado, bajar el tajo
+   de 22 a 20.
+
+### 1.12 Reglas comprobables (recursos, daño, hechizos, enemigos, balance) y cambios pedidos al GDD
+| ID | Regla | Test |
+|---|---|---|
+| C-25 | Invulnerabilidad: lista cerrada (decisión del usuario) | Con un esqueleto golpeando y un goblin disparando en cada tick: durante Estocada (45 ticks), Embestida (66), contraataque (36 / 42) y remate ⇒ 0 daño, 0 acumulaciones, sin interrupción; el tick siguiente al final del clip ⇒ daño normal; durante ligero o fuerte ⇒ daño. El imparable del jefe durante una Estocada ⇒ 0 |
+| C-26 | Recursos | Aguante 0 ⇒ 0 durante 0,8 s y 100 a los 4,13 s; con guardia, 15/s; tras rotura de guardia empieza a 1,5 s. Maná 0 ⇒ 100 a los 50 s, también lanzando. Ligero con 9 de aguante (EP) ⇒ no sale |
+| C-27 | Fórmula | Los 5 ejemplos de §1.5 dan 8,6 / 26 / 45 / 21,6 / 3,64 (± 0,01); un golpe de 1 contra defensa 3 ⇒ 1; Ardiendo a esqueleto ⇒ 1,8/s y al jefe ⇒ 2,4/s (3 × 0,8) |
+| C-28 | Combo y fuerte | R1 0,30 s después del final del 1.er ligero ⇒ golpe 2; a 0,40 s ⇒ golpe 1. El 3.º hace 15. Mantener R1 0,20 s ⇒ fuerte de 1,00 s (EP) |
+| C-29 | Cancelación con esquiva | Esquiva pulsada en el ligero EP a 0,30 s ⇒ sale a 0,36 s (60 %); en el fuerte EP a 0,30 s ⇒ se descarta (fuera del buffer de 0,15 s); a 0,90 s ⇒ sale al acabar el clip (1,00 s) |
+| C-30 | Esquiva | 0,45 s, 3,5 m ± 0,1; golpe en los ticks 3–18 ⇒ 0 daño; en el tick 2 o 19 ⇒ daño; −15 aguante (EE −20) |
+| C-31 | Hit-stop local | Ligero que impacta ⇒ el clip dura 0,66 s y la víctima se congela 60 ms; un tercer enemigo sigue moviéndose; un contraataque con impacto alarga su invulnerabilidad 75 ms |
+| C-32 | Hechizos | Valores de la tabla de §1.8; 2 Lanzas ⇒ Congelado 2 s y una 3.ª en los 3 s siguientes ⇒ sin Escarcha; Bola contra congelado ⇒ × 2 y el estado desaparece; Destello sobre cultista con barrera ⇒ barrera 0 y luego daño; golpe al jugador lanzando ⇒ sin coste de maná |
+| C-33 | Grabar hechizos MVP | Partida nueva ⇒ Bola equipada, 2 tintas; aprender en el Santuario y grabar ⇒ Lanza equipable y 1 tinta; Destello sin tinta ⇒ borrador no equipable (M-48); grabar fuera de descanso/altar ⇒ rechazo |
+| C-34 | Interacciones | Tabla de §1.9: fuego sobre Escarcha 2 ⇒ Escarcha 0 sin extra; Lanza sobre Ardiendo ⇒ Ardiendo apagado y Escarcha 2; recarga de reacción 1,5 s por objetivo |
+| C-35 | Turnos de ataque | Con 4 esqueletos y 3 goblins a 10 m durante 60 s: nunca hay 2 cuerpo a cuerpo en anticipación/activo a la vez ni 2 tiradores tensando/lanzando a la vez (`window.__GAME__`) |
+| C-36 | Balance (simulación de §1.11) | Con los datos de `config/combat/`: TTK de §1.11 ± 15 %; ninguna acción de espada tiene el mayor DPS contra los 4 enemigos y ningún hechizo tampoco; EP mixto en las oleadas 1–5 dentro de los objetivos; EE espada recibe menos daño que EP espada en la oleada 2 (C-22) |
+
+**Cambios que se piden al GDD (`disenador-juego`; no se edita aquí):**
+1. §3.3 y §4.1: marcar como aceptados por COMBATE (recursos, esquiva, cancelación desde el 60 % y nunca antes del final
+   del activo, hit-stop local con 75 ms para habilidades y contraataque). Añadir «aguante a 15/s con guardia» y «1,5 s de
+   retardo tras rotura de guardia».
+2. §6.1 / §7.3: el **Santuario del Arroyo** cuenta como altar rúnico (o tiene punto de descanso) para grabar la Lanza.
+3. §7.4: los goblins «en la muralla» deben ser alcanzables (escaleras o rampas, ≤ 8 s de subida) o bajar cuando quedan
+   solos; si no, EP sin magia no puede terminar la oleada. Mencionar los turnos de ataque (§1.10).
+4. §6.3: recomendar llegar al dungeon con Destello sagrado o ≥ 4 pociones (riesgo 1 de §1.11); «Curva por oleada y TTK:
+   COMBATE §1.11» (ya no pendiente).
 
 ---
 
@@ -510,7 +751,7 @@ y 64 globales (los más antiguos se disipan); máx. 6 saltos de cadena; máx. 2 
 
 | Elemento | Tipo de daño | Estado (dur. / acumul.) | Comportamiento |
 |---|---|---|---|
-| Fuego | Ardiente | **Ardiendo**: 3 % vida máx/s, 4 s, renueva | Explota (radio 2,5 m al impactar) |
+| Fuego | Ardiente | **Ardiendo**: 3 % vida máx/s (tope 3/s, §1.8), 4 s, renueva | Explota (radio 2,5 m al impactar) |
 | Hielo | Frío | **Escarcha**: −15 % vel. por acumul., 5 s, 3 acumul. → **Congelado** 2 s | Cristaliza (deja hielo, congela agua) |
 | Luz | Sagrado (×1,5 a no-muertos) | **Iluminado**: revela, −1 buff, 6 s; en aliados cura 3/s | Haz rápido (×1,5 vel.), revela |
 | Rayo | Eléctrico | **Cargado**: 3 acumul. → **Aturdido** 1 s, 5 s | Salta en cadena (2 saltos, 6 m, 70 %) |
