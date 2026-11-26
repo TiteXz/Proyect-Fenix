@@ -182,6 +182,20 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   `scripts/verificar.sh`), y el MVP incluye una **pantalla de créditos** en el juego (CC-BY obliga a atribuir).
 - **Proceso:** se termina la planificación (`/iniciar`: GDD §1–9, arquitectura, ADR, backlog) antes de escribir código del juego.
 
+## Decisiones del usuario (2026-11-26)
+- **Bolso mágico:** empieza con **12 casillas** y se **amplía comprando mejoras al mercader** (+4 casillas cada una, cada vez
+  más caras, tope [SUPUESTO] 28). Sustituye al «número de casillas SUPUESTO» anterior.
+- **Escena final:** la cuenta la **voz del Guardián** liberado (unas líneas con subtítulos) mientras la cámara muestra el castillo (GDD §10.9 p. 9).
+- **Reconocimiento (D-8):** lo hacen el **mercader de la Aldea del Vado y un anciano**, con una frase suelta (bocadillo de
+  texto) la primera vez que ven al protagonista.
+- **Vida de los NPCs (D-9):** tienen **rutina con el ciclo día/noche** y **se pueden golpear**, pero **no mueren**: reaccionan
+  (se quejan, huyen o se cubren) y el mercader deja de vender durante un rato. Sustituye al supuesto «quietos, no atacables».
+- **Causa de la Pausa (GDD §10.9 p. 1):** no se explica en el MVP; solo se insinúa. Se decide en fase 2.
+- **Invulnerabilidad al atacar (COMBATE §1.1, remates):** el jugador es invulnerable durante los **remates**, el
+  **contraataque** tras parada perfecta **y las habilidades** (Estocada de quiebre y Embestida). Los ataques ligero y
+  fuerte normales **no** son invulnerables.
+- Falta volcarlas en GDD §5 y §10.9/§10.11 y en COMBATE §1.1 (`disenador-juego`, `disenador-combate`) durante `/iniciar`.
+
 ## Glosario
 - **Parry (parada perfecta):** stick hacia el golpe + L1 a tiempo (ventana ≈ 0,2 s); aturde al enemigo. **Bloqueo normal:** con el stick ya mantenido.
 - **Congelado:** estado tras acumular escarcha; el enemigo no actúa y recibe más daño contundente.
