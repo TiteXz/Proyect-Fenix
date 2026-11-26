@@ -80,7 +80,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   con dos fases. En el mundo aparecen en grupos pequeños (patrullas, campamentos); el jefe solo en el dungeon.
   El chamán goblin queda fuera del MVP (fase 2, COMBATE §2.14).
 - **NPCs (MVP):** pocos, en asentamientos, con **rutina ligada al ciclo día/noche**. **Se pueden golpear pero no mueren**:
-  reaccionan (se quejan, huyen o se cubren) y el mercader deja de vender un rato. Solo el **mercader de la Aldea del Vado
+  reaccionan (se quejan, huyen o se cubren) y el mercader no vuelve a venderte **hasta el día siguiente** (amanecer del ciclo día/noche). Solo el **mercader de la Aldea del Vado
   y un anciano** «reconocen» al protagonista con una frase suelta (bocadillo) la primera vez que lo ven (GDD §10.11 D-8, D-9).
   Fauna en fase 3.
 - **Exploración:** a pie y a caballo (el caballo se invoca/está cerca en el mundo; no se monta dentro del
@@ -188,9 +188,9 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 ## Preguntas abiertas (supuesto propuesto; corrígelo si no te encaja)
 1. Precio/escalado de las ampliaciones del bolso y de las mejoras: lo fija GDD §5 con curva simple **[SUPUESTO]** (se rellena en config).
 2. ¿Qué ocurre al morir? **[SUPUESTO]** reaparecer en el último punto de descanso del mundo (o inicio de oleada en dungeon), sin perder monedas; se cierra en GDD §3.
-3. ¿Se puede guardar a mano? **[SUPUESTO]** autoguardado en puntos de descanso/asentamientos y al salir; sin guardado manual.
+3. ✔ Decidido (2026-11-26): **sí hay guardado manual** (desde el menú de pausa, fuera de combate y fuera del dungeon **[SUPUESTO]**), además del autoguardado en puntos de descanso/asentamientos y al salir.
 4. ¿La tienda de oleadas vende también ampliaciones de bolso? **[SUPUESTO]** no: solo el mercader del mundo.
-5. ¿Cuánto dura el «deja de vender» del mercader golpeado? **[SUPUESTO]** 60 s de tiempo de juego; configurable.
+5. ✔ Decidido (2026-11-26): el mercader golpeado no vende **hasta el día siguiente** (amanecer del ciclo día/noche).
 6. Frase de reconocimiento: ¿se repite? **[SUPUESTO]** solo la primera vez (se guarda en la partida).
 7. Efecto del Guardián tras liberarlo en mecánicas: **[SUPUESTO]** solo narrativo (sin habilidad nueva) en el MVP.
 
