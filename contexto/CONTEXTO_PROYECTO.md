@@ -1,8 +1,7 @@
 # Contexto del proyecto
 
-> Fuente de verdad del proyecto. Lo marcado como **[SUPUESTO]** es una decisión por defecto para
-> poder empezar: cámbiala aquí antes de `/iniciar` si no te encaja. Máximo ~150 líneas;
-> el detalle va en docs/.
+> Fuente de verdad del proyecto. Lo marcado como **[SUPUESTO]** es una decisión por defecto: corrígela aquí
+> si no te encaja. Máximo ~150 líneas; el detalle va en docs/. Última integración de decisiones: 2026-11-26.
 
 ## Elevator pitch
 Juego de acción 3D de fantasía medieval para navegador, en un **mundo abierto hiper optimizado**.
@@ -29,9 +28,10 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - Navegadores de escritorio recientes (Chrome/Edge/Firefox/Safari). Móvil fuera del MVP. **[SUPUESTO]**
 - Controles: teclado y ratón; mando (Gamepad API) en el hito de pulido.
   - WASD mover · Ratón cámara · Clic izq. ataque · Clic der. bloquear · Espacio esquivar
-  - Dirección de ataque/parada: ratón en teclado (WASD solo mueve) o stick izquierdo en mando (detalle en `docs/COMBATE.md` §1.1 y `docs/GUIA_UI.md` §5.1)
+  - Dirección de ataque/parada: **stick virtual con el ratón mientras hay un botón de combate mantenido** (la cámara no
+    orbita entonces; COMBATE §1.1 M-1 a M-4, decisión del usuario) o stick izquierdo en mando (`docs/GUIA_UI.md` §5.1)
   - Q/E/R lanzar hechizo · Rueda ciclar hechizos · Esc pausa
-  - F interactuar (entrar al dungeon, recoger) · F mantenida montar/desmontar caballo **[SUPUESTO]** (E queda para hechizos)
+  - F interactuar (entrar al dungeon, recoger, hablar/comprar) · F mantenida montar/desmontar caballo **[SUPUESTO]** (E queda para hechizos)
   - A caballo: Shift galopa. El prototipo ya valida montar/galopar (`prototipo/README.md`).
 
 ## Rendimiento "hiper optimizado" (presupuestos medibles; se verifican en CI/Playwright con `renderer.info`)
@@ -57,12 +57,14 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - **Armas (MVP: espada + magia; escudo opcional que se equipa)** (decisión del usuario)
   | Arma | Papel | Rasgos |
   |---|---|---|
-  | Espada (sola o con escudo) | Equilibrada | Combo de 3 golpes, bloqueo, contraataque tras parada perfecta (parry). Dos configuraciones, solo espada / espada + escudo, con animaciones distintas según cuál lleves |
+  | Espada (sola o con escudo) | Equilibrada | Combo de 3 golpes, bloqueo, contraataque tras parada perfecta (parry). Dos configuraciones, solo espada (EP) / espada + escudo (EE), con animaciones distintas |
   - En reserva para más adelante: martillo y arco. Los enemigos sí pueden usar arcos (goblin arquero).
 - **Combate cuerpo a cuerpo direccional** (detalle en `docs/COMBATE.md` §1.1; solo afecta al cuerpo a cuerpo):
-  - Los ataques llegan por izquierda, derecha, arriba y abajo; la dirección se marca con el stick izquierdo y el jugador ataca igual.
-  - Parada perfecta: stick hacia el golpe + L1 a tiempo. Con el stick ya mantenido, solo bloqueo normal.
+  - Los ataques llegan por izquierda, derecha, arriba y abajo; la dirección se marca con el stick (virtual con ratón, o físico en mando) y el jugador ataca igual.
+  - Parada perfecta: dirección hacia el golpe + bloqueo (L1 en mando) a tiempo. Con la dirección ya mantenida, solo bloqueo normal.
   - Mínimo una animación por dirección, más remates/ejecuciones y contraataque tras parada.
+  - **Invulnerabilidad del jugador:** durante los **remates**, el **contraataque** tras parada perfecta y las **habilidades**
+    (Estocada de quiebre y Embestida). Los ataques ligero y fuerte normales **no** son invulnerables.
 - **Magias (MVP: 3 escuelas)** **[SUPUESTO]**
   | Hechizo | Elemento | Efecto |
   |---|---|---|
@@ -72,10 +74,15 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - **Interacciones elementales:** fuego derrite la congelación (gran daño); los esqueletos son débiles a la luz
   y a lo **contundente** (vía Tierra y el escudo: Embestida, golpe de escudo tras parada). Escudos y flechas según la
   configuración: **EE** bloquea de frente flechas (−80 %) y hechizos (−50 %); **EP** no los bloquea, solo desvía flechas
-  con la hoja (L1 ≤ 150 ms antes, de frente) y esquiva el resto (`docs/COMBATE.md` §1.1; el resto de reglas en §1).
+  con la hoja (bloqueo ≤ 150 ms antes, de frente) y esquiva el resto (`docs/COMBATE.md` §1.1; el resto de reglas en §1).
 - **Enemigos (MVP)** **[SUPUESTO]**: esqueleto guerrero (cuerpo a cuerpo), goblin arquero (a distancia,
   huye si te acercas), cultista mago (lanza hechizos y crea escudos) y un jefe: caballero no-muerto
   con dos fases. En el mundo aparecen en grupos pequeños (patrullas, campamentos); el jefe solo en el dungeon.
+  El chamán goblin queda fuera del MVP (fase 2, COMBATE §2.14).
+- **NPCs (MVP):** pocos, en asentamientos, con **rutina ligada al ciclo día/noche**. **Se pueden golpear pero no mueren**:
+  reaccionan (se quejan, huyen o se cubren) y el mercader deja de vender un rato. Solo el **mercader de la Aldea del Vado
+  y un anciano** «reconocen» al protagonista con una frase suelta (bocadillo) la primera vez que lo ven (GDD §10.11 D-8, D-9).
+  Fauna en fase 3.
 - **Exploración:** a pie y a caballo (el caballo se invoca/está cerca en el mundo; no se monta dentro del
   dungeon **[SUPUESTO]**). Puntos de interés (campamentos, ruinas, torres, cofres con monedas) para dar
   motivos de recorrido. Sin mapa complejo: brújula/marcador en el HUD y minimapa simple **[SUPUESTO]**.
@@ -84,9 +91,16 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   Entrada desde el mundo (portón/puerta interactuable) → pantalla de carga → **instancia separada**; el
   mundo se **congela y descarga** salvo la celda de la entrada, que se restaura al salir **[SUPUESTO]**.
   Salir: victoria (tras el jefe) o abandonar desde pausa (pierde el progreso de oleadas).
-- **Progresión:** se desbloquean armas/hechizos y mejoras sencillas (daño, coste de maná) con las
-  monedas que sueltan los enemigos. **Tienda de mejoras:** entre oleadas dentro del dungeon (como estaba
-  previsto) y un mercader fijo en un asentamiento del mundo **[SUPUESTO]**. Sin inventario complejo en el MVP.
+  Tras liberar al Guardián el dungeon se **rejuega** con el jefe ya derrotado y **botín reducido**.
+- **Progresión y economía:** se desbloquean hechizos y mejoras sencillas (daño, coste de maná) con las monedas que sueltan
+  los enemigos. **Tienda de mejoras:** entre oleadas dentro del dungeon y **un único mercader fijo en la Aldea del Vado**
+  (GDD §10.11 D-6).
+- **Bolso mágico (inventario simple del MVP):** casillas fijas, **sin peso**; empieza con **12** y se amplía comprando
+  mejoras al mercader (**+4** cada una, cada vez más caras, tope **[SUPUESTO] 28**). Detalle en GDD §5. Sin crafteo ni gestión compleja.
+- **Códice:** un solo menú con dos pestañas (elemental / lore).
+- **Lore y final en el MVP:** trama mínima. Escena final sencilla: la **voz del Guardián** liberado (unas líneas con subtítulos)
+  mientras la cámara muestra el castillo (GDD §10.9 p. 9). La causa de la Pausa solo se insinúa (se decide en fase 2).
+  Tras el final el mundo sigue abierto (estado persistente). Pantalla de **créditos** de assets en el juego (CC-BY obliga a atribuir).
 
 ## Alcance
 - **Dentro del MVP:**
@@ -99,24 +113,23 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
     (Aldea del Vado, Puerto Gaviota, Caleta, Oasis de Arenal, Refugio del lago, la Ciudad de la Roca y, si cabe, uno más;
     nombres y papel en `docs/GDD.md` §10.1) y 50–70 puntos de interés **[SUPUESTO]**. Terreno y vegetación base **procedurales
     con semilla** (heightmap + reglas de colocación); asentamientos, POI y dungeon colocados a mano.
-  - Recorrido a pie y a caballo; enemigos de mundo; streaming por celdas; clima/niebla fijos por zona.
+  - Recorrido a pie y a caballo; enemigos de mundo; NPCs con rutina; streaming por celdas; clima/niebla fijos por zona.
   - **Dungeon "Patio del castillo en ruinas"**: 5 oleadas + jefe, como instancia cargada desde el mundo.
   - **Ciclo día/noche dinámico** (≈ 24 min reales por día **[SUPUESTO]**): sol/luna como única luz direccional
     con sombra, cielo analítico (scattering) y entorno/IBL actualizado de forma escalonada, no cada frame.
   - Espada (con escudo opcional) + 3 hechizos, 4 tipos de enemigo; HUD (vida/aguante/maná, arma y hechizos activos con su
-    tiempo de recarga, brújula/minimapa); menú principal, pausa, ajustes, pantalla de victoria/derrota;
-    tienda de mejoras; sonido y música; guardado de partida en `localStorage`.
-- **Fuera del MVP:** multijugador, mundo mayor de ≈ 33 km², clima dinámico completo (lluvia/tormentas
-  más allá de lo fijo por bioma), misiones/diálogos complejos (como mucho 1–2 encargos
-  simples de "ve y limpia"), inventario y crafteo, más de 1 dungeon (el sistema los permite, el contenido
-  no entra), guardar partida en la
-  nube, editor de personaje, móvil, agua con simulación (solo plano con shader barato), destrucción del terreno.
+    tiempo de recarga, brújula/minimapa); menú principal, pausa, ajustes, Códice, créditos, pantalla de victoria/derrota;
+    tienda de mejoras y bolso; sonido y música; guardado de partida en `localStorage`.
+- **Fuera del MVP:** multijugador, mundo mayor de 33 km², clima dinámico completo (lluvia/tormentas
+  más allá de lo fijo por bioma), misiones/diálogos complejos (como mucho 1–2 encargos simples de "ve y limpia"),
+  inventario complejo por peso y crafteo (el bolso simple sí entra), más de 1 dungeon (el sistema los permite, el contenido
+  no entra), nube, editor de personaje, móvil, agua con simulación (solo plano con shader barato), destrucción del terreno.
 - **Hoja de ruta tras el MVP** (cada fase se replanifica con `planificador` antes de empezar) **[SUPUESTO]**:
   - **Fase 2:** **sistema de magia por runas** (detalle en `docs/COMBATE.md`): 7 elementos (+Aire), 21 fusiones, combinaciones
     generadas, legendarias y arcanos (Espacio, Tiempo); hechizos de ataque, buffs/debuffs, encantar armas/armaduras,
     invisibilidad, teletransporte, planeo e impulsos (sin vuelo libre); inestabilidad; grimorio + mutación sin perder el
     original; sin bloqueos por nivel (el nivel, que sube sobre todo explorando, cambia coste y fallo); más armas;
-    armaduras modulares; inventario y crafteo básico (materiales para inscripciones).
+    armaduras modulares; crafteo básico (materiales para inscripciones); trama completa y causa de la Pausa; chamán goblin.
   - **Fase 3:** NPCs modulares, casas por kit de piezas, castillo y Ciudad de la Roca con arte final; animales; vegetación mejorada.
   - **Fase 4:** barcos y navegación, pesca, mar mejorado (olas, espuma, reflejos).
   - Contenido **por piezas reutilizables** (atlas compartidos, kits modulares) y magia por componentes para contener el peso.
@@ -124,8 +137,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 ## Estilo visual y sonoro
 - **Fantasía realista luminosa (NO fantasía oscura). NO low-poly, NO cartoon.** Referencias de tono y
   calidad: *Ghost of Tsushima* y *Dragon's Dogma 2* **[SUPUESTO]** — naturaleza viva y colorida, cielos amplios, sensación de aventura
-  heroica; proporciones humanas realistas, materiales PBR detallados (piedra, madera, cuero, acero, tela).
-- Son referencias de **sensación**, no de contenido: no se copia nada de esos juegos; todo es original.
+  heroica; proporciones humanas realistas, materiales PBR detallados. Son referencias de **sensación**, no de contenido: todo es original.
 - Paleta natural y saturada con acentos por elemento (fuego naranja, hielo cian, luz dorada). Por bioma:
   bosque (verdes intensos, luz filtrada), costa (turquesa, arena clara), desierto (dorados y ocres cálidos),
   monte nevado (blancos limpios, cielos azules), islas (aguas turquesa, calas y arboleda mediterránea). Los dungeons sí pueden ser más sombríos por contraste.
@@ -133,8 +145,7 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
   azulada con antorchas. Bruma atmosférica ligera de distancia (oculta el cambio de LOD), sin niebla densa.
 - Postproceso: tonemapping AgX/ACES, bloom contenido, SSAO, gradación de color, viñeta muy ligera;
   profundidad de campo solo en menús/cinemáticas.
-- Realismo dentro de los límites del navegador: el "look" sale sobre todo de **iluminación, materiales
-  y postproceso**, no del número de polígonos. Presets de calidad Bajo/Medio/Alto/Ultra.
+- El "look" sale sobre todo de **iluminación, materiales y postproceso**, no del número de polígonos. Presets Bajo/Medio/Alto/Ultra.
 - Los hechizos deben verse a simple vista: partículas, luz y destellos legibles sin saturar la pantalla.
 - Música orquestal/folk medieval; golpes con peso.
 
@@ -146,63 +157,49 @@ las debilidades de cada enemigo, y en que todo corra fluido en un navegador.
 - Física y colisiones: Rapier (`@dimforge/rapier3d-compat`) para personaje, proyectiles y hitboxes
 - ECS ligero (miniplex o propio); animaciones con `AnimationMixer` (glTF) y máquina de estados de animación
 - UI: DOM/HTML+CSS sobre el canvas
-- Assets: glTF/GLB (Meshopt) con LOD y texturas KTX2 en sets PBR (color, normal, rugosidad/metal, AO).
-  Fuentes y licencias: ver `.claude/agents/artista-3d.md`. Los packs low-poly solo valen como
-  placeholder temporal de gameplay, nunca como arte final.
+- Assets: glTF/GLB (Meshopt) con LOD y texturas KTX2 en sets PBR. Fuentes y licencias: `.claude/agents/artista-3d.md`.
+  Los packs low-poly solo valen como placeholder temporal de gameplay, nunca como arte final.
 - Tests: Vitest (fórmulas de daño, elementos, recursos, streaming) + Playwright (e2e en navegador)
 - **Técnicas de mundo abierto** (el arquitecto debe formalizarlas en ADRs antes de implementar):
-  - **Streaming por celdas** con carga/descarga asíncrona, cola priorizada por distancia y `dispose()` completo.
+  - **Streaming por celdas** asíncrono, cola priorizada por distancia y `dispose()` completo.
   - **Floating origin** (recentrar a > 1 km) y **generación procedural con semilla** en Workers: las celdas
     viajan como datos ligeros (alturas, máscaras, POI), no como mallas.
-  - **Terreno** por heightmap con LOD (clipmaps o quadtree) y *splatting* de materiales PBR (4 capas máx.).
-  - **Vegetación y rocas** con `InstancedMesh`/`BatchedMesh`; **impostores** (billboards) para lejanía; LOD de modelos.
-  - **Culling:** frustum + distancia + oclusión simple solo si compensa (p. ej. interiores/colinas).
-  - **Simulación local:** física Rapier e IA solo en celdas cercanas; enemigos lejanos dormidos
-    (estado mínimo, sin física ni animación); **navmesh por celda**.
-  - **Workers:** decodificación de glTF/KTX2, generación de mallas/colisiones y navmesh fuera del hilo principal.
-  - **Persistencia:** estado del mundo (celdas despejadas, cofres, posición, caballo) en `localStorage`.
+  - **Terreno** por heightmap con LOD (clipmaps o quadtree) y *splatting* PBR (4 capas máx.).
+  - **Vegetación y rocas** con `InstancedMesh`/`BatchedMesh`; **impostores** para lejanía; LOD de modelos.
+  - **Culling:** frustum + distancia + oclusión simple solo si compensa.
+  - **Simulación local:** física e IA solo en celdas cercanas; enemigos y NPCs lejanos dormidos
+    (estado mínimo; la rutina de NPCs se calcula por hora del día al despertar); **navmesh por celda**.
+  - **Workers:** decodificación de glTF/KTX2, generación de mallas/colisiones y navmesh.
+  - **Persistencia (`localStorage`):** celdas despejadas, cofres, posición, caballo, monedas, bolso y su ampliación, mejoras,
+    dungeon completado, hora del día, ajustes.
   - **Dungeons:** escena aparte con su propio ciclo de vida; el cargador de oleadas lee datos, no código.
 
 ## Restricciones
-- Licencias: solo assets propios o CC0/compatibles, con su origen en `juego/public/assets/CREDITOS.md`.
+- Licencias: solo assets propios o CC0/compatibles; todo asset en `juego/public/assets/` lleva su entrada en
+  `CREDITOS.md` (lo comprueba `scripts/verificar.sh`).
 - Sin backend: progreso, estado del mundo y ajustes en `localStorage`.
-- Todos los números de combate (daño, costes, tiempos de recarga, resistencias) y de dungeons/oleadas
-  van en `juego/src/config/`; los presupuestos de rendimiento, en un único fichero de config verificable.
-
-## Decisiones del usuario (2026-11-25) sobre las antiguas preguntas abiertas
-- **Lore en el MVP:** solo 1–2 NPCs que «reconocen» al protagonista con una frase, y una escena final sencilla. El resto de la trama pasa a fase 2/3.
-- **Post-final:** el mundo sigue abierto tras liberar al Guardián (estado persistente); el dungeon se **rejuega** con el jefe ya derrotado y **botín reducido**.
-- **Mercaderes:** **uno fijo, en la Aldea del Vado** (GDD §10.11 D-6).
-- **Códice vs. lore:** un solo menú, el **Códice**, con dos pestañas (elemental / lore).
-- **Chamán goblin:** fuera del MVP (fase 2, COMBATE §2.14); ficha pendiente.
-- **Bolso mágico:** inventario de **casillas fijas, sin peso** [número de casillas SUPUESTO; detalle en GDD §5].
-- **Fauna y NPCs:** se mantienen los supuestos de GDD §10.11 (fauna en fase 3; NPCs quietos y no atacables).
-- **Ratón en combate:** stick virtual con botón mantenido (COMBATE §1.1 M-1 a M-4).
-- **Créditos de assets:** todo asset que entre en `juego/public/assets/` lleva su entrada en `CREDITOS.md` (lo comprueba
-  `scripts/verificar.sh`), y el MVP incluye una **pantalla de créditos** en el juego (CC-BY obliga a atribuir).
+- Todos los números de combate, economía (precios, bolso) y dungeons/oleadas van en `juego/src/config/`; los presupuestos de rendimiento, en un único fichero de config verificable.
 - **Proceso:** se termina la planificación (`/iniciar`: GDD §1–9, arquitectura, ADR, backlog) antes de escribir código del juego.
 
-## Decisiones del usuario (2026-11-26)
-- **Bolso mágico:** empieza con **12 casillas** y se **amplía comprando mejoras al mercader** (+4 casillas cada una, cada vez
-  más caras, tope [SUPUESTO] 28). Sustituye al «número de casillas SUPUESTO» anterior.
-- **Escena final:** la cuenta la **voz del Guardián** liberado (unas líneas con subtítulos) mientras la cámara muestra el castillo (GDD §10.9 p. 9).
-- **Reconocimiento (D-8):** lo hacen el **mercader de la Aldea del Vado y un anciano**, con una frase suelta (bocadillo de
-  texto) la primera vez que ven al protagonista.
-- **Vida de los NPCs (D-9):** tienen **rutina con el ciclo día/noche** y **se pueden golpear**, pero **no mueren**: reaccionan
-  (se quejan, huyen o se cubren) y el mercader deja de vender durante un rato. Sustituye al supuesto «quietos, no atacables».
-- **Causa de la Pausa (GDD §10.9 p. 1):** no se explica en el MVP; solo se insinúa. Se decide en fase 2.
-- **Invulnerabilidad al atacar (COMBATE §1.1, remates):** el jugador es invulnerable durante los **remates**, el
-  **contraataque** tras parada perfecta **y las habilidades** (Estocada de quiebre y Embestida). Los ataques ligero y
-  fuerte normales **no** son invulnerables.
-- Falta volcarlas en GDD §5 y §10.9/§10.11 y en COMBATE §1.1 (`disenador-juego`, `disenador-combate`) durante `/iniciar`.
+## Pendiente de volcar (decisiones 2026-11-25/26)
+- GDD §5 y §10.9/§10.11 (bolso, NPCs D-8/D-9, final) y COMBATE §1.1 (invulnerabilidad, stick con ratón) deben reflejar este
+  documento durante `/iniciar` (`disenador-juego`, `disenador-combate`). Ante conflicto, manda este fichero.
+
+## Preguntas abiertas (supuesto propuesto; corrígelo si no te encaja)
+1. Precio/escalado de las ampliaciones del bolso y de las mejoras: lo fija GDD §5 con curva simple **[SUPUESTO]** (se rellena en config).
+2. ¿Qué ocurre al morir? **[SUPUESTO]** reaparecer en el último punto de descanso del mundo (o inicio de oleada en dungeon), sin perder monedas; se cierra en GDD §3.
+3. ¿Se puede guardar a mano? **[SUPUESTO]** autoguardado en puntos de descanso/asentamientos y al salir; sin guardado manual.
+4. ¿La tienda de oleadas vende también ampliaciones de bolso? **[SUPUESTO]** no: solo el mercader del mundo.
+5. ¿Cuánto dura el «deja de vender» del mercader golpeado? **[SUPUESTO]** 60 s de tiempo de juego; configurable.
+6. Frase de reconocimiento: ¿se repite? **[SUPUESTO]** solo la primera vez (se guarda en la partida).
+7. Efecto del Guardián tras liberarlo en mecánicas: **[SUPUESTO]** solo narrativo (sin habilidad nueva) en el MVP.
 
 ## Glosario
-- **Parry (parada perfecta):** stick hacia el golpe + L1 a tiempo (ventana ≈ 0,2 s); aturde al enemigo. **Bloqueo normal:** con el stick ya mantenido.
+- **Parry (parada perfecta):** dirección hacia el golpe + bloqueo a tiempo (ventana ≈ 0,2–0,25 s según EE/EP); aturde al enemigo. **Bloqueo normal:** con la dirección ya mantenida.
 - **Congelado:** estado tras acumular escarcha; el enemigo no actúa y recibe más daño contundente.
 - **Celda:** bloque cuadrado del mundo (128 m) que se carga, simula y descarga como unidad.
 - **Streaming:** carga/descarga progresiva y asíncrona de celdas según la posición del jugador.
 - **Dungeon:** zona instanciada, separada del mundo, con oleadas y jefe definidos por datos.
-- **Oleada:** grupo de enemigos que aparece dentro de un dungeon; al limpiarla se abre la tienda.
-- **Impostor:** sprite/billboard que sustituye a un modelo 3D lejano para ahorrar triángulos.
-- **LOD:** nivel de detalle; versión más simple de un modelo o terreno según la distancia.
+- **Oleada:** grupo de enemigos dentro de un dungeon; al limpiarla se abre la tienda.
+- **Impostor:** sprite/billboard que sustituye a un modelo 3D lejano. **LOD:** versión más simple según la distancia.
 - **Aguante:** recurso de acciones físicas; se recupera rápido si no atacas.
