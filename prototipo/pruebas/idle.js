@@ -1,0 +1,34 @@
+// Prueba del visor de idle de magia. Uso: node prototipo/pruebas/idle.js [dirCapturas]
+const { chromium } = require('playwright'); const fs = require('fs'), path = require('path'), cp = require('child_process');
+const base = path.resolve(__dirname, '..'), pkg = path.join(base, '.three/package'), caps = process.argv[2] || path.join(base, 'idle', 'capturas');
+fs.mkdirSync(caps, { recursive: true });
+let fails = 0; const ok = (c, m) => { console.log((c ? 'OK   ' : 'FALLO ') + m); if (!c) fails++; };
+const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import sys;from PIL import Image;Image.open(sys.argv[1]).convert("RGB").save(sys.argv[2],"WEBP",quality=85)', png, webp]); fs.unlinkSync(png); };
+(async () => {
+  const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  const p = await (await b.newContext({ viewport: { width: 1280, height: 720 } })).newPage(), errs = [];
+  p.on('pageerror', e => errs.push(e.message)); p.on('console', m => { if (m.type() === 'error') errs.push(m.text()); });
+  await p.route('**/npm/three@0.147.0/**', rt => rt.fulfill({ path: pkg + '/' + rt.request().url().split('three@0.147.0/')[1], contentType: 'application/javascript' }));
+  await p.goto('file://' + path.join(base, 'idle', 'idle.html') + '?test=1');
+  await p.waitForFunction(() => window.__IDLE__ && window.__IDLE__.ready(), null, { timeout: 30000 });
+  const st = n => p.evaluate(n => window.__IDLE__.step(n), n);
+  const shot = async name => { const f = path.join(caps, name + '.png'); await p.screenshot({ path: f }); toWebp(f, f.replace('.png', '.webp')); };
+  await p.evaluate(() => window.__IDLE__.camara(1.3, 1.55, 1.9, 0.1, 1.25, 0));
+  let s = await st(60); ok(s.w === 0 && !s.orbVisible, `reposo al principio (quieto ${s.quieto.toFixed(2)} s, sin bola)`);
+  await shot('1_reposo');
+  s = await st(60 * 4.2); ok(s.w > 0 && s.fase === 'levantando la mano', `tras 5 s quieto empieza a levantar la mano (w ${s.w.toFixed(2)})`);
+  s = await st(60 * 2.5); ok(s.w === 1 && s.forma === 1 && s.orbVisible, 'idle de magia completo con bola formada');
+  ok(s.hand[1] > s.chest[1] - 0.35, `mano levantada a la altura del pecho (mano y ${s.hand[1].toFixed(2)}, pecho ${s.chest[1].toFixed(2)})`);
+  ok(s.orb[1] > s.palm[1] + 0.05, `bola por encima de la palma (${(s.orb[1] - s.palm[1]).toFixed(3)} m)`);
+  await shot('2_idle_magia');
+  const o1 = s.orb; s = await st(45); const dO = Math.hypot(s.orb[0] - o1[0], s.orb[1] - o1[1], s.orb[2] - o1[2]);
+  ok(dO > 0.005, `la bola se mueve (${(dO * 100).toFixed(1)} cm en 0,75 s)`);
+  await p.evaluate(() => window.__IDLE__.camara(-1.2, 1.5, 1.6, 0.1, 1.25, 0)); await shot('3_idle_magia_otro_lado');
+  await p.evaluate(() => window.__IDLE__.camara(0.75, 1.45, 0.75, 0.15, 1.2, 0.25)); await shot('4_mano_cerca');
+  await p.evaluate(() => window.__IDLE__.key('w', true)); s = await st(30);
+  ok(s.quieto === 0 && s.w < 1 && s.fase !== 'idle de magia', `al moverse se interrumpe (${s.fase}, w ${s.w.toFixed(2)})`);
+  s = await st(30); ok(s.w === 0 && !s.orbVisible, 'mano bajada y bola deshecha');
+  await p.evaluate(() => window.__IDLE__.key('w', false));
+  ok(errs.length === 0, 'sin errores de consola' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
+  await b.close(); console.log(fails ? `${fails} FALLOS` : 'TODO OK'); process.exit(fails ? 1 : 0);
+})();

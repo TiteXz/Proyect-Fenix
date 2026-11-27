@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Idle de magia</title>
+<style>
+  :root { --bg: #dfe8f0; --panel: rgba(255,255,255,.82); --ink: #1d2733; --mute: #5a6878; --acc: #2f7fd0; --line: rgba(29,39,51,.14); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; overflow: hidden; }
+  #cv { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #ui { position: fixed; left: 16px; top: 16px; width: 300px; max-width: calc(100% - 32px); background: var(--panel); backdrop-filter: blur(8px);
+        border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: grid; gap: 10px; }
+  h1 { font-size: 15px; margin: 0; }
+  .sub { color: var(--mute); font-size: 12px; margin: 0; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row label { flex: 1; min-width: 90px; }
+  input[type=range] { width: 100%; accent-color: var(--acc); }
+  button { font: inherit; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--ink); cursor: pointer; }
+  button.on { background: var(--acc); color: #fff; border-color: var(--acc); }
+  #meter { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  #meter > div { height: 100%; width: 0; background: linear-gradient(90deg, #7cc4ff, #ffd98a); }
+  #estado { font-weight: 600; }
+  #pad { position: fixed; right: 16px; bottom: 16px; display: none; grid-template-columns: repeat(3, 48px); gap: 6px; }
+  #pad button { height: 48px; font-size: 18px; padding: 0; }
+  @media (pointer: coarse) { #pad { display: grid; } }
+  @media (max-width: 560px) { #ui { top: auto; bottom: 16px; width: auto; right: 16px; } #pad { bottom: auto; top: 16px; } }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="ui">
+  <div><h1>Idle de magia</h1><p class="sub">Quédate quieto: tras la espera levanta la mano izquierda y mueve una bola de magia. WASD / flechas para andar (arrastra para girar la cámara).</p></div>
+  <div><div class="row"><span id="estado">Cargando…</span><span class="sub" id="reloj" style="margin-left:auto"></span></div><div id="meter"><div></div></div></div>
+  <div class="row"><label for="rEspera">Espera <b id="vEspera">5</b> s</label><input id="rEspera" type="range" min="1" max="15" step="0.5" value="5"></div>
+  <div class="row"><label for="rVel">Velocidad <b id="vVel">1</b>×</label><input id="rVel" type="range" min="0.25" max="2" step="0.25" value="1"></div>
+  <div class="row"><button id="bForzar">Forzar idle</button><button id="bPasear">Pasear</button><button id="bPausa">Pausa</button></div>
+</div>
+<div id="pad"><span></span><button data-k="w">▲</button><span></span><button data-k="a">◄</button><button data-k="s">▼</button><button data-k="d">►</button></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/loaders/GLTFLoader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+'use strict';
+const GLB_B64 = /*__GLB__*/'';
+const $ = id => document.getElementById(id);
+const TEST = new URLSearchParams(location.search).has('test');
+const DT = 1 / 60;
+
+/* ---------- parámetros (luego irían a config) ---------- */
+const P = {
+  espera: 5,          // s quieto antes del idle de magia
+  entrada: 1.1,       // s en levantar la mano
+  salida: 0.35,       // s en bajarla al moverse
+  formar: 1.0,        // s en que las partículas forman la bola
+  velAndar: 1.5,      // m/s
+};
+
+/* ---------- escena: exterior luminoso de día ---------- */
+const cv = $('cv');
+const renderer = new THREE.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
+renderer.outputEncoding = THREE.sRGBEncoding;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 1, 0.05, 200);
+camera.position.set(1.6, 1.7, 3.0);
+const controls = new THREE.OrbitControls(camera, cv);
+controls.enableDamping = true; controls.dampingFactor = 0.12; controls.maxPolarAngle = Math.PI * 0.49;
+controls.minDistance = 0.8; controls.maxDistance = 12; controls.target.set(0, 1.2, 0);
+
+(function sky() {
+  const c = document.createElement('canvas'); c.width = 4; c.height = 256;
+  const g = c.getContext('2d'), gr = g.createLinearGradient(0, 0, 0, 256);
+  gr.addColorStop(0, '#5f9fe0'); gr.addColorStop(0.55, '#a9cff0'); gr.addColorStop(1, '#f3e6cf');
+  g.fillStyle = gr; g.fillRect(0, 0, 4, 256);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; scene.background = t;
+  scene.fog = new THREE.Fog(0xd9e6ef, 18, 70);
+})();
+scene.add(new THREE.HemisphereLight(0xcfe4ff, 0x6b7a45, 0.9));
+const sun = new THREE.DirectionalLight(0xfff1d8, 2.6);
+sun.position.set(4, 7, 3); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -4, right: 4, top: 4, bottom: -4, near: 1, far: 20 });
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.02;
+scene.add(sun, sun.target);
+
+(function ground() {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d'); g.fillStyle = '#6f8f45'; g.fillRect(0, 0, 256, 256);
+  let s = 7; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < 5000; i++) { const v = 90 + rnd() * 70 | 0; g.fillStyle = `rgba(${v * 0.75 | 0},${v},${v * 0.45 | 0},0.35)`; g.fillRect(rnd() * 256, rnd() * 256, 1 + rnd() * 2, 1 + rnd() * 3); }
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(30, 30);
+  t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const m = new THREE.Mesh(new THREE.CircleGeometry(60, 64), new THREE.MeshStandardMaterial({ map: t, roughness: 0.95 }));
+  m.rotation.x = -Math.PI / 2; m.receiveShadow = true; scene.add(m);
+})();
+
+/* ---------- bola de magia ---------- */
+const ORB_COL = new THREE.Color(0x8fd4ff), ORB_CORE = new THREE.Color(0xfff6dc);
+function glowTex() {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.25, 'rgba(255,255,255,.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = gr; g.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c);
+}
+const GLOW = glowTex();
+const orb = new THREE.Group(); scene.add(orb);
+const orbMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  uniforms: { uT: { value: 0 }, uA: { value: 0 }, uCol: { value: ORB_COL }, uCore: { value: ORB_CORE } },
+  vertexShader: `varying vec3 vN; varying vec3 vV; varying vec3 vP;
+    void main(){ vP = position; vec4 mv = modelViewMatrix * vec4(position,1.); vN = normalize(normalMatrix*normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix*mv; }`,
+  fragmentShader: `uniform float uT; uniform float uA; uniform vec3 uCol; uniform vec3 uCore; varying vec3 vN; varying vec3 vV; varying vec3 vP;
+    float h(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719)))*43758.5453); }
+    float n3(vec3 p){ vec3 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+      return mix(mix(mix(h(i),h(i+vec3(1,0,0)),f.x),mix(h(i+vec3(0,1,0)),h(i+vec3(1,1,0)),f.x),f.y),
+                 mix(mix(h(i+vec3(0,0,1)),h(i+vec3(1,0,1)),f.x),mix(h(i+vec3(0,1,1)),h(i+vec3(1,1,1)),f.x),f.y),f.z); }
+    void main(){ float fr = 1. - max(dot(vN, vV), 0.);
+      vec3 q = normalize(vP)*3.0; float sw = n3(q + vec3(uT*1.3, -uT*0.9, uT*0.7)) * .6 + n3(q*2.1 - uT*1.7) * .4;
+      float core = pow(1. - fr, 2.2);
+      vec3 c = mix(uCol, uCore, core*0.8) * (0.35 + 0.75*sw) + uCol * pow(fr, 2.) * 1.4;
+      gl_FragColor = vec4(c * uA, 1.); }`,
+});
+const orbCore = new THREE.Mesh(new THREE.SphereGeometry(0.045, 32, 20), orbMat);
+const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: GLOW, color: ORB_COL, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+halo.scale.setScalar(0.26);
+const orbLight = new THREE.PointLight(0x9fd8ff, 0, 2.2, 2);
+orb.add(orbCore, halo, orbLight);
+
+// partículas: órbitas alrededor de la bola + hilo de la palma a la bola
+const NP = 220, NH = 40;
+const pGeo = new THREE.BufferGeometry();
+const pPos = new Float32Array((NP + NH) * 3), pA = new Float32Array(NP + NH), pS = new Float32Array(NP + NH);
+pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+pGeo.setAttribute('aA', new THREE.BufferAttribute(pA, 1));
+pGeo.setAttribute('aS', new THREE.BufferAttribute(pS, 1));
+const pMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  uniforms: { uMap: { value: GLOW }, uCol: { value: ORB_COL }, uScale: { value: 300 } },
+  vertexShader: `attribute float aA; attribute float aS; varying float vA; uniform float uScale;
+    void main(){ vA = aA; vec4 mv = modelViewMatrix*vec4(position,1.); gl_PointSize = aS * uScale / -mv.z; gl_Position = projectionMatrix*mv; }`,
+  fragmentShader: `uniform sampler2D uMap; uniform vec3 uCol; varying float vA;
+    void main(){ vec4 t = texture2D(uMap, gl_PointCoord); gl_FragColor = vec4(mix(uCol, vec3(1.), .35) * t.a * vA, 1.); }`,
+});
+const parts = new THREE.Points(pGeo, pMat); parts.frustumCulled = false; scene.add(parts);
+// semillas deterministas por partícula
+const seed = []; { let s = 12345; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < NP; i++) seed.push({ r: 0.07 + r() * 0.08, w: 1.2 + r() * 2.5, ph: r() * 6.283, tilt: r() * 3.1416, az: r() * 6.283, s: 0.01 + r() * 0.025, far: 0.35 + r() * 0.5 }); }
+
+/* ---------- personaje ---------- */
+const V = THREE.Vector3, Q = THREE.Quaternion;
+const UP = new V(0, 1, 0);
+let char = null, mixer = null, acts = {}, B = {}, ready = false;
+const pivot = new THREE.Group(); scene.add(pivot);   // posición y rumbo del personaje
+let headFwdLocal = new V(0, 0, 1), chestFwdLocal = new V(0, 0, 1);
+
+function b64ToBuf(b) { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; }
+const tA = new V(), tB = new V(), tC = new V(), tD = new V(), tE = new V(), tF = new V(), tG = new V(), tq = new Q(), tq2 = new Q(), tq3 = new Q();
+const wp = (o, out) => o.getWorldPosition(out);
+
+// rota un hueso en espacio mundo con el cuaternión q (q * world), y actualiza su subárbol
+function rotWorld(bone, q) {
+  bone.getWorldQuaternion(tq2);
+  tq2.premultiply(q);
+  bone.parent.getWorldQuaternion(tq3);
+  bone.quaternion.copy(tq3.invert().multiply(tq2));
+  bone.updateMatrixWorld(true);
+}
+// alinea la dirección hueso→hijo con dir (mundo)
+function aim(bone, child, dir, w = 1) {
+  wp(bone, tA); wp(child, tB); tB.sub(tA).normalize();
+  tq.setFromUnitVectors(tB, tC.copy(dir).normalize());
+  if (w < 1) tq.slerp(tq3.identity(), 1 - w);
+  rotWorld(bone, tq);
+}
+const palmLocal = new V(0, 0, 1);   // normal de la palma en el espacio de hand_l (se calcula al cargar)
+function palmNormal(out) {   // normal de la palma izquierda en mundo (hacia donde «mira» la palma)
+  B.hand.getWorldQuaternion(tq3); return out.copy(palmLocal).applyQuaternion(tq3);
+}
+
+new THREE.GLTFLoader().parse(b64ToBuf(GLB_B64), '', gltf => {
+  char = gltf.scene;
+  char.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
+  pivot.add(char);
+  const find = n => { let r = null; char.traverse(o => { if (!r && o.isBone && o.name === n) r = o; }); return r; };
+  ['upperarm_l', 'lowerarm_l', 'hand_l', 'spine_03', 'neck_01', 'head', 'middle_01_l', 'index_01_l', 'pinky_01_l', 'clavicle_l'].forEach(n => B[n] = find(n));
+  B.upper = B.upperarm_l; B.lower = B.lowerarm_l; B.hand = B.hand_l; B.middle = B.middle_01_l; B.index = B.index_01_l; B.pinky = B.pinky_01_l;
+  B.fingers = [];
+  ['index', 'middle', 'ring', 'pinky', 'thumb'].forEach((f, fi) => { for (let j = 1; j <= 3; j++) { const b = find(`${f}_0${j}_l`); if (b) B.fingers.push({ b, fi, j, thumb: f === 'thumb' }); } });
+  mixer = new THREE.AnimationMixer(char);
+  for (const c of gltf.animations) acts[c.name] = mixer.clipAction(c);
+  acts.reposo.play(); acts.andar.play(); acts.andar.setEffectiveWeight(0);
+  mixer.update(0.5); char.updateMatrixWorld(true);
+  // normal de la palma en el espacio de la mano: perpendicular al plano (eje de los dedos × fila de nudillos),
+  // con el signo del lado hacia el que se cierra el pulgar
+  const inv = new THREE.Matrix4().copy(B.hand.matrixWorld).invert(), loc = b => wp(b, new V()).applyMatrix4(inv);
+  const kI = loc(B.index), kM = loc(B.middle), kP = loc(B.pinky), th = loc(find('thumb_03_l'));
+  palmLocal.crossVectors(kM.clone().normalize(), kI.clone().sub(kP)).normalize();
+  const centro = kI.clone().add(kM).add(kP).multiplyScalar(1 / 3).multiplyScalar(0.6);
+  if (th.sub(centro).dot(palmLocal) < 0) palmLocal.negate();
+  for (const f of B.fingers) f.base = loc(f.b).normalize();   // abanico natural de cada dedo
+  // ejes «adelante» de cabeza y pecho en su espacio local (el personaje mira a +Z)
+  const fwd = new V(0, 0, 1);
+  B.head.getWorldQuaternion(tq); headFwdLocal.copy(fwd).applyQuaternion(tq.invert());
+  B.spine_03.getWorldQuaternion(tq); chestFwdLocal.copy(fwd).applyQuaternion(tq.invert());
+  ready = true;
+}, e => { $('estado').textContent = 'Error al cargar: ' + e.message; console.error(e); });
+
+/* ---------- input ---------- */
+const keys = new Set();
+addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) { keys.add(k); e.preventDefault(); } });
+addEventListener('keyup', e => keys.delete(e.key.toLowerCase()));
+addEventListener('blur', () => keys.clear());
+document.querySelectorAll('#pad button').forEach(b => {
+  const k = b.dataset.k;
+  b.addEventListener('pointerdown', e => { keys.add(k); e.preventDefault(); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => keys.delete(k)));
+});
+let pasear = false, pausa = false, vel = 1;
+$('bPasear').onclick = () => { pasear = !pasear; $('bPasear').classList.toggle('on', pasear); };
+$('bPausa').onclick = () => { pausa = !pausa; $('bPausa').classList.toggle('on', pausa); $('bPausa').textContent = pausa ? 'Seguir' : 'Pausa'; };
+$('bForzar').onclick = () => { S.quieto = Math.max(S.quieto, P.espera); };
+$('rEspera').oninput = e => { P.espera = +e.target.value; $('vEspera').textContent = P.espera; };
+$('rVel').oninput = e => { vel = +e.target.value; $('vVel').textContent = vel; };
+
+/* ---------- estado (lógica pura, paso fijo) ---------- */
+const S = { t: 0, quieto: 0, w: 0, forma: 0, idleT: 0, mov: 0, rumbo: 0, x: 0, z: 0, fase: 'reposo', paseoT: 0 };
+const mv = new V();
+function moveInput() {
+  mv.set(0, 0, 0);
+  if (keys.has('w') || keys.has('arrowup')) mv.z -= 1;
+  if (keys.has('s') || keys.has('arrowdown')) mv.z += 1;
+  if (keys.has('a') || keys.has('arrowleft')) mv.x -= 1;
+  if (keys.has('d') || keys.has('arrowright')) mv.x += 1;
+  if (mv.lengthSq() > 0) {   // relativo a la cámara
+    const yaw = Math.atan2(camera.position.x - controls.target.x, camera.position.z - controls.target.z);
+    mv.normalize().applyAxisAngle(UP, yaw);
+  } else if (pasear) {
+    S.paseoT += DT; const a = S.paseoT * 0.5; mv.set(Math.cos(a), 0, -Math.sin(a));
+  }
+  return mv.lengthSq() > 0;
+}
+function step() {
+  S.t += DT;
+  const moving = moveInput();
+  S.mov += ((moving ? 1 : 0) - S.mov) * Math.min(1, DT * 8);
+  if (moving) {
+    S.quieto = 0;
+    const target = Math.atan2(mv.x, mv.z);
+    let d = target - S.rumbo; d = Math.atan2(Math.sin(d), Math.cos(d));
+    S.rumbo += d * Math.min(1, DT * 10);
+    S.x += mv.x * P.velAndar * DT; S.z += mv.z * P.velAndar * DT;
+  } else S.quieto += DT;
+  const want = S.quieto >= P.espera ? 1 : 0;
+  S.w = want ? Math.min(1, S.w + DT / P.entrada) : Math.max(0, S.w - DT / P.salida);
+  if (want && S.w > 0.55) S.forma = Math.min(1, S.forma + DT / P.formar);
+  else if (!want) S.forma = Math.max(0, S.forma - DT / 0.25);
+  if (S.w > 0) S.idleT += DT; else S.idleT = 0;
+  S.fase = S.w === 0 ? (moving ? 'andando' : 'reposo') : want ? (S.w < 1 ? 'levantando la mano' : 'idle de magia') : 'bajando la mano';
+}
+
+/* ---------- capa de animación procedural (sobre el clip) ---------- */
+const ease = x => x * x * (3 - 2 * x);
+const target = new V(), pole = new V(), elbow = new V(), fwdW = new V(), leftW = new V(), chest = new V(), palm = new V(), pn = new V(), orbP = new V(), side = new V();
+function solveArm(T, w) {
+  wp(B.upper, tA); wp(B.lower, tB); wp(B.hand, tD);
+  const l1 = tA.distanceTo(tB), l2 = tB.distanceTo(tD);
+  tE.subVectors(T, tA); let d = tE.length(); d = Math.min(Math.max(d, Math.abs(l1 - l2) + 1e-3), l1 + l2 - 1e-3);
+  tE.normalize();
+  const a = (l1 * l1 - l2 * l2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+  tF.subVectors(pole, tA); tF.addScaledVector(tE, -tF.dot(tE)).normalize();
+  elbow.copy(tA).addScaledVector(tE, a).addScaledVector(tF, h);
+  aim(B.upper, B.lower, tG.subVectors(elbow, tA), w);
+  wp(B.lower, tB); tG.subVectors(T, tB); aim(B.lower, B.hand, tG, w);
+}
+function applyIdle(w, t) {
+  if (w <= 0) return;
+  const e = ease(w);
+  pivot.getWorldQuaternion(tq); fwdW.set(0, 0, 1).applyQuaternion(tq); leftW.crossVectors(UP, fwdW);
+  wp(B.spine_03, chest);
+  // pecho: leve giro hacia la mano y respiración
+  tq.setFromAxisAngle(UP, 0.18 * e); rotWorld(B.spine_03, tq);
+  // objetivo de la mano: delante del pecho, a la izquierda, a la altura del esternón, describiendo un lazo lento
+  const a = t * 0.9;
+  target.copy(chest).addScaledVector(fwdW, 0.34 + 0.03 * Math.sin(a * 0.7)).addScaledVector(leftW, 0.20 + 0.06 * Math.sin(a))
+    .addScaledVector(UP, -0.05 + 0.05 * Math.sin(a * 2) + 0.04 * Math.sin(a * 0.5));
+  pole.copy(chest).addScaledVector(leftW, 0.6).addScaledVector(UP, -0.7).addScaledVector(fwdW, -0.1);
+  solveArm(target, e);
+  // palma hacia arriba, dedos hacia delante (y un poco hacia el cuerpo)
+  palmNormal(pn); tq.setFromUnitVectors(pn, tG.copy(UP).addScaledVector(leftW, -0.15 * Math.sin(a)).addScaledVector(fwdW, -0.1).normalize());
+  tq.slerp(tq3.identity(), 1 - e); rotWorld(B.hand, tq);
+  wp(B.hand, tA); wp(B.middle, tB); tB.sub(tA); palmNormal(pn); tB.addScaledVector(pn, -tB.dot(pn)).normalize();
+  tC.copy(fwdW).addScaledVector(leftW, -0.35).addScaledVector(pn, -fwdW.dot(pn)).normalize();
+  tq.setFromUnitVectors(tB, tC); tq.slerp(tq3.identity(), 1 - e); rotWorld(B.hand, tq);
+  // dedos: se curvan y ondulan como si movieran la bola
+  palmNormal(pn); wp(B.index, tA); wp(B.pinky, tB); side.subVectors(tB, tA).normalize();
+  // abre la mano y ondula los dedos uno tras otro (de índice a meñique), como si giraran la bola
+  B.hand.getWorldQuaternion(tq2); const hq = tq2.clone();
+  let acc = 0;
+  for (const f of B.fingers) {
+    if (f.j === 1) acc = 0;
+    if (f.thumb || !f.b.children.length) continue;
+    const ola = 0.5 + 0.5 * Math.sin(t * 2.6 - f.fi * 0.9);
+    acc += [0.10, 0.22, 0.25][f.j - 1] + ola * [0.25, 0.35, 0.3][f.j - 1];
+    tA.copy(f.base).applyQuaternion(hq); tB.copy(pn); tB.addScaledVector(tA, -tB.dot(tA)).normalize();
+    tC.copy(tA).multiplyScalar(Math.cos(acc)).addScaledVector(tB, Math.sin(acc));
+    aim(f.b, f.b.children[0], tC, e);
+  }
+  // cabeza: mira la bola
+  if (S.forma > 0) {
+    B.head.getWorldQuaternion(tq); tA.copy(headFwdLocal).applyQuaternion(tq);
+    wp(B.head, tB); tC.subVectors(orb.position, tB).normalize();
+    tq.setFromUnitVectors(tA, tC); tq.slerp(tq3.identity(), 1 - 0.65 * e * ease(S.forma)); rotWorld(B.head, tq);
+  }
+}
+
+function updateOrb(t) {
+  if (!ready) return;
+  // centro de la palma
+  wp(B.hand, tA); wp(B.middle, tB); wp(B.index, tC); wp(B.pinky, tD);
+  palm.copy(tA).add(tB).add(tC).add(tD).multiplyScalar(0.25);
+  palmNormal(pn);
+  const f = ease(S.forma);
+  const lift = 0.11 + 0.025 * Math.sin(t * 1.7);
+  side.crossVectors(pn, fwdW).normalize();
+  orbP.copy(palm).addScaledVector(pn, lift).addScaledVector(side, 0.035 * Math.sin(t * 1.3)).addScaledVector(fwdW, 0.025 * Math.sin(t * 2.6));
+  orb.position.copy(orbP);
+  const sc = 0.2 + 0.8 * f, pulse = 1 + 0.06 * Math.sin(t * 5.0);
+  orbCore.scale.setScalar(sc * pulse); halo.scale.setScalar(0.26 * sc * pulse);
+  orbMat.uniforms.uT.value = t; orbMat.uniforms.uA.value = f;
+  halo.material.opacity = 0.5 * f; orbLight.intensity = 1.2 * f;
+  orb.visible = f > 0.001;
+  // partículas: al formarse vienen desde lejos en espiral; luego orbitan
+  const gather = 1 - f;
+  for (let i = 0; i < NP; i++) {
+    const p = seed[i], ang = p.ph + t * p.w, r = p.r * (1 + gather * p.far * 6);
+    tB.set(Math.cos(ang) * r, Math.sin(ang * 0.5 + p.tilt) * r * 0.45, Math.sin(ang) * r).applyAxisAngle(UP, p.az);
+    pPos[i * 3] = orbP.x + tB.x; pPos[i * 3 + 1] = orbP.y + tB.y; pPos[i * 3 + 2] = orbP.z + tB.z;
+    const tw = 0.5 + 0.5 * Math.sin(t * 6 + p.ph * 3);
+    pA[i] = (S.forma > 0 ? Math.min(1, S.forma * 3) : 0) * (0.25 + 0.5 * tw) * (S.w > 0 ? 1 : 0);
+    pS[i] = p.s;
+  }
+  // hilo de la palma a la bola
+  for (let k = 0; k < NH; k++) {
+    const i = NP + k, u = ((k / NH) + t * 0.6) % 1;
+    tB.lerpVectors(palm, orbP, u).addScaledVector(side, 0.006 * Math.sin(u * 20 + t * 4));
+    pPos[i * 3] = tB.x; pPos[i * 3 + 1] = tB.y; pPos[i * 3 + 2] = tB.z;
+    pA[i] = f * Math.sin(u * Math.PI) * 0.8; pS[i] = 0.012;
+  }
+  pGeo.attributes.position.needsUpdate = true; pGeo.attributes.aA.needsUpdate = true; pGeo.attributes.aS.needsUpdate = true;
+}
+
+function pose(dt) {
+  if (!ready) return;
+  pivot.position.set(S.x, 0, S.z); pivot.rotation.y = S.rumbo;
+  acts.andar.setEffectiveWeight(S.mov); acts.reposo.setEffectiveWeight(1 - S.mov);
+  mixer.update(dt);
+  pivot.updateMatrixWorld(true);
+  applyIdle(S.w, S.idleT);
+  updateOrb(S.idleT);
+}
+
+/* ---------- bucle: paso fijo + render ---------- */
+function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); pMat.uniforms.uScale.value = h * 0.9; }
+addEventListener('resize', resize); resize();
+const lastTarget = new V();
+function frame(dt) {
+  pose(dt);
+  // la cámara sigue al personaje
+  tA.set(S.x, 1.2, S.z); tB.subVectors(tA, controls.target); controls.target.add(tB); camera.position.add(tB);
+  sun.position.set(S.x + 4, 7, S.z + 3); sun.target.position.set(S.x, 0, S.z);
+  controls.update();
+  renderer.render(scene, camera);
+  ui();
+}
+function ui() {
+  if (!ready) return;
+  $('estado').textContent = S.fase[0].toUpperCase() + S.fase.slice(1);
+  $('reloj').textContent = `quieto ${Math.min(S.quieto, 99).toFixed(1)} s`;
+  $('meter').firstElementChild.style.width = (Math.min(1, S.quieto / P.espera) * 100).toFixed(1) + '%';
+}
+let acc = 0, last = performance.now();
+function loop(now) {
+  requestAnimationFrame(loop);
+  let dt = Math.min(0.1, (now - last) / 1000) * vel; last = now;
+  if (pausa || !ready) { if (ready) frame(0); return; }
+  acc += dt; let n = 0;
+  while (acc >= DT && n < 8) { step(); acc -= DT; n++; }
+  frame(n * DT);
+}
+if (!TEST) requestAnimationFrame(loop);
+
+window.__IDLE__ = {
+  ready: () => ready,
+  state: () => ({ ...S, espera: P.espera, orbVisible: orb.visible, orb: orb.position.toArray(), palm: palm.toArray(),
+    hand: ready ? wp(B.hand, new V()).toArray() : null, chest: ready ? wp(B.spine_03, new V()).toArray() : null }),
+  step: (n = 1) => { let k = 0; for (let i = 0; i < n; i++) { step(); k++; } frame(k * DT); return window.__IDLE__.state(); },
+  key: (k, on) => { on ? keys.add(k) : keys.delete(k); },
+  forzar: () => $('bForzar').click(),
+  camara: (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); controls.update(); renderer.render(scene, camera); },
+  render: () => renderer.render(scene, camera),
+  // posiciones de los huesos de la mano izq. en el espacio local de hand_l (depuración)
+  mano: () => { const inv = new THREE.Matrix4().copy(B.hand.matrixWorld).invert(), r = {};
+    char.traverse(o => { if (o.isBone && /_l$/.test(o.name) && /(index|middle|ring|pinky|thumb)/.test(o.name)) r[o.name] = wp(o, new V()).applyMatrix4(inv).toArray().map(v => +v.toFixed(3)); });
+    return r; },
+};
+</script>
+</body>
+</html>
