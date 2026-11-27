@@ -1,0 +1,207 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 1400" width="900" height="1400">
+  <title>Concepto: armadura ligera del héroe (dibujo)</title>
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7fa6c9"/><stop offset="0.55" stop-color="#e8d2b0"/><stop offset="1" stop-color="#f3dcc0"/>
+    </linearGradient>
+    <linearGradient id="suelo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#9c8763"/><stop offset="1" stop-color="#5e4e38"/>
+    </linearGradient>
+    <linearGradient id="cuero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6a4630"/><stop offset="0.6" stop-color="#4a2f20"/><stop offset="1" stop-color="#2e1d14"/>
+    </linearGradient>
+    <linearGradient id="cueroOsc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3d2a20"/><stop offset="1" stop-color="#1c130e"/>
+    </linearGradient>
+    <linearGradient id="abrigo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a4038"/><stop offset="1" stop-color="#2a241f"/>
+    </linearGradient>
+    <linearGradient id="abrigoL" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2a241f"/><stop offset="0.5" stop-color="#4f453c"/><stop offset="1" stop-color="#2e2722"/>
+    </linearGradient>
+    <linearGradient id="piel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e9c3a2"/><stop offset="1" stop-color="#b98564"/>
+    </linearGradient>
+    <linearGradient id="pelo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a271b"/><stop offset="0.5" stop-color="#5a3c28"/><stop offset="1" stop-color="#2b1c13"/>
+    </linearGradient>
+    <linearGradient id="metal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#5d636b"/><stop offset="0.45" stop-color="#d9dde2"/><stop offset="0.55" stop-color="#9aa1aa"/><stop offset="1" stop-color="#40454c"/>
+    </linearGradient>
+    <linearGradient id="bufanda" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7c7260"/><stop offset="1" stop-color="#4f483c"/>
+    </linearGradient>
+    <pattern id="acolchado" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="22" height="22" fill="#3a3734"/>
+      <rect x="1.5" y="1.5" width="19" height="19" rx="6" fill="#4b4743"/>
+      <path d="M0 0H22M0 0V22" stroke="#1f1d1b" stroke-width="1.6"/>
+    </pattern>
+    <pattern id="tramaCuero" width="6" height="6" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="0.7" fill="#000" opacity="0.18"/><circle cx="5" cy="4.5" r="0.5" fill="#fff" opacity="0.05"/>
+    </pattern>
+    <filter id="brillo" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="suave"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+
+  <!-- fondo: atardecer luminoso sobre colinas -->
+  <rect width="900" height="1400" fill="url(#cielo)"/>
+  <circle cx="690" cy="520" r="90" fill="#fff1d6" opacity="0.55" filter="url(#suave)"/>
+  <path d="M0 880 C150 820 260 860 380 830 C520 790 640 850 900 810 V1400 H0Z" fill="#8f9a86" opacity="0.55"/>
+  <path d="M0 960 C200 920 330 950 470 930 C650 905 760 950 900 930 V1400 H0Z" fill="#7a8a6c" opacity="0.6"/>
+  <path d="M0 1080 C250 1050 600 1060 900 1040 V1400 H0Z" fill="url(#suelo)"/>
+  <ellipse cx="450" cy="1318" rx="190" ry="26" fill="#2c2318" opacity="0.45"/>
+
+  <g stroke="#1a1310" stroke-linejoin="round" stroke-linecap="round">
+
+    <!-- pelo largo y liso por detrás de los hombros -->
+    <path d="M392 168 C360 230 356 330 362 430 C366 520 378 600 392 640 L508 640 C522 600 534 520 538 430 C544 330 540 230 508 168 Z" fill="url(#pelo)" stroke-width="2.5"/>
+    <g stroke="#1c120c" stroke-width="1.2" fill="none" opacity="0.6">
+      <path d="M380 260 C372 380 380 520 396 630"/><path d="M398 250 C392 390 398 520 410 636"/>
+      <path d="M520 260 C528 380 520 520 504 630"/><path d="M502 250 C508 390 502 520 490 636"/>
+    </g>
+
+    <!-- faldones traseros del abrigo -->
+    <path d="M318 700 C300 860 290 1000 284 1130 L452 1130 L452 700 Z" fill="#241e1a" stroke-width="2.5"/>
+    <path d="M582 700 C600 860 610 1000 616 1130 L448 1130 L448 700 Z" fill="#241e1a" stroke-width="2.5"/>
+
+    <!-- espada: saya por detrás del faldón izquierdo (a la derecha del dibujo), baja hacia atrás -->
+    <path d="M610 712 C660 790 700 880 735 990 L748 984 C716 876 676 786 624 704 Z" fill="#0e1014" stroke-width="2"/>
+    <path d="M618 716 C664 792 702 880 736 984" stroke="#59c8ff" stroke-width="2" fill="none" filter="url(#brillo)"/>
+    <rect x="726" y="972" width="22" height="26" rx="4" transform="rotate(-20 737 985)" fill="url(#metal)" stroke-width="1.6"/>
+    <rect x="645" y="758" width="20" height="8" rx="2" transform="rotate(-35 655 762)" fill="url(#metal)" stroke-width="1.2"/>
+
+    <!-- piernas: pantalón y botas altas con vuelta -->
+    <path d="M378 760 L372 1010 L432 1010 L446 760 Z" fill="#3b3128" stroke-width="2.5"/>
+    <path d="M522 760 L528 1010 L468 1010 L454 760 Z" fill="#3b3128" stroke-width="2.5"/>
+    <path d="M368 1000 L366 1262 C366 1290 360 1304 336 1312 C320 1318 322 1330 342 1330 L436 1330 C444 1330 446 1318 440 1300 L438 1000 Z" fill="url(#cueroOsc)" stroke-width="2.5"/>
+    <path d="M532 1000 L534 1262 C534 1290 540 1304 564 1312 C580 1318 578 1330 558 1330 L464 1330 C456 1330 454 1318 460 1300 L462 1000 Z" fill="url(#cueroOsc)" stroke-width="2.5"/>
+    <path d="M362 990 L444 990 L446 1032 L360 1032 Z" fill="#4a3225" stroke-width="2.2"/>
+    <path d="M538 990 L456 990 L454 1032 L540 1032 Z" fill="#4a3225" stroke-width="2.2"/>
+    <g stroke="#c9a15e" stroke-width="1.4" fill="none" opacity="0.8">
+      <path d="M372 1180 H436"/><path d="M528 1180 H464"/><path d="M370 1210 H436"/><path d="M530 1210 H464"/>
+    </g>
+    <rect x="392" y="1172" width="16" height="16" rx="2" fill="url(#metal)" stroke-width="1.2"/>
+    <rect x="492" y="1172" width="16" height="16" rx="2" fill="url(#metal)" stroke-width="1.2"/>
+
+    <!-- faldones delanteros del abrigo (abiertos en el centro) -->
+    <path d="M330 690 C312 820 300 960 292 1110 C330 1124 380 1128 424 1122 C428 980 432 840 438 700 Z" fill="url(#abrigoL)" stroke-width="2.8"/>
+    <path d="M570 690 C588 820 600 960 608 1110 C570 1124 520 1128 476 1122 C472 980 468 840 462 700 Z" fill="url(#abrigoL)" stroke-width="2.8"/>
+    <g stroke="#15110e" stroke-width="1.3" fill="none" opacity="0.55">
+      <path d="M360 760 C352 880 344 1000 338 1116"/><path d="M402 740 C398 880 396 1000 394 1120"/>
+      <path d="M540 760 C548 880 556 1000 562 1116"/><path d="M498 740 C502 880 504 1000 506 1120"/>
+    </g>
+    <path d="M296 1100 C330 1116 380 1120 424 1114" stroke="#8a6b47" stroke-width="2" fill="none"/>
+    <path d="M604 1100 C570 1116 520 1120 476 1114" stroke="#8a6b47" stroke-width="2" fill="none"/>
+
+    <!-- torso: gambesón acolchado -->
+    <path d="M330 360 C320 460 322 580 332 700 L568 700 C578 580 580 460 570 360 C520 336 380 336 330 360 Z" fill="url(#acolchado)" stroke-width="2.8"/>
+    <!-- peto de cuero endurecido con cintura marcada -->
+    <path d="M350 382 C344 450 350 540 372 600 C400 624 500 624 528 600 C550 540 556 450 550 382 C510 366 390 366 350 382 Z" fill="url(#cuero)" stroke-width="2.6"/>
+    <path d="M350 382 C344 450 350 540 372 600 C400 624 500 624 528 600 C550 540 556 450 550 382 C510 366 390 366 350 382 Z" fill="url(#tramaCuero)" stroke="none"/>
+    <path d="M450 392 V606" stroke="#1d120c" stroke-width="1.6" opacity="0.7"/>
+    <g stroke="#caa36c" stroke-width="1.1" stroke-dasharray="4 4" fill="none" opacity="0.75">
+      <path d="M358 392 C352 456 358 536 378 592"/><path d="M542 392 C548 456 542 536 522 592"/>
+      <path d="M378 596 C404 614 496 614 522 596"/>
+    </g>
+    <path d="M372 600 C400 624 500 624 528 600 L534 650 C500 668 400 668 366 650 Z" fill="url(#cueroOsc)" stroke-width="2.4"/>
+
+    <!-- cinturón ancho, hebilla y bolsas -->
+    <path d="M326 664 C380 680 520 680 574 664 L576 708 C520 722 380 722 324 708 Z" fill="#3a2418" stroke-width="2.6"/>
+    <rect x="428" y="668" width="44" height="40" rx="5" fill="url(#metal)" stroke-width="2"/>
+    <rect x="440" y="680" width="20" height="16" rx="3" fill="#2a2e33" stroke-width="1.4"/>
+    <path d="M336 694 h44 v52 c0 8 -6 12 -14 12 h-16 c-8 0 -14 -4 -14 -12 Z" fill="url(#cueroOsc)" stroke-width="2.2"/>
+    <path d="M336 706 h44" stroke-width="1.6"/><circle cx="358" cy="716" r="3.5" fill="url(#metal)" stroke-width="1"/>
+    <path d="M384 696 h30 v40 c0 6 -4 9 -10 9 h-10 c-6 0 -10 -3 -10 -9 Z" fill="url(#cueroOsc)" stroke-width="2"/>
+
+    <!-- bandolera: del hombro derecho del personaje (izquierda del dibujo) a la cadera izquierda, con cápsulas -->
+    <path d="M352 372 L366 360 L566 662 L548 674 Z" fill="#24170f" stroke-width="2.2"/>
+    <g stroke-width="1.4">
+      <rect x="398" y="420" width="16" height="26" rx="5" transform="rotate(-34 406 433)" fill="url(#metal)"/>
+      <rect x="432" y="470" width="16" height="26" rx="5" transform="rotate(-34 440 483)" fill="url(#metal)"/>
+      <rect x="466" y="520" width="16" height="26" rx="5" transform="rotate(-34 474 533)" fill="url(#metal)"/>
+      <rect x="500" y="570" width="16" height="26" rx="5" transform="rotate(-34 508 583)" fill="url(#metal)"/>
+    </g>
+    <g fill="#7fd8ff" stroke="none" filter="url(#brillo)">
+      <circle cx="404" cy="425" r="3"/><circle cx="438" cy="475" r="3"/><circle cx="472" cy="525" r="3"/><circle cx="506" cy="575" r="3"/>
+    </g>
+
+    <!-- brazos: mangas del gambesón -->
+    <path d="M330 372 C300 400 290 470 292 560 C294 600 298 630 306 660 L346 656 C344 600 346 520 352 450 Z" fill="url(#acolchado)" stroke-width="2.6"/>
+    <path d="M570 372 C600 400 610 470 608 560 C606 600 602 630 594 660 L554 656 C556 600 554 520 548 450 Z" fill="url(#acolchado)" stroke-width="2.6"/>
+    <!-- brazales -->
+    <path d="M300 590 L346 586 L350 690 L304 694 Z" fill="url(#cueroOsc)" stroke-width="2.4"/>
+    <path d="M600 590 L554 586 L550 690 L596 694 Z" fill="url(#cueroOsc)" stroke-width="2.4"/>
+    <g stroke="#b88f55" stroke-width="1.3" fill="none"><path d="M302 618 L348 614"/><path d="M304 662 L349 658"/><path d="M598 618 L552 614"/><path d="M596 662 L551 658"/></g>
+    <path d="M556 600 L590 598 L592 640 L560 642 Z" fill="url(#metal)" stroke-width="1.6" opacity="0.9"/>
+    <!-- manos con guantes sin dedos -->
+    <path d="M306 692 C300 716 302 740 312 760 C320 774 334 778 344 768 C352 758 352 730 350 692 Z" fill="#2a1c14" stroke-width="2.2"/>
+    <path d="M310 756 C304 776 308 800 320 812 C332 822 348 818 354 804 C358 792 356 776 350 760 Z" fill="url(#piel)" stroke-width="2.2"/>
+    <path d="M322 770 C322 790 326 806 332 814 M334 770 C336 790 340 804 344 810 M344 768 C346 784 350 796 352 800" stroke="#9b6a4f" stroke-width="1.3" fill="none"/>
+    <path d="M348 744 C360 752 364 770 358 784" fill="none" stroke="#9b6a4f" stroke-width="1.3"/>
+    <path d="M350 742 C364 748 366 766 360 780 C356 786 350 784 350 776 Z" fill="url(#piel)" stroke-width="2"/>
+    <path d="M594 692 C600 716 598 740 588 760 C580 774 566 778 556 768 C548 758 548 730 550 692 Z" fill="#2a1c14" stroke-width="2.2"/>
+    <path d="M590 756 C596 776 592 800 580 812 C568 822 552 818 546 804 C542 792 544 776 550 760 Z" fill="url(#piel)" stroke-width="2.2"/>
+    <path d="M578 770 C578 790 574 806 568 814 M566 770 C564 790 560 804 556 810 M556 768 C554 784 550 796 548 800" stroke="#9b6a4f" stroke-width="1.3" fill="none"/>
+    <path d="M550 742 C536 748 534 766 540 780 C544 786 550 784 550 776 Z" fill="url(#piel)" stroke-width="2"/>
+    <!-- empuñadura de la espada: delante de la cadera izquierda, apuntando arriba y hacia delante -->
+    <g>
+      <path d="M598 704 L548 610 L562 602 L612 696 Z" fill="url(#metal)" stroke-width="2"/>
+      <g stroke="#2a2e33" stroke-width="2.2">
+        <path d="M556 622 L570 614"/><path d="M562 634 L576 626"/><path d="M568 646 L582 638"/><path d="M574 658 L588 650"/><path d="M580 670 L594 662"/>
+      </g>
+      <path d="M560 618 L574 610 L590 640 L576 648 Z" fill="#2b1a12" stroke-width="1.4" opacity="0.85"/>
+      <ellipse cx="609" cy="706" rx="22" ry="9" transform="rotate(-28 609 706)" fill="#1d2126" stroke-width="2"/>
+      <ellipse cx="616" cy="718" rx="9" ry="5" transform="rotate(-28 616 718)" fill="#6fd2ff" stroke="none" filter="url(#brillo)"/>
+      <path d="M548 610 L544 596 L558 590 L562 602 Z" fill="#2a2e33" stroke-width="1.6"/>
+      <circle cx="575" cy="636" r="2.6" fill="#7fd8ff" stroke="none" filter="url(#brillo)"/>
+    </g>
+
+    <!-- hombreras de láminas solapadas; la izquierda del personaje (derecha del dibujo) con borde metálico -->
+    <path d="M296 360 C300 330 330 316 366 322 L376 372 C346 380 316 392 300 412 Z" fill="url(#cuero)" stroke-width="2.4"/>
+    <path d="M290 392 C296 372 326 360 362 364 L368 410 C338 414 310 426 294 446 Z" fill="url(#cueroOsc)" stroke-width="2.4"/>
+    <path d="M288 428 C294 410 322 400 356 404 L360 446 C332 450 306 460 290 478 Z" fill="url(#cuero)" stroke-width="2.4"/>
+    <path d="M604 352 C598 320 564 306 526 314 L518 372 C552 378 586 392 604 414 Z" fill="url(#cuero)" stroke-width="2.6"/>
+    <path d="M612 388 C606 364 572 352 534 356 L530 410 C564 414 594 428 612 450 Z" fill="url(#cueroOsc)" stroke-width="2.6"/>
+    <path d="M616 426 C610 404 578 394 540 398 L538 450 C572 454 600 466 616 488 Z" fill="url(#cuero)" stroke-width="2.6"/>
+    <path d="M616 488 C600 466 572 454 538 450" stroke="url(#metal)" stroke-width="6" fill="none"/>
+    <g fill="url(#metal)" stroke-width="1"><circle cx="560" cy="330" r="4"/><circle cx="566" cy="372" r="4"/><circle cx="572" cy="414" r="4"/><circle cx="340" cy="336" r="3.5"/><circle cx="334" cy="378" r="3.5"/></g>
+
+    <!-- cuello envolvente (bufanda gruesa) -->
+    <path d="M376 330 C390 296 510 296 524 330 C540 352 520 376 496 380 C470 390 430 390 404 380 C380 376 360 352 376 330 Z" fill="url(#bufanda)" stroke-width="2.6"/>
+    <g stroke="#3b352b" stroke-width="1.4" fill="none" opacity="0.8">
+      <path d="M392 340 C420 356 480 356 508 340"/><path d="M386 358 C420 374 480 374 514 358"/><path d="M470 300 C478 320 486 350 492 378"/>
+    </g>
+
+    <!-- cuello y cabeza -->
+    <path d="M422 268 L420 322 C436 334 464 334 480 322 L478 268 Z" fill="url(#piel)" stroke-width="2.2"/>
+    <path d="M404 186 C400 150 420 120 450 118 C482 118 502 148 498 188 C496 226 488 260 470 280 C460 292 440 292 430 280 C412 260 404 226 404 186 Z" fill="url(#piel)" stroke-width="2.6"/>
+    <!-- orejas -->
+    <path d="M404 196 C394 192 392 214 400 224 C404 228 408 226 408 220" fill="url(#piel)" stroke-width="2"/>
+    <path d="M498 196 C508 192 510 214 502 224 C498 228 494 226 494 220" fill="url(#piel)" stroke-width="2"/>
+    <!-- pelo peinado hacia atrás (raya en medio apenas marcada, mechones hacia la nuca) -->
+    <path d="M400 190 C396 140 418 108 452 106 C488 106 508 136 502 190 C496 160 484 142 470 136 C458 132 444 132 432 136 C418 142 406 160 400 190 Z" fill="url(#pelo)" stroke-width="2.4"/>
+    <g stroke="#1a100a" stroke-width="1.2" fill="none" opacity="0.7">
+      <path d="M418 140 C430 126 446 120 460 120"/><path d="M412 160 C426 140 446 130 470 130"/><path d="M488 150 C478 136 466 128 452 126"/><path d="M496 172 C488 150 474 138 458 134"/>
+    </g>
+    <!-- rasgos -->
+    <path d="M422 190 C430 184 440 184 446 190" stroke-width="3" fill="none"/>
+    <path d="M478 190 C470 184 460 184 454 190" stroke-width="3" fill="none"/>
+    <path d="M426 202 C432 198 440 198 444 202 C440 206 432 206 426 202 Z" fill="#f6efe6" stroke-width="1.6"/>
+    <path d="M474 202 C468 198 460 198 456 202 C460 206 468 206 474 202 Z" fill="#f6efe6" stroke-width="1.6"/>
+    <circle cx="436" cy="202" r="2.6" fill="#3d5a4e" stroke="none"/><circle cx="464" cy="202" r="2.6" fill="#3d5a4e" stroke="none"/>
+    <path d="M450 204 C448 220 444 232 442 238 C446 242 454 242 458 238" stroke-width="2" fill="none"/>
+    <path d="M436 256 C444 260 456 260 464 256" stroke-width="2.2" fill="none"/>
+    <!-- barba de pocos días y cicatriz -->
+    <path d="M412 236 C420 268 438 284 450 286 C462 284 480 268 488 236 C478 262 462 274 450 274 C438 274 422 262 412 236 Z" fill="#5a3f2e" stroke="none" opacity="0.35"/>
+    <path d="M476 214 L486 236" stroke="#a4655a" stroke-width="1.8" fill="none"/>
+    <path d="M420 228 C428 236 432 246 432 252 M480 228 C472 236 468 246 468 252" stroke="#8a5f45" stroke-width="1.2" fill="none" opacity="0.6"/>
+  </g>
+
+  <!-- cartela -->
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#2b2016">
+    <text x="40" y="1360" font-size="26" font-style="italic">Héroe — armadura ligera (concepto)</text>
+    <text x="40" y="1386" font-size="15" opacity="0.8">gambesón acolchado · peto de cuero · hombreras de láminas · bandolera con cápsulas · espada híbrida</text>
+  </g>
+</svg>
