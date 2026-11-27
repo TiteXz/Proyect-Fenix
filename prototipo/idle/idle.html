@@ -24,18 +24,24 @@
   #pad { position: fixed; right: 16px; bottom: 16px; display: none; grid-template-columns: repeat(3, 48px); gap: 6px; }
   #pad button { height: 48px; font-size: 18px; padding: 0; }
   @media (pointer: coarse) { #pad { display: grid; } }
+  #ui.oculto { display: none; }
+  #bMostrar { position: fixed; left: 16px; top: 16px; display: none; width: 40px; height: 40px; padding: 0; font-size: 18px;
+              background: var(--panel); backdrop-filter: blur(8px); }
+  #bMostrar.ver { display: block; }
+  @media (max-width: 560px) { #bMostrar { top: auto; bottom: 16px; } }
   @media (max-width: 560px) { #ui { top: auto; bottom: 16px; width: auto; right: 16px; } #pad { bottom: auto; top: 16px; } }
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
 <div id="ui">
-  <div><h1>Idle de magia</h1><p class="sub">Quédate quieto: tras la espera levanta la mano izquierda y mueve una bola de magia. WASD / flechas para andar (arrastra para girar la cámara).</p></div>
+  <div><h1>Idle de magia</h1><p class="sub">Quédate quieto: tras la espera levanta la mano izquierda y mueve una bola de magia. WASD / flechas para andar (arrastra para girar la cámara). H oculta el panel.</p></div>
   <div><div class="row"><span id="estado">Cargando…</span><span class="sub" id="reloj" style="margin-left:auto"></span></div><div id="meter"><div></div></div></div>
   <div class="row"><label for="rEspera">Espera <b id="vEspera">5</b> s</label><input id="rEspera" type="range" min="1" max="15" step="0.5" value="5"></div>
   <div class="row"><label for="rVel">Velocidad <b id="vVel">1</b>×</label><input id="rVel" type="range" min="0.25" max="2" step="0.25" value="1"></div>
-  <div class="row"><button id="bForzar">Forzar idle</button><button id="bPasear">Pasear</button><button id="bPausa">Pausa</button></div>
+  <div class="row"><button id="bForzar">Forzar idle</button><button id="bPasear">Pasear</button><button id="bPausa">Pausa</button><button id="bOcultar" title="Ocultar el panel (tecla H)">Ocultar panel</button></div>
 </div>
+<button id="bMostrar" title="Mostrar el panel (tecla H)" aria-label="Mostrar el panel">☰</button>
 <div id="pad"><span></span><button data-k="w">▲</button><span></span><button data-k="a">◄</button><button data-k="s">▼</button><button data-k="d">►</button></div>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
@@ -326,6 +332,12 @@ let pasear = false, pausa = false, vel = 1;
 $('bPasear').onclick = () => { pasear = !pasear; $('bPasear').classList.toggle('on', pasear); };
 $('bPausa').onclick = () => { pausa = !pausa; $('bPausa').classList.toggle('on', pausa); $('bPausa').textContent = pausa ? 'Seguir' : 'Pausa'; };
 $('bForzar').onclick = () => { S.quieto = Math.max(S.quieto, P.espera); };
+// ocultar/mostrar el panel para ver la animación sin tapar (botón o tecla H; se recuerda en este navegador)
+function panel(ver) { $('ui').classList.toggle('oculto', !ver); $('bMostrar').classList.toggle('ver', !ver); try { localStorage.setItem('fenix_idle_panel', ver ? '1' : '0'); } catch (e) {} }
+$('bOcultar').onclick = () => panel(false);
+$('bMostrar').onclick = () => panel(true);
+addEventListener('keydown', e => { if (e.key.toLowerCase() === 'h' && !e.repeat) panel($('ui').classList.contains('oculto')); });
+try { if (localStorage.getItem('fenix_idle_panel') === '0') panel(false); } catch (e) {}
 $('rEspera').oninput = e => { P.espera = +e.target.value; $('vEspera').textContent = P.espera; };
 $('rVel').oninput = e => { vel = +e.target.value; $('vVel').textContent = vel; };
 
@@ -525,7 +537,7 @@ function applyPose(wMagia, t, mov) {
     const yd = yawSuave(Math.atan2(tC.dot(leftW), tC.dot(fwdW)), MAX_YAW);
     const pd = Math.max(PITCH_MIN, Math.min(PITCH_MAX, Math.asin(Math.max(-1, Math.min(1, tC.y)))));
     if (!MIRA.init || DTR < 0) { MIRA.y = yd; MIRA.p = pd; MIRA.vy = MIRA.vp = 0; MIRA.init = true; }
-    else { [MIRA.y, MIRA.vy] = spring1(MIRA.y, MIRA.vy, yd, 6, DTR, 2.4); [MIRA.p, MIRA.vp] = spring1(MIRA.p, MIRA.vp, pd, 6, DTR, 1.8); }
+    else { [MIRA.y, MIRA.vy] = spring1(MIRA.y, MIRA.vy, yd, 11, DTR, 4.2); [MIRA.p, MIRA.vp] = spring1(MIRA.p, MIRA.vp, pd, 11, DTR, 3.2); }
     lookNoRoll(B.neck_01, 0.4 * wl, MIRA.y, MIRA.p); lookNoRoll(B.head, 1.0 * wl, MIRA.y, MIRA.p);
   }
 }
@@ -659,7 +671,7 @@ function placeOrb(t) {
   // suavizado: la bola sigue su recorrido con un muelle rápido (quita esquinas) y la mirada con uno lento (retraso natural)
   const dt = lastT < 0 || t < lastT || t - lastT > 1 ? -1 : t - lastT; lastT = t; DTR = dt;
   if (!springInit || dt < 0 || S.forma <= 0) { orbS.copy(out); orbV.set(0, 0, 0); lookP.copy(out); lookV.set(0, 0, 0); springInit = true; }
-  else { spring(orbS, orbV, out, 26, dt); spring(lookP, lookV, orbS, 7, dt); }
+  else { spring(orbS, orbV, out, 26, dt); spring(lookP, lookV, orbS, 12, dt); }
   out.copy(orbS);
   orb.position.copy(out);
 }

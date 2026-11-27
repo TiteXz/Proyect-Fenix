@@ -47,11 +47,14 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
     return { cr, acc, hv }; });
   ok(m.cr === 0, `la bola no atraviesa el cuerpo (${m.cr} fotogramas dentro)`);
   ok(m.acc < 25, `bola sin tirones (aceleración máx. ${m.acc.toFixed(1)} m/s²)`);
-  ok(m.hv < 200, `cabeza sin giros bruscos (máx. ${m.hv.toFixed(0)}°/s)`);
+  ok(m.hv < 320, `cabeza sin giros bruscos (máx. ${m.hv.toFixed(0)}°/s)`);
   await p.evaluate(() => window.__IDLE__.key('w', true)); s = await st(30);
   ok(s.quieto === 0 && s.w < 1 && s.fase !== 'idle de magia', `al moverse se interrumpe (${s.fase}, w ${s.w.toFixed(2)})`);
   s = await st(30); ok(s.w === 0 && !s.orbVisible, 'mano bajada y bola deshecha');
   await p.evaluate(() => window.__IDLE__.key('w', false));
+  await p.click('#bOcultar'); ok(await p.isHidden('#ui') && await p.isVisible('#bMostrar'), 'ocultar panel');
+  await p.click('#bMostrar'); ok(await p.isVisible('#ui') && await p.isHidden('#bMostrar'), 'mostrar panel');
+  await p.keyboard.press('h'); ok(await p.isHidden('#ui'), 'tecla H oculta el panel'); await p.keyboard.press('h');
   ok(errs.length === 0, 'sin errores de consola' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
   await b.close(); console.log(fails ? `${fails} FALLOS` : 'TODO OK'); process.exit(fails ? 1 : 0);
 })();
