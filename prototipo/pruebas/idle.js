@@ -25,6 +25,7 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
   ok(dO > 0.005, `la bola se mueve (${(dO * 100).toFixed(1)} cm en 0,75 s)`);
   await p.evaluate(() => window.__IDLE__.camara(-1.2, 1.5, 1.6, 0.1, 1.25, 0)); await shot('3_idle_magia_otro_lado');
   await p.evaluate(() => window.__IDLE__.camara(0.75, 1.45, 0.75, 0.15, 1.2, 0.25)); await shot('4_mano_cerca');
+  await p.evaluate(() => window.__IDLE__.camara(-0.75, 0.95, 0.55, -0.22, 0.85, 0.02)); await shot('5_mano_relajada');
   await p.evaluate(() => window.__IDLE__.key('w', true)); s = await st(30);
   ok(s.quieto === 0 && s.w < 1 && s.fase !== 'idle de magia', `al moverse se interrumpe (${s.fase}, w ${s.w.toFixed(2)})`);
   s = await st(30); ok(s.w === 0 && !s.orbVisible, 'mano bajada y bola deshecha');

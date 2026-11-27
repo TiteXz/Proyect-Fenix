@@ -184,11 +184,77 @@ const H = { l: null, r: null };
 let bones = [], bind = [];
 function palmNormal(h, out) { h.hand.getWorldQuaternion(tq3); return out.copy(h.palm).applyQuaternion(tq3); }
 
+// Recoloca las articulaciones de los dedos donde la malla realmente se dobla (el esqueleto del soldado se re-enlazó desde
+// otro personaje y sus nudillos quedan 1–2 cm fuera de sitio). Cada articulación pasa al centro del anillo de vértices
+// que comparten peso entre las dos falanges; la malla en reposo no cambia (se recalculan los boneInverses).
+const MANOS_INFO = [];
+function arreglarManos(root, clips) {
+  const FINGER = /^(thumb|index|middle|ring|pinky)_0([123])_([lr])$/;
+  root.updateMatrixWorld(true);
+  const meshes = []; root.traverse(o => { if (o.isSkinnedMesh) meshes.push(o); });
+  const byName = {}; root.traverse(o => { if (o.isBone) byName[o.name] = o; });
+  const ring = {};   // nombre de hueso → [suma, n]
+  const G = ['getX', 'getY', 'getZ', 'getW'], v = new V(), m = new THREE.Matrix4(), acc = new V();
+  for (const mesh of meshes) {
+    const sk = mesh.skeleton, g = mesh.geometry, pos = g.attributes.position, si = g.attributes.skinIndex, sw = g.attributes.skinWeight;
+    if (!si || !sw) continue;
+    for (let i = 0; i < pos.count; i++) {
+      const ws = {}; let any = false;
+      for (let k = 0; k < 4; k++) { const w = sw[G[k]](i); if (w > 0.15) { ws[sk.bones[si[G[k]](i)].name] = w; any = true; } }
+      if (!any) continue;
+      // pares (padre, hijo) en la misma cadena con peso repartido
+      for (const n in ws) {
+        const mm = FINGER.exec(n); if (!mm) continue;
+        const parentName = mm[2] === '1' ? 'hand_' + mm[3] : `${mm[1]}_0${+mm[2] - 1}_${mm[3]}`;
+        if (!(parentName in ws)) continue;
+        const wsum = ws[n] + ws[parentName]; if (Math.min(ws[n], ws[parentName]) / wsum < 0.25) continue;
+        acc.set(0, 0, 0); let wt = 0;
+        for (let k = 0; k < 4; k++) {
+          const w = sw[G[k]](i); if (w <= 0) continue; const bi = si[G[k]](i);
+          v.fromBufferAttribute(pos, i).applyMatrix4(mesh.bindMatrix).applyMatrix4(sk.boneInverses[bi]).applyMatrix4(sk.bones[bi].matrixWorld);
+          acc.addScaledVector(v, w); wt += w;
+        }
+        acc.multiplyScalar(1 / wt);
+        const r = ring[n] || (ring[n] = [new V(), 0]); r[0].add(acc); r[1]++;
+      }
+    }
+  }
+  // mueve cada hueso de dedo (de la raíz a la punta) y recalcula su boneInverse para que la malla en reposo no cambie
+  const oldW = new Map();
+  root.traverse(o => { if (o.isBone && FINGER.test(o.name)) oldW.set(o, o.matrixWorld.clone()); });
+  const orden = []; root.traverse(o => { if (o.isBone && FINGER.test(o.name)) orden.push(o); });
+  for (const bn of orden) {
+    const r = ring[bn.name]; if (!r || r[1] < 3 || /_01_/.test(bn.name)) continue;   // nudillos y base del pulgar: el anillo de esta malla no es fiable
+    const want = r[0].multiplyScalar(1 / r[1]);
+    bn.parent.updateMatrixWorld(true);
+    const before = bn.getWorldPosition(new V());
+    // hijos: conserva su posición en mundo (se recolocan después con su propio anillo si lo tienen)
+    const kids = bn.children.filter(c => c.isBone).map(c => [c, c.getWorldPosition(new V())]);
+    bn.position.copy(bn.parent.worldToLocal(want.clone()));
+    bn.updateMatrixWorld(true);
+    for (const [c, wpos] of kids) { c.position.copy(bn.worldToLocal(wpos)); c.updateMatrixWorld(true); }
+    MANOS_INFO.push([bn.name, +(before.distanceTo(want) * 100).toFixed(2)]);
+  }
+  root.updateMatrixWorld(true);
+  for (const mesh of meshes) {
+    const sk = mesh.skeleton;
+    sk.bones.forEach((bn, i) => {
+      const W0 = oldW.get(bn); if (!W0) return;
+      // nuevo inverso = W_nuevo⁻¹ · W_viejo · inverso_viejo
+      m.copy(bn.matrixWorld).invert().multiply(W0).multiply(sk.boneInverses[i]);
+      sk.boneInverses[i].copy(m);
+    });
+  }
+  // los clips no deben devolver los dedos a la posición vieja
+  for (const c of clips) c.tracks = c.tracks.filter(t => !(t.name.endsWith('.position') && FINGER.test(t.name.split('.')[0])));
+}
+
 new THREE.GLTFLoader().parse(b64ToBuf(GLB_B64), '', gltf => {
   char = gltf.scene;
   char.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
   pivot.add(char);
   const find = n => { let r = null; char.traverse(o => { if (!r && o.isBone && o.name === n) r = o; }); return r; };
+  arreglarManos(char, gltf.animations);
   char.traverse(o => { if (o.isBone) { bones.push(o); bind.push([o.quaternion.clone(), o.position.clone()]); } });
   ['spine_03', 'neck_01', 'head', 'pelvis'].forEach(n => B[n] = find(n));
   char.updateMatrixWorld(true);   // pose de enlace (bind): mano abierta
@@ -202,7 +268,7 @@ new THREE.GLTFLoader().parse(b64ToBuf(GLB_B64), '', gltf => {
     ['index', 'middle', 'ring', 'pinky', 'thumb'].forEach((f, fi) => {
       for (let j = 1; j <= 3; j++) {
         const b = find(`${f}_0${j}_${sd}`); if (!b) continue;
-        h.fingers.push({ b, fi, j, thumb: f === 'thumb', bindQ: b.quaternion.clone(), axis: new V() });
+        h.fingers.push({ b, fi, j, thumb: f === 'thumb', bindQ: b.quaternion.clone(), axis: new V(), axisN: new V() });
       }
     });
     H[sd] = h;
@@ -229,7 +295,8 @@ new THREE.GLTFLoader().parse(b64ToBuf(GLB_B64), '', gltf => {
       tB.normalize();
       tC.crossVectors(tB, tF);
       if (tC.lengthSq() < 1e-6) tC.set(1, 0, 0);
-      f.b.getWorldQuaternion(tq); f.axis.copy(tC.normalize()).applyQuaternion(tq.invert());
+      f.b.getWorldQuaternion(tq); tq.invert(); f.axis.copy(tC.normalize()).applyQuaternion(tq);
+      f.axisN.copy(tF).applyQuaternion(tq);   // eje de separación (abducción): la normal de la palma
     }
   }
   const fwd = new V(0, 0, 1);
@@ -315,15 +382,31 @@ function orientHand(h, nUp, dFwd, w) {
   tq.setFromUnitVectors(tB, tC); if (w < 1) tq.slerp(tq3.identity(), 1 - w); rotWorld(h.hand, tq);
 }
 // dedos a partir de la pose de enlace (mano abierta) + flexión por falange; mezcla con el clip según w
-const RELAJADA = [0.30, 0.45, 0.35], PULGAR_REL = [0.10, 0.20, 0.15];
-function poseFingers(h, curl, w) {
+const RELAJADA = [0.22, 0.40, 0.30], PULGAR_REL = [0.30, 0.22, 0.12];
+const qS = new Q();
+function poseFingers(h, curl, spread, w) {
+  const sg = h.side === 'l' ? 1 : -1;
   for (const f of h.fingers) {
     const ang = curl(f);
-    qR.setFromAxisAngle(f.axis, ang); tq.copy(f.bindQ).multiply(qR);
+    qR.setFromAxisAngle(f.axis, ang); tq.copy(f.bindQ);
+    if (f.j === 1) { qS.setFromAxisAngle(f.axisN, sg * spread(f)); tq.multiply(qS); }
+    tq.multiply(qR);
     f.b.quaternion.slerp(tq, w);
   }
   h.hand.updateMatrixWorld(true);
+  // pulgar: se orienta su base explícitamente (en la pose de enlace sale en T, separado de la mano)
+  const th = h.fingers.find(f => f.thumb && f.j === 1), th2 = h.fingers.find(f => f.thumb && f.j === 2);
+  if (th && th2) {
+    wp(h.hand, tA); wp(h.middle, tB); tB.sub(tA).normalize();         // dirección de los dedos
+    wp(h.index, tC); wp(h.pinky, tD); tC.sub(tD).normalize();          // hacia el índice
+    palmNormal(h, tE);
+    const k = thumbK;                                                   // 0 relajado → 1 abierto (magia)
+    tF.set(0, 0, 0).addScaledVector(tB, 0.80 - 0.25 * k).addScaledVector(tE, 0.50 - 0.35 * k).addScaledVector(tC, 0.30 + 0.45 * k).normalize();
+    aim(th.b, th2.b, tF, w);
+    h.hand.updateMatrixWorld(true);
+  }
 }
+let thumbK = 0;
 function applyPose(wMagia, t, mov) {
   const a = 1 - mov;                 // capa de brazos: plena quieto, nula andando
   const e = ease(wMagia);
@@ -359,13 +442,21 @@ function applyPose(wMagia, t, mov) {
       }
       orientHand(h, dUp, dFw, a);
       // dedos: relajados → mano abierta ahuecada que ondula, dedo a dedo, como si girara la bola
+      // relajada: cascada natural (el meñique más cerrado que el índice); mágica: mano ahuecada, dedos algo separados,
+      // ola lenta del índice al meñique y pulgar abierto hacia fuera
+      thumbK = k;
       poseFingers(h, f => {
-        const rel = f.thumb ? PULGAR_REL[f.j - 1] : RELAJADA[f.j - 1];
+        const casc = f.fi * 0.07;
+        const rel = f.thumb ? PULGAR_REL[f.j - 1] : RELAJADA[f.j - 1] + casc * (f.j === 1 ? 1.2 : 0.6);
         if (k <= 0) return rel;
-        const ola = Math.sin(t * 2.4 - f.fi * 0.7);
-        const mag = f.thumb ? [-0.25, -0.05, 0.05][f.j - 1] + 0.04 * Math.sin(t * 1.9)
-                            : [0.18, 0.26, 0.22][f.j - 1] + ola * [0.10, 0.12, 0.10][f.j - 1];
+        const ola = Math.sin(t * 2.0 - f.fi * 0.75);
+        const mag = f.thumb ? [-0.20, 0.02, 0.10][f.j - 1] + 0.05 * Math.sin(t * 1.6)
+                            : [0.14, 0.22, 0.18][f.j - 1] + casc * 0.8 + ola * [0.09, 0.10, 0.08][f.j - 1];
         return rel + (mag - rel) * k;
+      }, f => {
+        const relS = 0;
+        const magS = [-0.03, 0.0, 0.025, 0.05, 0.0][f.fi] + 0.012 * Math.sin(t * 2.0 - f.fi * 0.75);
+        return relS + (magS - relS) * k;
       }, a);
     }
   }
@@ -470,6 +561,8 @@ window.__IDLE__ = {
   camara: (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); controls.update(); renderer.render(scene, camera); },
   render: () => renderer.render(scene, camera),
   _clips: () => Object.values(acts).map(a => a.getClip()),
+  manos: () => MANOS_INFO,
+  _dbg: () => ({ THREE, scene, camera, renderer, char, H, pivot, resetBind }),
   // posiciones de los huesos de la mano izq. en el espacio local de hand_l (depuración)
   mano: () => { const inv = new THREE.Matrix4().copy(H.l.hand.matrixWorld).invert(), r = {};
     char.traverse(o => { if (o.isBone && /_l$/.test(o.name) && /(index|middle|ring|pinky|thumb)/.test(o.name)) r[o.name] = wp(o, new V()).applyMatrix4(inv).toArray().map(v => +v.toFixed(3)); });
