@@ -184,6 +184,18 @@ Sección Elemental: matriz de reacciones descubiertas (icono + forma + texto). S
 entradas de lore ordenadas por zona; las entradas aún no halladas son huecos con título censurado. Solo texto
 e ilustración; protagonista mudo, sin diálogo (GDD 10.3).
 
+**Entradas de la Ciudad de la Roca [SUPUESTO, CIUDAD_ROCA §3b, §3d, §10].** Tres tipos nuevos en Fragmentos, con
+subfiltro «Ciudad de la Roca»; el punto de aviso del marcapáginas sigue la regla de §2.2:
+| Tipo | Cuándo se anota | Contenido |
+|---|---|---|
+| **Glifo de la Orden** (D) | La primera vez que el jugador **ve** ese glifo (evento del bus, p. ej. `codex:entry-added` {id, tipo}) | Dibujo del glifo (generador de §2.11) + texto breve de lore; el glifo de umbral se anota igual. La entrada **no dice dónde está ni qué abre** |
+| **Frase del Archivista** | Opcional por frase (CIUDAD_ROCA §3b) | La frase literal entre comillas, con la etapa **no** indicada; se muestra por orden de hallazgo, no de cadena. Una por etapa, sin duplicados |
+| **Tabla de las Horas** | Al ver el mural en G6 | 2-3 entradas de pista sin respuestas; una **hornacina vacía** ilustrada como hueco, sin leyenda de «falta algo» |
+Reglas: las entradas no hallazgadas no se listan (ni título censurado) cuando delatarían la sala escondida; para estos tipos
+se omite el hueco «censurado» de arriba [SUPUESTO]. Ninguna entrada contiene coordenadas, flechas ni «ve a», y el Códice no
+cambia de estado por progreso de puzle (solo por haber visto el elemento). `data-testid`: `codex-entry-<id>`,
+`codex-filter-roca`.
+
 ### 2.10 Apartado Mapa
 Mapa de Valdera con las **piedras de paso** (posición y orden): renombrar, reordenar, marcar; crear/borrar solo
 donde COMBATE 2.7 lo permita.
@@ -531,6 +543,11 @@ unos ojos así»), **frase de aldeano/leyenda** (al interactuar, sin diálogo co
 mostrarse porque la bandera llega con la partida (la UI no la decide: solo muestra lo que emite el bus). Subtítulo
 siempre visible (el murmullo de audio es acompañamiento). `data-testid`: `npc-bubble` (`data-kind="recognize|line|hit|closed"`,
 `data-npc`).
+
+**Archivista anciano (CIUDAD_ROCA §3b) [SUPUESTO]:** tipo nuevo `data-kind="hint"`. Al interactuar con F muestra **una frase por
+conversación** (repetible) según la etapa que llega por el bus; la UI no calcula etapas ni las muestra. Sin marcador de misión,
+sin flecha, sin icono de «pista nueva» sobre el NPC, y el aviso de interacción es el genérico «F · Hablar». Si la frase está
+sin anotar, un aviso discreto «Anotado en el Códice» (1,5 s, línea de avisos) tras cerrarse el bocadillo; si ya estaba, nada.
 
 ### 8.4 Pantalla «Caíste»
 Al `player:died`: cámara lenta/desaturación del juego (GDD §9), luego **«Caíste»** centrado, tipografía display grande, fondo
