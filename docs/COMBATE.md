@@ -522,6 +522,8 @@ MVP no hay ninguno del jugador; Tierra y Aire llegan en la fase 2).
 | **Cultista mago** | 45 / 3,0 m/s | Bola de fuego enemiga 14 + Ardiendo · círculo 0,8 s, una cada 4 s · 20 m/s. **Barrera** sobre sí o un aliado a ≤ 12 m: absorbe 30, 8 s, círculo 1,0 s, recarga 12 s. A ≤ 2,5 m: empujón de bastón 8 + empuje 2 m (0,5 / 0,1 / 0,5) | Círculo de runas con color del elemento (§2.14, ≥ 0,5 s) | Un golpe de espada durante el círculo lo **interrumpe** (recarga 3 s); la espada rompe la barrera (× 2); Destello la quita; Lanza (débil a frío); resiste fuego |
 | **Jefe caballero no-muerto** | 800 (fase 2 al 50 %) / 4,0 m/s | Fase 1: tajo direccional 22 (0,70 / 0,20 / 0,70), uno cada 3,2 s; cada 4.º ataque, **imparable** 35 (0,90 / 0,25 / 0,65). Fase 2: combo de 2 golpes de 16 con fintas (§1.1), uno cada 2,6 s; imparable cada 4.º. Transición: 3 s sin recibir control, grito que empuja 3 m | Chevrones, fintas legibles (§1.1); imparable en rojo con sonido propio | Parada ⇒ contraataque; Destello (× 1,5); Lanza × 2 ⇒ Congelado 1 s ⇒ Bola (Vapor); Embestida rompe la guardia 1 s; esquiva el imparable |
 
+- **Ciudad de la Roca (zona 3, fase 2):** el jefe del subsuelo (Custodio del Umbral) y los enemigos de la arena
+  (duelistas EP/EE, mago de arena, hiena del cañón, escorpión de roca) tienen su ficha en §3.1–§3.2.
 - **El jefe no usa multiplicador de zona;** los enemigos normales del dungeon usan los de la amenaza 2 (× 1,25 vida,
   × 1,15 daño; GDD §6.3).
 - **Turnos de ataque (necesarios para el balance; cambio técnico para `programador-gameplay`):** como máximo **1
@@ -584,6 +586,9 @@ recibido (con la cura del Destello cuando se usa):
 Con mezcla de espada y magia, el dungeon completo dura ≈ 4,5–5 min más ≈ 1,5–2 min de jefe. **Sin turnos** (2 + 2), EP
 mixto sube a 137 s / 230 de daño en la oleada 4. **Solo espada** no es viable en las oleadas 4–5 (sobre todo EP): es
 intencionado (pilar 2), pero es el mayor riesgo de frustración.
+
+**Ciudad de la Roca:** balance del Custodio del Umbral y TTK de los duelos de la arena por rango en §3.1–§3.2
+(misma fórmula y método, estimación escalada desde estas tablas hasta tener `sim-balance.ts`).
 
 **Riesgos de balance.**
 1. **Vida que no se rellena entre oleadas:** sin Destello, el daño acumulado de EP mixto en las 5 oleadas es
@@ -726,7 +731,7 @@ progresión y reglas (p. ej. qué rompe la invisibilidad).
 | Silencioso | 1 | +3 | Sin sonido ni círculo visible; no alerta a quien no impacta | 0 |
 | Eficiencia | 1 | ×0,75 | −20 % potencia | 0 |
 | *Hueco de control:* | | | | |
-| **Ancla** (control) | 1 | +0 | −15 % potencia | −20 |
+| **Ancla** (control; se aprende en el archivo, §3.3) | 1 | +0 | −15 % potencia | −20 |
 | **Catalizador** (control) | 1 | +0 | +25 % potencia | +15 |
 | **Sangre** (control) | 1 | 50 % del maná se paga en vida | — | −25 |
 
@@ -777,8 +782,8 @@ resistencias de la tabla de enemigos (esqueleto débil a Tierra, por ejemplo).
 
 ### 2.5 Fusiones de dos elementos (y tabla de reacciones)
 
-**Descubrimiento:** la primera vez que lanzas un núcleo con los dos elementos (2 huecos) o provocas la
-reacción en combate, el compuesto entra en el **Códice elemental**. Desde entonces ocupa **1 hueco** y su
+**Descubrimiento:** la primera vez que lanzas un núcleo con los dos elementos (2 huecos), provocas la
+reacción en combate o lees su página en un **atril de la Orden** (§3.3), el compuesto entra en el **Códice elemental**. Desde entonces ocupa **1 hueco** y su
 penalización por par opuesto baja a la mitad (+15).
 
 **Reacción en combate (misma tabla):** si un golpe del elemento B alcanza a un objetivo con el estado del
@@ -897,7 +902,10 @@ por mutación rara ≈ 1 %). Las 4 elegidas (aceptadas por el usuario) cubren lo
 *Reserva para expansiones (decisión del usuario; fuera del alcance actual):* Eclipse ceniciento, Jardín de hierro, Corazón de volcán,
 Faro del vendaval. Sus recetas resuelven como **generadas**. Nota: las flechas imantadas de *Jardín de hierro* dependían del arco del jugador (en reserva, §1.2); si vuelve sin arco, se rediseña sobre flechas enemigas como Magnetismo.
 
-**Arcanos** (fusiones de 3; se descubren lanzándolos una vez y luego ocupan 1 hueco; C 4).
+**Arcanos** (fusiones de 3; se descubren lanzándolos una vez **o leyendo su página en un atril de la Orden** (§3.3) y
+luego ocupan 1 hueco; C 4). **Espacio** se obtiene en el archivo de la Ciudad de la Roca (atril central, con 2 esquirlas
+rúnicas). **Tiempo** está **sellado** hasta el final de la trama (flag `tiempoDesellado`): antes, su conjunto resuelve
+como generada (§3.3, M-60).
 
 **ESPACIO = Aire + Sombra + Tierra**
 | Hechizo | Maná | Recarga | Efecto |
@@ -1012,7 +1020,7 @@ los más cortos pagan coste normal. Si un buff sufre contragolpe, se aplica su *
 | Intercambio | 15 | 8 s | Cambia de sitio con objetivo ≤ 25 m |
 | Llamada | 10 | 20 s | Trae caballo, aliado u objeto suelto ≤ 40 m (caballo: desde cualquier distancia en el mundo, llega en 3 s) |
 | Impulso | 12 | 2 cargas, 3 s c/u | Salto de 6 m vertical o 10 m horizontal |
-| Planeo | 5 + 3/s | — | Caída 2 m/s; horizontal 14 m/s (Aire 18 m/s) |
+| Planeo | 5 + 3/s | — | Caída 2 m/s; horizontal 14 m/s (Aire 18 m/s). Runa del archivo de la Ciudad de la Roca (G11, §3.3) |
 | Levitación | ver buff | — | Caída lenta / flotar |
 
 **Variantes de Destello por elemento:** Sombra = solo entre zonas en sombra pero alcance ×1,5 y sin sonido;
@@ -1034,6 +1042,9 @@ mismos límites de velocidad, techo y zonas de anulación; el daño por caída a
   rúnica, Planeo e Impulso. **Piedra de paso:** crear se bloquea en dungeons y santuarios (más reglas en 2.7);
   viajar se bloquea dentro de dungeons.
   **Destello, Intercambio, Zancada, Rebobinar y Estasis sí funcionan.**
+  **Excepciones de la Ciudad de la Roca (§3.2–§3.3):** la biblioteca N8 (zona de recompensa) **no** bloquea Planeo,
+  Impulso ni Levitación, pero sí Salto lejano, Portal, Ancla rúnica y Piedra de paso (la instancia N6–N8 cuenta como
+  dungeon); el ruedo de la arena bloquea como una sala de jefe y recorta el Destello en el muro del podio.
   El HUD muestra esas runas apagadas con aviso; lanzar una bloqueada no gasta maná.
 
 ### 2.11 Fórmulas: coste, complejidad, inestabilidad [SUPUESTO]
@@ -1199,6 +1210,8 @@ tampoco gasta tinta (decisión del usuario).
 - Reflejo y Vacío no afectan a sus ataques marcados como **imparables** (señal roja).
 - El cambio de fase limpia todos sus debuffs y le da 3 s de inmunidad a control.
 - Detecta invisibilidad a 4 m y al recibir daño.
+- **Elementos de sala** (pilares, braseros, anillos del suelo) pueden cambiar el combate con reglas propias que no
+  cuentan para los rendimientos decrecientes (p. ej. el Estrellado del Custodio del Umbral, §3.1).
 - **Rebobinar y Estasis funcionan** en salas de jefe: Estasis sobre el jefe dura 1 s y cuenta como *inmovilizar*
   (rendimientos decrecientes); Rebobinar solo afecta al jugador.
 
@@ -1308,6 +1321,8 @@ Pendiente con el usuario (2.18): recetas fijas o generadas con semilla por zona,
 | M-54 | Tinta: vías de obtención | Fabricar en altar con 1 pigmento + 1 polvo ⇒ +2 tintas (fuera de altar ⇒ rechazo sin gastar); partida nueva ⇒ receta de tinta ya conocida; comprar 4.ª tinta al mismo mercader el mismo día ⇒ rechazo, al día siguiente stock = 3; saquear ruina de Tejedores ⇒ +1–3 una sola vez; grabar con 0 tinta ⇒ borrador; elegir variante de mutación con 0 tinta ⇒ hechizo nuevo lanzable y tinta sigue en 0 |
 | M-55 | Piedra de paso: viajar | e2e: en Mapa del libro-menú, confirmar destino válido ⇒ animación de portal, luego transición 2–3 s con precarga, llegada a la piedra, −30 maná y recarga 120 s; con enemigo en alerta a 39 m, recarga activa, maná < 30 o dentro de dungeon ⇒ destinos deshabilitados, maná y recarga sin cambios |
 
+Reglas de la Ciudad de la Roca (jefe del archivo, arena y conjuros del archivo): C-37–C-48 y M-56–M-60 en §3.5.
+
 ### 2.18 Preguntas abiertas
 
 *Resueltas antes:* runas de control (hueco propio), progresión del mago (2.11, sin bloqueos), Velo y planeo a
@@ -1349,3 +1364,213 @@ caballo (sí), Rebobinar/Estasis en jefes (sí).
    enseña sus runas?
 14. Ficha de combate del chamán goblin (vida, resistencias, patrones, telegraphing): pendiente con `disenador-juego`
     al rellenar §1.
+
+---
+
+## 3. Ciudad de la Roca: jefe del archivo, arena y conjuros del archivo (zona 3)
+
+Sincroniza con `docs/CIUDAD_ROCA.md` §3b (sala N7), §3c (arena) y §3d (conjuros). Decisiones del usuario: la ciudad es
+**zona 3** (amenaza 3, GDD §6.2); el jefe del subsuelo está en una **sala escondida en instancia aparte**; la arena tiene
+**monstruos y NPCs** y da recompensas y XP; al ganar a un NPC se elige **matar o perdonar**; reparto de conjuros de §3d.
+Todo número es **[SUPUESTO]** salvo lo marcado como decisión. Datos: `juego/src/config/combat/jefeArchivo.ts`,
+`arena.ts` y `juego/src/config/runas/` (recetas de la Orden). Contenido de **fase 2** (usa runas de §2).
+
+### 3.1 Jefe del subsuelo: el Custodio del Umbral (guardián del archivo)
+**Concepto (sin cerrar lore).** Gran custodio de piedra tallada, bronce y tela rúnica (≈ 4 m), con el **glifo de umbral**
+en el pecho y una «página» de luz encerrada en el núcleo. Lo dejó la Orden para guardar el archivo: el Códice no aclara
+si es un constructo, un Tejedor atado al archivo o las dos cosas (2–3 entradas ambiguas; `disenador-juego` decide).
+No es no-muerto (el sagrado no le hace × 1,5). Domina el **Arcano de Espacio** que custodia (anticipa la recompensa) y
+**no** el de Tiempo (coherente con la reserva, §3.3).
+
+**Valores base** (no usa multiplicador de zona; sus números ya son de amenaza 3, como el jefe del MVP en §1.10):
+| Vida | Vel. | Defensa | Cortante | Contundente | Perforante | Ardiente | Frío | Sagrado | Eléctrico | Necrótico |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 150 (fases al 65 % y 30 %) | 3,5 m/s | 4 | 0,8 | **1,25** | 0,75 (núcleo expuesto **1,5**) | 0,8 | 1,0 | 1,0 | **1,25** (bronce) | 0,5 |
+
+**Uso del espacio (sala de §3b: suelo útil Ø 40 m).**
+| Elemento | Regla |
+|---|---|
+| Anillos grabados | Centro r ≤ 6 m · medio 6–13 m · borde 13–20 m. El **Sello concéntrico** ilumina uno o dos anillos antes de estallar; el otro es seguro |
+| 6 pilares (Ø 2,4 m, anillo exterior) | Bloquean el **Haz** (línea de visión) y paran el **Embate**: si el Custodio choca con un pilar queda **Estrellado** 2,5 s. Cada pilar aguanta **2 choques** y cae (escombros bajos pegados al muro, sin cortar la cámara). **Siempre quedan 2 en pie**: con 2, el Embate ya no los rompe |
+| 8 braseros rúnicos (borde, r ≈ 21 m) | Color por fase: ámbar (F1), rojo de Fuego (F2), azul violeta de Espacio (F3). En F2 alimentan la **Égida** (abajo). Se **apagan** con 1 impacto de Hielo o Aire (Lanza de escarcha basta), con 1 fuerte o con 3 ligeros |
+| Nichos laterales (4 m) | Refugio contra el Haz; el Embate no entra (para en la boca del nicho, sin Estrellado) |
+
+**Fases y ataques** (fases en s: anticipación / activo / recuperación; telegrafiado de §1.1 y §2.14):
+| Fase | Ataque | Daño · fases · alcance | Señal previa (dirección legible sin HUD) | Contador |
+|---|---|---|---|---|
+| F1 100–65 % | Tajo direccional (maza-báculo) | 24 · 0,70 / 0,20 / 0,70 · 3,0 m; uno cada 3,2 s | Postura + chevrón del lado; el glifo del brazo se enciende del lado de entrada | Parada ⇒ contraataque (EE contundente el mejor); bloqueo EE |
+| F1 | **Sello concéntrico** (cada 4.º ataque), **imparable** | 30 · 1,20 / 0,20 / 0,80 · un anillo | El anillo elegido se ilumina en el suelo 1,2 s + zumbido grave; indicador rojo | Salir al anillo seguro, esquiva (i-frames) o acción invulnerable |
+| F1–F3 | **Haz del archivo** (receta: Rayo (haz) + [Luz], compilada con `PlanHechizo`, M-49) | 6 por tic de 0,25 s, 2 s · 30 m en línea | Círculo de runas 0,8 s + línea fina en el suelo con la dirección (0,6 s) | Ponerse tras un pilar o en un nicho; EE bloquea de frente (hechizo −50 %); EP esquiva lateral; Silencio/Desequilibrado lo interrumpe |
+| Transición 65 % | Grito + encendido | Empuje 3 m; 3 s inmune a control (§2.14); enciende **3 braseros** en rojo | Braseros que cambian de color | Usar los 3 s para colocarse junto a un brasero |
+| F2 65–30 % | Combo de 2 tajos | 18 + 18 · 0,60 / 0,20 / 0,60 · 3,0 m; uno cada 2,8 s | Chevrones (sin fintas en F2) | Parada en el 2.º ⇒ contraataque |
+| F2 | **Embate**, imparable | 32 · 1,00 de anticipación, carrera a 14 m/s, hasta 24 m | Se agacha 1,0 s, línea roja en el suelo hacia el jugador, rugido de braseros | Esquiva lateral; **con un pilar detrás** ⇒ Estrellado 2,5 s (castigo) |
+| F2 | **Égida de brasero** | −15 % daño recibido por brasero encendido (máx. 3); reenciende 1 cada 20 s | Llama del brasero tendida hacia el Custodio | Apagar braseros (Hielo/Aire o espada) |
+| F2 | Lluvia de brasas (receta Proyectil + Fuego + Multiplicar) | 3 × 10 ardiente + Ardiendo · cada 10 s | Círculo rojo 0,7 s | EE bloquea de frente; esquiva; Lanza apaga Ardiendo (§1.9) |
+| Transición 30 % | Paso al umbral | Braseros a azul violeta; 3 s inmune; limpia debuffs; apaga la Égida | — | — |
+| F3 30–0 % | Combo de 2 con **fintas** (reglas de §1.1: máx. 1 por ciclo de 3, nunca hacia abajo, dirección fija ≥ 0,40 s antes del activo) | 18 + 18 · como F2 | Chevrón que se desliza; destello frío | Igual que F2; morder la finta cuesta la parada |
+| F3 | **Paso del umbral** (Arcano de Espacio, Destello) + tajo | Reaparece a 3 m del jugador; tajo 24 tras 0,60 s de anticipación; cada ≈ 10 s, máx. 1 por ciclo de 3 ataques | Glifo de umbral en el suelo **0,8 s antes** donde va a aparecer (siempre en el flanco o la espalda); sonido con paneo estéreo de ese lado | Girarse y parar (dirección del chevrón), o esquivar hacia delante |
+| F3 | **Gravedad + Sello central** | Atrae 3 m/s durante 2 s hacia el centro; luego Sello del centro, imparable 35 | Círculo violeta 1,0 s; el anillo central brilla durante la atracción | Correr hacia fuera (más rápido que la atracción), Destello (funciona, §2.10), Silencio/Desequilibrado en el círculo |
+
+**Estrellado** (tras chocar con un pilar): 2,5 s abierto, el núcleo queda **expuesto**: multiplicadorEstado × 1,5 para
+todo golpe (no se consume durante los 2,5 s; no se suma a Congelado: se toma el mayor) y el perforante usa 1,5 en vez
+de 0,75. No cuenta para los rendimientos decrecientes de control (§2.14) porque lo provoca el escenario.
+
+**Contadores por herramienta** (ninguna resuelve sola el combate):
+| Herramienta | Papel en este jefe |
+|---|---|
+| EP | Estocada al núcleo expuesto (≈ 45 por golpe, la ventana más rentable del combate); parada de 250 ms contra las fintas |
+| EE | Contraataque contundente (el mejor DPS fuera de ventanas); bloquea Haz y Lluvia de frente; Embestida lo aparta 1 s |
+| Lanza de escarcha / Hielo / Aire | Apagan braseros a distancia (la Égida es su razón de estar aquí); Congelado 1 s |
+| Rayo (fase 2) | × 1,25 (bronce); Cargado ⇒ Aturdido con rendimientos decrecientes |
+| Silencio / Desequilibrado | Interrumpen Haz, Lluvia y Gravedad |
+| Bola / Destello sagrado | Débiles aquí (ardiente 0,8, no es no-muerto): Destello solo vale por la cura |
+
+**Balance** (estimación analítica: TTK del jefe del MVP de §1.11 escalado por los multiplicadores y la defensa de esta
+ficha, con Égida media de 0,7 braseros en F2, ventanas de Estrellado y 3 s por transición; script de apoyo en el
+scratchpad, a sustituir por `juego/tools/sim-balance.ts`, ± 15 %):
+| Acción contra el Custodio | DPS normal | DPS con núcleo expuesto |
+|---|---|---|
+| Ligero EP / fuerte EP | 9,3 / 15,2 | 17,3 / 24,8 |
+| Contraataque EP / EE | 17,3 / **26,4** | 29,3 / 42,5 |
+| Estocada (EP) | 16,3 | **≈ 59** (perforante 1,5 en el núcleo) |
+| Bola / Lanza / Destello | 5,5 / 4,6 / 1,3 | 9,4 / 8,5 / 2,2 |
+
+| TTK (s) | EP espada | EE espada | EP mixto | EE mixto | Objetivo |
+|---|---|---|---|---|---|
+| Sin mejoras | 233 | 228 | **188** | 199 | mixto 170–220; solo espada ≤ 240 |
+| Filo 2 + Potencia 2 | 191 | 189 | **155** | 165 | mixto 140–180 |
+Coherencia con §1.11 y la zona 3: el jefe del MVP dura 96–125 s en amenaza 2; este, opcional y de amenaza 3, ≈ 1,6–2 ×.
+Daño recibido estimado (EP mixto, sin mejoras): ≈ 230–270 netos ⇒ 3–4 pociones o Destello en rotación.
+
+**Reglas de sala:** zona de anulación estándar (§2.10). Morir ⇒ reaparición fuera de la sala (N6, §3b), el Custodio
+vuelve al 100 % y pilares y braseros se restauran. Derrota única: no reaparece; al vencerlo el muro este se retrae
+hacia la biblioteca. Detecta invisibilidad a 4 m (§2.14).
+
+### 3.2 Arena (Casa de la Arena, ruedo de 40 × 32 m)
+Propuesta de combate; **rondas, entrada, monedas, objetos y reputación los fija el GDD** (`disenador-juego`).
+
+**Tipos de combate.**
+| Tipo | Quién | Reglas de combate |
+|---|---|---|
+| Monstruos de jaula | Bestiario (esqueleto, goblin, cultista) + 2 bestias de arena (abajo) | Turnos de ataque 1 + 1 (§1.10); sin elección matar/perdonar |
+| Duelista EP | NPC humano con espada sola | Mismas reglas direccionales que el jugador (§1.1): guardia direccional visible que cambia cada 1,5–3 s, combo de 3, Estocada de quiebre (atraviesa tu guardia: esquívala). Desde Plata **para** tus golpes al lado que guarda si la dirección es «recién cambiada» (destello en su hoja) ⇒ tú quedas abierto 0,8 s |
+| Duelista EE | NPC con espada y escudo | Bloqueo frontal −80 % (también tus hechizos de frente −50 %); Embestida (cono 90°, telegrafiada con 0,25 s de hombro adelantado). Débil por el flanco: Embestida y fuerte con Tierra rompen su guardia, la Estocada la atraviesa |
+| Mago de arena | NPC lanzador de recetas (M-49) | Proyectil de Fuego o Hielo, Barrera (absorbe 40 × rango), Muro y **Destello** de huida si estás a < 3 m (recarga 4 s). Círculo ≥ 0,5 s; un golpe de espada lo interrumpe (como el cultista); Destello sagrado o Crepúsculo quitan la Barrera; resiste su elemento × 0,5 |
+
+**Fichas base** (rango Bronce; los rangos multiplican vida y daño):
+| Enemigo | Vida / vel. / defensa | Ataques (daño · fases · alcance) | Débil (× > 1) / resiste | Señal previa |
+|---|---|---|---|---|
+| Duelista EP | 110 / 4,5 m/s / 1 | Ligero 10 (0,60 lateral), Estocada 18 perforante (0,25 / 0,15 / 0,40, 4 m, recarga 7 s) | Todo × 1,0 | Chevrón; Estocada con pie atrás 0,25 s y brillo en la punta |
+| Duelista EE | 130 / 3,5 m/s / 2 | Ligero 10 (0,70), Embestida 12 contundente + empuje 2 m (recarga 9 s) | Flanco y espalda sin escudo | Chevrón; hombro adelantado |
+| Mago de arena | 80 (+ Barrera 40) / 3,0 m/s / 0 | Proyectil 14 + estado, uno cada 3,5 s · 25 m | Cortante 1,2, perforante 1,25 / su elemento 0,5 | Círculo de runas del color del elemento |
+| Hiena del cañón (jauría 3–5) | 30 / 7,0 m/s / 0 | Mordisco 8 (0,45 / 0,10 / 0,40) · 1,6 m; rodean y atacan por la espalda | Cortante 1,25, ardiente 1,25 | Se agacha y gruñe 0,45 s |
+| Escorpión de roca (foso) | 200 / 3,0 m/s / 3 | Pinzas izq./der. 18 (0,60 / 0,20 / 0,60) · 2,5 m; **aguijón imparable** 28 + Veneno 2 %/s 6 s (0,90 / 0,20 / 1,50) · 4 m | Contundente 1,25, frío 1,25 / cortante 0,75, ardiente 0,75; coraza frontal: proyectiles físicos de frente × 0,5 | Pinza que se abre del lado de entrada; cola que brilla 0,9 s |
+Tras fallar el aguijón, la cola queda **clavada** 1,5 s (espalda abierta: crítico de §1.5). Las dos bestias son
+nuevas en el bestiario: requieren el visto bueno de `disenador-juego` y modelos de `artista-3d`.
+
+**Rangos y escalado** (vida / daño; el de Oro coincide con la amenaza 3 de la ciudad):
+| Rango | Vida / daño | Oleadas (descanso 15 s: aguante y maná al 100 %, vida no; máx. 2 pociones por ronda) | Cierre |
+|---|---|---|---|
+| Bronce | × 1,0 / × 1,0 | 3: 3 esqueletos · 3 hienas · duelo | Duelista EP |
+| Plata | × 1,25 / × 1,15 | 4: 2 esq. + 2 gob. · 4 hienas + 1 cult. · escorpión · duelo | Duelista EE (o rival perdonado) |
+| Oro | × 1,5 / × 1,3 | 4: 3 esq. + 2 gob. + 1 cult. · escorpión + 2 gob. · mago · duelo | Duelista EP veterano (o rival) |
+| Campeón | × 1,8 / × 1,45 | 5: 4 esq. + 2 cult. · 2 escorpiones · 5 hienas · mago + duelista EE seguidos · campeón | Campeón de la arena: duelista con **2 rasgos** (abajo) |
+Perder una ronda = salir por el túnel de combatientes con la vida al 100 % (sin otra penalización, §3c). Un rango se
+desbloquea al completar el anterior.
+
+**TTK estimado de los duelos** (s por rango B / P / O / C; mismo método que §3.1, ± 15 %; objetivo: duelo 15–45 s):
+| Rival | EP espada | EE espada | EP mixto | EE mixto |
+|---|---|---|---|---|
+| Duelista EP | 20/25/29/35 | 19/24/29/35 | **16/20/24/29** | 17/21/25/30 |
+| Duelista EE | 25/31/37/45 | 24/31/37/44 | **21/26/31/37** | **21/26/31/37** |
+| Mago de arena | **13/16/19/23** | 22/28/33/40 | **11/14/17/20** | 19/24/29/35 |
+| Escorpión de roca | 48/60/72/87 | 42/52/62/75 | 38/47/56/68 | **35/44/52/63** |
+EP gana contra el mago (cierra distancia, lanza más rápido); EE contra el escorpión (contundente, bloquea las pinzas) y
+empata contra el duelista EE (Embestida); el mixto gana siempre al solo espada (pilar 2). EE recibe menos daño en todos.
+
+**Recompensas por rango (propuesta para el GDD; no fija economía).** Monedas = suma de las monedas de los enemigos del
+GDD §8.1 (duelista y mago cuentan como cultista, bestias como esqueleto; escorpión × 4) × multiplicador de monedas del
+rango (1,0 / 1,5 / 2,0 / 2,0) + premio de ronda que fija el GDD. **XP (fase 2): solo la primera victoria de cada rango**
+(30 / 45 / 60 / 90 = 225 XP) para no romper M-27 ni M-50 (3.780 + 225 = 4.005 < 4.571). Objeto de rango y título: GDD.
+
+**Matar / perdonar (decisión del usuario; efecto en combate).** El duelo termina cuando el rival llega a ≤ 15 % de vida
+(el umbral del remate, §1.6): cae de rodillas, invulnerable y sin atacar; la elección aparece sin límite de tiempo y fuera
+de combate (sin enemigos activos). Ninguna opción cambia las monedas ni la XP del combate.
+| Elección | Efecto en combate |
+|---|---|
+| **Perdonar** | El rival pasa a **rival recurrente**: vuelve como cierre del rango siguiente (en Campeón, como revancha opcional) con equipo mejorado (vida × 1,15, defensa + 1) y **+1 rasgo** elegido con semilla. Máx. 2 regresos por rival |
+| **Matar** | Remate de arena sincronizado (invulnerable, sin cálculo de daño). El rival sale del cartel y su hueco lo cubre un duelista genérico del mismo rango: **ningún rango queda bloqueado**. Botín de su equipo: valor en GDD |
+Rasgos de rival: **Lectura** (su guardia se pone en tu dirección de ataque más usada en el duelo anterior el 60 % del
+tiempo; contrarresta cambiar de dirección), **Contra** (su ventana de parada contra ti pasa de 0 a 150 ms; contrarresta
+Estocada, Embestida y magia), **Runa** (añade 1 receta: Barrera o Proyectil de su elemento). La reputación y las
+reacciones de la ciudad son del GDD.
+
+**Reglas del ruedo.** Zona de anulación como sala de jefe (§2.10: sin Planeo, Impulso, Salto lejano, Portal ni Ancla
+rúnica: el muro de 3,5 m se saltaría); Destello funciona pero no cruza el muro del podio (se recorta al borde). Velo
+permitido; los duelistas lo detectan a 4 m y al recibir daño (como jefes).
+
+### 3.3 Conjuros del archivo (biblioteca N8; reparto decidido en `docs/CIUDAD_ROCA.md` §3d)
+**Atril de la Orden (resuelve §2.7, punto 1).** Leer una página **descubre** su pieza aunque no se haya lanzado antes
+(igual que lanzarla, §2.5 y §2.7): entra en el Códice, ocupa 1 hueco desde ese momento y da la XP de descubrimiento de
+2.11 (si ya estaba descubierta, solo la página, sin XP). Además graba su **receta de la Orden** como hoja nueva **sin
+gastar tinta** (excepción a M-48, como la Bola inicial de §1.8). El compuesto o arcano leído se puede usar sin conocer
+sus runas base (cuenta como pieza propia). No hay XP nueva: estas piezas ya están en el catálogo de 2.11.
+
+| Página | Qué descubre | Receta de la Orden (valores de §2.3 y §2.11, con M = 0) | Papel |
+|---|---|---|---|
+| **Arcano de Espacio** (atril central, garantizado) | Arcano Aire + Sombra + Tierra (200 XP; +1 ranura equipada, M-30) | **Piedra de paso** (§2.7: crear 60 maná + 1 esquirla; viajar 30, recarga 120 s). Los otros 7 destinos de Espacio se componen en el grimorio (con tinta) | Viaje propio; Zancada y Gravedad para combate |
+| **Llama sagrada** (G5) | Fusión 2 (30 XP) | Proyectil + [Llama sagrada]: 24 maná, 0,4 s, recarga 1,0 s, 25 m/s, 30 m; 26,4 (½ sagrado, ½ ardiente); Ardiendo que quita 1 buff/s; estela ígnea de 6 m, 2 s, que aplica Ardiendo; C 3, I 0 % | Anti no-muertos y anti buffs (≈ 1,5 × el daño por maná de la Bola contra esqueletos) |
+| **Aurora** (G8) | Fusión 18 (30 XP) | Muro + [Aurora]: 34 maná, 0,6 s, recarga 8 s; cortina 8 × 3 m, 8 s; 13,2/s al contacto; Cegado 2 s al cruzarla; quien la cruza de tu lado gana +20 % vel. 4 s; **corta la línea de visión** de tiradores; C 4, I 0 % | Control de distancia contra goblins y magos |
+| **Crepúsculo** (G2) | Fusión 12 (30 XP) | Zona + [Crepúsculo]: 30 maná, 0,8 s, recarga 6 s; radio 5 m, 4 s; 7,9/s; **Anulado**: al entrar y cada 1 s borra buffs y debuffs de **todos** los que estén dentro (también los tuyos); reacción +10 por estado quitado; C 4, I 15 % | Quita Barreras, Égidas y bendiciones enemigas; riesgo propio |
+| **Planeo** (G11) | Runa de movimiento (40 XP) | Yo + [Planeo]: 5 + 3/s; caída 2 m/s, 14 m/s horizontal (§2.10); C 2, I 0 % | Exploración: pozo, meseta y la propia biblioteca |
+| **Ancla** (G3) | Runa de control (40 XP) | Sin receta: se aprende la runa (§2.3: −15 % potencia, −20 inestabilidad) | Hace viables recetas de 3–4 piezas |
+
+**Planeo frente a zonas de anulación (resuelve el punto 2).** La **biblioteca N8 no es zona de anulación para Planeo,
+Impulso ni Levitación** (zona de recompensa sin enemigos). Sí lo es la sala N7 (estándar). En toda la instancia (N6–N8)
+siguen bloqueados Salto lejano, Portal y Ancla rúnica (la instancia no se precarga por viaje). El daño por caída de
+§2.10 se aplica en N8 (60 m de alto); Planeo y Levitación lo anulan.
+
+**Esquirlas de Piedra de paso (resuelve el punto 3).** Junto al atril central hay **2 esquirlas rúnicas** de recogida
+única (no reaparecen). Toda la instancia N6–N8 cuenta como **dungeon**: allí no se puede crear ni viajar con Piedra de
+paso (motivo visible, sin gasto, M-22 y M-55). La primera piedra se estrena al salir (meseta o ciudad, ≥ 300 m de otra).
+
+**Arcano de Tiempo reservado (resuelve el punto 4).** Hasta el flag de trama `tiempoDesellado` (final, la Pausa), el
+conjunto exacto Luz + Rayo + Hielo **no resuelve como arcano**: resuelve como **generada** (§2.6), sin descubrimiento ni
+XP de arcano; sus 7 destinos (Rebobinar, Estasis…) no existen para el jugador. Un código importado que use el arcano
+aparece como receta con silueta y pista («la hora que nadie encuentra», opción C de 2.13). La hornacina de G6 y el
+hueco del atril central solo dan entradas de Códice (XP de entrada, 10 c/u, ya en el catálogo).
+
+### 3.4 Cambios técnicos que necesitan estas reglas (para `programador-gameplay`, `programador-motor`, `arquitecto`)
+- Pilares con estado (choques, caída, mínimo 2) y línea de visión del Haz contra ellos; braseros como entidades que
+  reaccionan a Hielo/Aire/espada (vía destino Objeto/mundo) y alimentan un buff del jefe.
+- Anillos de la sala como datos (radios) para el Sello; reaparición del Custodio con glifo previo.
+- Volúmenes de anulación **por tipo de runa** (N8 permite Planeo e Impulso; N7 y el ruedo no) y recorte del Destello
+  en el muro del podio.
+- Estado persistente de la arena: rangos completados, rivales (vivo/muerto, regresos, rasgos, dirección favorita) y
+  primera victoria por rango (XP una vez). Flag `tiempoDesellado` en el resolutor de núcleos.
+
+### 3.5 Reglas comprobables (jefe del archivo, arena y archivo)
+| ID | Regla | Test |
+|---|---|---|
+| C-37 | Fases del Custodio | Con `?test=1`: vida 1 150; al bajar de 747,5 (65 %) y de 345 (30 %) ⇒ transición de 3 s sin control aplicable, debuffs limpiados, braseros cambian de color (ámbar ⇒ rojo ⇒ azul violeta en `window.__GAME__`) |
+| C-38 | Sello concéntrico | Imparable: bloquear o parar ⇒ daño completo; jugador en un anillo no iluminado ⇒ 0; aviso del anillo ≥ 1,2 s antes del activo; cada 4.º ataque en F1 |
+| C-39 | Pilares | El Haz no daña al jugador con un pilar en la línea; Embate contra pilar ⇒ Estrellado 2,5 s y multiplicadorEstado 1,5 (Estocada en ventana ⇒ 21,6 × 1,5 × 1,5 − 4 = 44,6 ± 0,01); 2 choques ⇒ el pilar cae; con 2 pilares en pie, 3 choques más ⇒ siguen 2 |
+| C-40 | Égida de brasero | En F2 con 3 braseros encendidos, un golpe de 20 base ⇒ daño × 0,55 antes de defensa; 1 Lanza al brasero ⇒ apagado; 1 fuerte o 3 ligeros ⇒ apagado; reencendido 1 cada 20 s, máx. 3 |
+| C-41 | Telegrafiado del Custodio | Paso del umbral: glifo visible ≥ 0,8 s antes de reaparecer, siempre en el flanco o la espalda, y tajo con chevrón ≥ 0,60 s; fintas solo en F3 y con las reglas de §1.1 (dirección fija ≥ 0,40 s antes del activo, nunca hacia abajo, máx. 1 por ciclo de 3) |
+| C-42 | Balance del Custodio | Simulación: TTK mixto sin mejoras 170–220 s y con Filo 2 + Potencia 2 140–180 s; solo espada ≤ 240 s; la Estocada en el núcleo expuesto es la acción de mayor DPS y el contraataque EE la mayor fuera de ventanas |
+| C-43 | Reinicio del jefe | Morir en N7 ⇒ reaparición en N6, Custodio al 100 %, 6 pilares y 8 braseros restaurados; vencido ⇒ no reaparece y el muro este abre N8 |
+| C-44 | Rangos de la arena | Vida y daño de cada enemigo = base × (1,0 / 1,25 / 1,5 / 1,8) y (1,0 / 1,15 / 1,3 / 1,45); Plata bloqueada hasta completar Bronce; perder ⇒ vida 100 % en el túnel y ronda perdida |
+| C-45 | Duelistas | El duelo acaba a ≤ 15 % de vida del rival (rodillas, invulnerable, 0 ataques); duelista EP desde Plata para un golpe al lado que guarda con dirección recién cambiada ⇒ jugador abierto 0,8 s; en Bronce nunca para |
+| C-46 | Matar / perdonar | Mismas monedas y XP con las dos opciones; perdonar ⇒ el rival aparece como cierre del rango siguiente con vida × 1,15, defensa + 1 y 1 rasgo (semilla); 3.ª vez perdonado ⇒ no vuelve; matar ⇒ fuera del cartel y un duelista genérico ocupa su hueco; rasgo Lectura ⇒ guardia en la dirección más usada ≥ 55 % del tiempo en 60 s |
+| C-47 | XP de la arena | Primera victoria de cada rango ⇒ 30 / 45 / 60 / 90 XP; repetir ⇒ 0 XP de arena; suma del catálogo con la arena < 4.571 (M-50) |
+| C-48 | Ruedo | Planeo, Impulso, Salto lejano, Portal y Ancla rúnica bloqueados sin gastar maná; Destello hacia el muro termina dentro del ruedo |
+| M-56 | Atril de la Orden | Leer la página de Llama sagrada sin haberla lanzado ⇒ fusión descubierta (1 hueco, +30 XP), receta lanzable y tinta sin cambios, +1 hoja; leerla ya descubierta ⇒ receta, 0 XP; Arcano de Espacio ⇒ +200 XP, ranuras 6 ⇒ 7, receta Piedra de paso |
+| M-57 | Recetas del archivo | Valores de §3.3 (maná 24 / 34 / 30; recarga 1,0 / 8 / 6 s; I 0 / 0 / 15 %); Crepúsculo borra también los buffs del jugador dentro de la zona |
+| M-58 | Planeo en la biblioteca | En N8 Planeo e Impulso funcionan y una caída de 40 m planeando ⇒ 0 daño; en N7 ⇒ bloqueados sin gastar maná; Salto lejano en N8 ⇒ bloqueado |
+| M-59 | Esquirlas y Piedra de paso en la instancia | 2 esquirlas junto al atril, una sola vez; crear o viajar en N6–N8 ⇒ rechazo con motivo, sin gastar maná ni esquirla; al salir, crear ⇒ aceptado si cumple 2.7 |
+| M-60 | Arcano de Tiempo sellado | Sin `tiempoDesellado`, Luz + Rayo + Hielo ⇒ resuelve como generada, sin arcano ni XP de arcano; con el flag ⇒ resuelve como arcano Tiempo (M-07) |
+
+### 3.6 Preguntas abiertas (Ciudad de la Roca)
+15. Lore del Custodio (constructo, Tejedor atado o ambos) y si sus últimas palabras dan una pista de la Pausa: `disenador-juego`.
+16. ¿Se puede repetir al Custodio (por ejemplo, un eco en la sala tras vencerlo) para usar Crepúsculo contra la Égida?
+17. Hienas y escorpión: aprobar como bestiario nuevo o sustituir por enemigos existentes.
