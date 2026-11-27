@@ -29,10 +29,11 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
   await p.evaluate(() => window.__IDLE__.camaraMano('r', -0.3, 0.05, 0.25)); await shot('5_mano_relajada');
   // coreografía: recorre las fases y saca una captura de cada una
   const hasta = async c => { let s = await st(1); const n = Math.max(0, Math.round(((c - s.coreo.c + 16) % 16) * 60)); return st(n); };
-  const fases = [[4.75, 'B', '7_puntas_dedos'], [6.4, 'C', '8_sube_brazo'], [8.4, 'D', '9_orbita'], [12.2, 'F', '10_mano_derecha'], [13.6, 'G', '11_salto']];
+  const fases = [[4.75, 'B', '7_puntas_dedos'], [6.9, 'C', '8_sube_brazo'], [8.4, 'D', '9_orbita'], [11.6, 'E', '9b_baja_brazo'], [13.0, 'F', '10_mano_derecha'], [14.1, 'G', '11_salto']];
   for (const [c, f, n] of fases) {
     s = await hasta(c); ok(s.coreo.fase === f && s.orbVisible, `fase ${f} en c=${s.coreo.c.toFixed(2)}`);
     await p.evaluate(() => window.__IDLE__.camara(0.6, 1.6, 2.4, 0, 1.25, 0)); await shot(n);
+    if (f === 'C' || f === 'E') { await p.evaluate(() => window.__IDLE__.camaraCabeza(0.35, 0.0, 0.45)); await shot(n + '_cuello'); }
   }
   s = await hasta(8.4); const o2 = s.orb; s = await st(30); ok(Math.hypot(s.orb[0] - o2[0], s.orb[2] - o2[2]) > 0.1, 'la bola rodea el cuerpo');
   await p.evaluate(() => window.__IDLE__.key('w', true)); s = await st(30);
