@@ -178,38 +178,66 @@ function aim(bone, child, dir, w = 1) {
   if (w < 1) tq.slerp(tq3.identity(), 1 - w);
   rotWorld(bone, tq);
 }
-const palmLocal = new V(0, 0, 1);   // normal de la palma en el espacio de hand_l (se calcula al cargar)
-function palmNormal(out) {   // normal de la palma izquierda en mundo (hacia donde «mira» la palma)
-  B.hand.getWorldQuaternion(tq3); return out.copy(palmLocal).applyQuaternion(tq3);
-}
+
+// Datos por mano: huesos, normal de la palma (en el espacio del hueso de la mano) y eje de flexión de cada falange.
+const H = { l: null, r: null };
+let bones = [], bind = [];
+function palmNormal(h, out) { h.hand.getWorldQuaternion(tq3); return out.copy(h.palm).applyQuaternion(tq3); }
 
 new THREE.GLTFLoader().parse(b64ToBuf(GLB_B64), '', gltf => {
   char = gltf.scene;
   char.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
   pivot.add(char);
   const find = n => { let r = null; char.traverse(o => { if (!r && o.isBone && o.name === n) r = o; }); return r; };
-  ['upperarm_l', 'lowerarm_l', 'hand_l', 'spine_03', 'neck_01', 'head', 'middle_01_l', 'index_01_l', 'pinky_01_l', 'clavicle_l'].forEach(n => B[n] = find(n));
-  B.upper = B.upperarm_l; B.lower = B.lowerarm_l; B.hand = B.hand_l; B.middle = B.middle_01_l; B.index = B.index_01_l; B.pinky = B.pinky_01_l;
-  B.fingers = [];
-  ['index', 'middle', 'ring', 'pinky', 'thumb'].forEach((f, fi) => { for (let j = 1; j <= 3; j++) { const b = find(`${f}_0${j}_l`); if (b) B.fingers.push({ b, fi, j, thumb: f === 'thumb' }); } });
+  char.traverse(o => { if (o.isBone) { bones.push(o); bind.push([o.quaternion.clone(), o.position.clone()]); } });
+  ['spine_03', 'neck_01', 'head', 'pelvis'].forEach(n => B[n] = find(n));
+  char.updateMatrixWorld(true);   // pose de enlace (bind): mano abierta
+  for (const sd of ['l', 'r']) {
+    const h = { side: sd, upper: find('upperarm_' + sd), lower: find('lowerarm_' + sd), hand: find('hand_' + sd),
+      index: find('index_01_' + sd), middle: find('middle_01_' + sd), pinky: find('pinky_01_' + sd), fingers: [], palm: new V() };
+    const inv = new THREE.Matrix4().copy(h.hand.matrixWorld).invert(), loc = b => wp(b, new V()).applyMatrix4(inv);
+    const kI = loc(h.index), kM = loc(h.middle), kP = loc(h.pinky);
+    h.palm.crossVectors(kM.clone().normalize(), kI.clone().sub(kP)).normalize();
+    // la palma mira hacia donde se doblan los dedos en el clip de reposo (se comprueba más abajo)
+    ['index', 'middle', 'ring', 'pinky', 'thumb'].forEach((f, fi) => {
+      for (let j = 1; j <= 3; j++) {
+        const b = find(`${f}_0${j}_${sd}`); if (!b) continue;
+        h.fingers.push({ b, fi, j, thumb: f === 'thumb', bindQ: b.quaternion.clone(), axis: new V() });
+      }
+    });
+    H[sd] = h;
+  }
   mixer = new THREE.AnimationMixer(char);
   for (const c of gltf.animations) acts[c.name] = mixer.clipAction(c);
   acts.reposo.play(); acts.andar.play(); acts.andar.setEffectiveWeight(0);
   mixer.update(0.5); char.updateMatrixWorld(true);
-  // normal de la palma en el espacio de la mano: perpendicular al plano (eje de los dedos × fila de nudillos),
-  // con el signo del lado hacia el que se cierra el pulgar
-  const inv = new THREE.Matrix4().copy(B.hand.matrixWorld).invert(), loc = b => wp(b, new V()).applyMatrix4(inv);
-  const kI = loc(B.index), kM = loc(B.middle), kP = loc(B.pinky), th = loc(find('thumb_03_l'));
-  palmLocal.crossVectors(kM.clone().normalize(), kI.clone().sub(kP)).normalize();
-  const centro = kI.clone().add(kM).add(kP).multiplyScalar(1 / 3).multiplyScalar(0.6);
-  if (th.sub(centro).dot(palmLocal) < 0) palmLocal.negate();
-  for (const f of B.fingers) f.base = loc(f.b).normalize();   // abanico natural de cada dedo
-  // ejes «adelante» de cabeza y pecho en su espacio local (el personaje mira a +Z)
+  for (const sd of ['l', 'r']) {
+    const h = H[sd];
+    // signo de la palma: el pulgar del clip de reposo se cierra hacia ella
+    const inv = new THREE.Matrix4().copy(h.hand.matrixWorld).invert();
+    const th = wp(h.fingers.find(f => f.thumb && f.j === 3).b, new V()).applyMatrix4(inv);
+    const kM = wp(h.middle, new V()).applyMatrix4(inv);
+    if (th.sub(kM.multiplyScalar(0.6)).dot(h.palm) < 0) h.palm.negate();
+  }
+  // ejes de flexión en la pose de enlace: girar la falange hacia la palma
+  resetBind(); char.updateMatrixWorld(true);
+  for (const sd of ['l', 'r']) {
+    const h = H[sd]; palmNormal(h, tF);
+    for (const f of h.fingers) {
+      const child = f.b.children.find(c => c.isBone);
+      wp(f.b, tA); if (child) wp(child, tB).sub(tA); else { f.b.getWorldQuaternion(tq); tB.set(0, 1, 0).applyQuaternion(tq); }
+      tB.normalize();
+      tC.crossVectors(tB, tF);
+      if (tC.lengthSq() < 1e-6) tC.set(1, 0, 0);
+      f.b.getWorldQuaternion(tq); f.axis.copy(tC.normalize()).applyQuaternion(tq.invert());
+    }
+  }
   const fwd = new V(0, 0, 1);
+  mixer.update(0); char.updateMatrixWorld(true);
   B.head.getWorldQuaternion(tq); headFwdLocal.copy(fwd).applyQuaternion(tq.invert());
-  B.spine_03.getWorldQuaternion(tq); chestFwdLocal.copy(fwd).applyQuaternion(tq.invert());
   ready = true;
 }, e => { $('estado').textContent = 'Error al cargar: ' + e.message; console.error(e); });
+function resetBind() { for (let i = 0; i < bones.length; i++) { bones[i].quaternion.copy(bind[i][0]); bones[i].position.copy(bind[i][1]); } }
 
 /* ---------- input ---------- */
 const keys = new Set();
@@ -229,7 +257,7 @@ $('rEspera').oninput = e => { P.espera = +e.target.value; $('vEspera').textConte
 $('rVel').oninput = e => { vel = +e.target.value; $('vVel').textContent = vel; };
 
 /* ---------- estado (lógica pura, paso fijo) ---------- */
-const S = { t: 0, quieto: 0, w: 0, forma: 0, idleT: 0, mov: 0, rumbo: 0, x: 0, z: 0, fase: 'reposo', paseoT: 0 };
+const S = { walkT: 0, t: 0, quieto: 0, w: 0, forma: 0, idleT: 0, mov: 0, rumbo: 0, x: 0, z: 0, fase: 'reposo', paseoT: 0 };
 const mv = new V();
 function moveInput() {
   mv.set(0, 0, 0);
@@ -246,7 +274,7 @@ function moveInput() {
   return mv.lengthSq() > 0;
 }
 function step() {
-  S.t += DT;
+  S.t += DT; S.walkT += DT;
   const moving = moveInput();
   S.mov += ((moving ? 1 : 0) - S.mov) * Math.min(1, DT * 8);
   if (moving) {
@@ -267,85 +295,112 @@ function step() {
 /* ---------- capa de animación procedural (sobre el clip) ---------- */
 const ease = x => x * x * (3 - 2 * x);
 const target = new V(), pole = new V(), elbow = new V(), fwdW = new V(), leftW = new V(), chest = new V(), palm = new V(), pn = new V(), orbP = new V(), side = new V();
-function solveArm(T, w) {
-  wp(B.upper, tA); wp(B.lower, tB); wp(B.hand, tD);
+const tR = new V(), tM = new V(), pR = new V(), pM = new V(), dUp = new V(), dFw = new V(), qR = new Q();
+function solveArm(h, T, Pole, w) {
+  wp(h.upper, tA); wp(h.lower, tB); wp(h.hand, tD);
   const l1 = tA.distanceTo(tB), l2 = tB.distanceTo(tD);
   tE.subVectors(T, tA); let d = tE.length(); d = Math.min(Math.max(d, Math.abs(l1 - l2) + 1e-3), l1 + l2 - 1e-3);
   tE.normalize();
-  const a = (l1 * l1 - l2 * l2 + d * d) / (2 * d), h = Math.sqrt(Math.max(0, l1 * l1 - a * a));
-  tF.subVectors(pole, tA); tF.addScaledVector(tE, -tF.dot(tE)).normalize();
-  elbow.copy(tA).addScaledVector(tE, a).addScaledVector(tF, h);
-  aim(B.upper, B.lower, tG.subVectors(elbow, tA), w);
-  wp(B.lower, tB); tG.subVectors(T, tB); aim(B.lower, B.hand, tG, w);
+  const a = (l1 * l1 - l2 * l2 + d * d) / (2 * d), hh = Math.sqrt(Math.max(0, l1 * l1 - a * a));
+  tF.subVectors(Pole, tA); tF.addScaledVector(tE, -tF.dot(tE)).normalize();
+  elbow.copy(tA).addScaledVector(tE, a).addScaledVector(tF, hh);
+  aim(h.upper, h.lower, tG.subVectors(elbow, tA), w);
+  wp(h.lower, tB); tG.subVectors(T, tB); aim(h.lower, h.hand, tG, w);
 }
-function applyIdle(w, t) {
-  if (w <= 0) return;
-  const e = ease(w);
+// orienta la mano: normal de la palma → nUp; dedos → dFwd (proyectado)
+function orientHand(h, nUp, dFwd, w) {
+  palmNormal(h, pn); tq.setFromUnitVectors(pn, tG.copy(nUp).normalize()); if (w < 1) tq.slerp(tq3.identity(), 1 - w); rotWorld(h.hand, tq);
+  wp(h.hand, tA); wp(h.middle, tB); tB.sub(tA); palmNormal(h, pn); tB.addScaledVector(pn, -tB.dot(pn)).normalize();
+  tC.copy(dFwd).addScaledVector(pn, -dFwd.dot(pn)).normalize();
+  tq.setFromUnitVectors(tB, tC); if (w < 1) tq.slerp(tq3.identity(), 1 - w); rotWorld(h.hand, tq);
+}
+// dedos a partir de la pose de enlace (mano abierta) + flexión por falange; mezcla con el clip según w
+const RELAJADA = [0.30, 0.45, 0.35], PULGAR_REL = [0.10, 0.20, 0.15];
+function poseFingers(h, curl, w) {
+  for (const f of h.fingers) {
+    const ang = curl(f);
+    qR.setFromAxisAngle(f.axis, ang); tq.copy(f.bindQ).multiply(qR);
+    f.b.quaternion.slerp(tq, w);
+  }
+  h.hand.updateMatrixWorld(true);
+}
+function applyPose(wMagia, t, mov) {
+  const a = 1 - mov;                 // capa de brazos: plena quieto, nula andando
+  const e = ease(wMagia);
   pivot.getWorldQuaternion(tq); fwdW.set(0, 0, 1).applyQuaternion(tq); leftW.crossVectors(UP, fwdW);
+  // respiración y leve giro del pecho hacia la mano mágica
+  tq.setFromAxisAngle(leftW, 0.015 * Math.sin(t * 1.6) * a); rotWorld(B.spine_03, tq);
+  if (e > 0) { tq.setFromAxisAngle(UP, 0.16 * e); rotWorld(B.spine_03, tq); }
   wp(B.spine_03, chest);
-  // pecho: leve giro hacia la mano y respiración
-  tq.setFromAxisAngle(UP, 0.18 * e); rotWorld(B.spine_03, tq);
-  // objetivo de la mano: delante del pecho, a la izquierda, a la altura del esternón, describiendo un lazo lento
-  const a = t * 0.9;
-  target.copy(chest).addScaledVector(fwdW, 0.34 + 0.03 * Math.sin(a * 0.7)).addScaledVector(leftW, 0.20 + 0.06 * Math.sin(a))
-    .addScaledVector(UP, -0.05 + 0.05 * Math.sin(a * 2) + 0.04 * Math.sin(a * 0.5));
-  pole.copy(chest).addScaledVector(leftW, 0.6).addScaledVector(UP, -0.7).addScaledVector(fwdW, -0.1);
-  solveArm(target, e);
-  // palma hacia arriba, dedos hacia delante (y un poco hacia el cuerpo)
-  palmNormal(pn); tq.setFromUnitVectors(pn, tG.copy(UP).addScaledVector(leftW, -0.15 * Math.sin(a)).addScaledVector(fwdW, -0.1).normalize());
-  tq.slerp(tq3.identity(), 1 - e); rotWorld(B.hand, tq);
-  wp(B.hand, tA); wp(B.middle, tB); tB.sub(tA); palmNormal(pn); tB.addScaledVector(pn, -tB.dot(pn)).normalize();
-  tC.copy(fwdW).addScaledVector(leftW, -0.35).addScaledVector(pn, -fwdW.dot(pn)).normalize();
-  tq.setFromUnitVectors(tB, tC); tq.slerp(tq3.identity(), 1 - e); rotWorld(B.hand, tq);
-  // dedos: se curvan y ondulan como si movieran la bola
-  palmNormal(pn); wp(B.index, tA); wp(B.pinky, tB); side.subVectors(tB, tA).normalize();
-  // abre la mano y ondula los dedos uno tras otro (de índice a meñique), como si giraran la bola
-  B.hand.getWorldQuaternion(tq2); const hq = tq2.clone();
-  let acc = 0;
-  for (const f of B.fingers) {
-    if (f.j === 1) acc = 0;
-    if (f.thumb || !f.b.children.length) continue;
-    const ola = 0.5 + 0.5 * Math.sin(t * 2.6 - f.fi * 0.9);
-    acc += [0.10, 0.22, 0.25][f.j - 1] + ola * [0.25, 0.35, 0.3][f.j - 1];
-    tA.copy(f.base).applyQuaternion(hq); tB.copy(pn); tB.addScaledVector(tA, -tB.dot(tA)).normalize();
-    tC.copy(tA).multiplyScalar(Math.cos(acc)).addScaledVector(tB, Math.sin(acc));
-    aim(f.b, f.b.children[0], tC, e);
+  if (a > 0) {
+    for (const sd of ['r', 'l']) {
+      const h = H[sd], s = sd === 'l' ? 1 : -1;   // +1 = lado izquierdo del personaje
+      // brazo relajado junto al cuerpo: mano al costado del muslo, codo atrás y afuera
+      wp(h.upper, tA);
+      tR.copy(tA).addScaledVector(UP, -0.50).addScaledVector(leftW, s * 0.10).addScaledVector(fwdW, 0.04 + 0.01 * Math.sin(t * 1.6));
+      pR.copy(tA).addScaledVector(fwdW, -0.5).addScaledVector(leftW, s * 0.25).addScaledVector(UP, -0.25);
+      let k = sd === 'l' ? e : 0;
+      if (sd === 'l' && k > 0) {
+        // mano mágica: delante del pecho, a la izquierda, describiendo un lazo lento
+        const q = t * 0.9;
+        tM.copy(chest).addScaledVector(fwdW, 0.33 + 0.02 * Math.sin(q * 0.7)).addScaledVector(leftW, 0.19 + 0.04 * Math.sin(q))
+          .addScaledVector(UP, -0.06 + 0.03 * Math.sin(q * 2) + 0.025 * Math.sin(q * 0.5));
+        pM.copy(chest).addScaledVector(leftW, 0.6).addScaledVector(UP, -0.7).addScaledVector(fwdW, -0.1);
+        tR.lerp(tM, k); pR.lerp(pM, k);
+      }
+      solveArm(h, tR, pR, a);
+      // orientación de la mano: relajada (palma hacia el muslo, dedos abajo) → mágica (palma arriba, dedos al frente)
+      dUp.copy(leftW).multiplyScalar(-s).addScaledVector(fwdW, 0.25);
+      dFw.copy(UP).multiplyScalar(-1).addScaledVector(fwdW, 0.25);
+      if (k > 0) {
+        tA.copy(UP).addScaledVector(leftW, -0.12 * Math.sin(t * 0.9)).addScaledVector(fwdW, -0.08).normalize();
+        tB.copy(fwdW).addScaledVector(leftW, -0.4).normalize();
+        dUp.normalize().lerp(tA, k); dFw.normalize().lerp(tB, k);
+      }
+      orientHand(h, dUp, dFw, a);
+      // dedos: relajados → mano abierta ahuecada que ondula, dedo a dedo, como si girara la bola
+      poseFingers(h, f => {
+        const rel = f.thumb ? PULGAR_REL[f.j - 1] : RELAJADA[f.j - 1];
+        if (k <= 0) return rel;
+        const ola = Math.sin(t * 2.4 - f.fi * 0.7);
+        const mag = f.thumb ? [-0.25, -0.05, 0.05][f.j - 1] + 0.04 * Math.sin(t * 1.9)
+                            : [0.18, 0.26, 0.22][f.j - 1] + ola * [0.10, 0.12, 0.10][f.j - 1];
+        return rel + (mag - rel) * k;
+      }, a);
+    }
   }
   // cabeza: mira la bola
-  if (S.forma > 0) {
+  if (S.forma > 0 && e > 0) {
     B.head.getWorldQuaternion(tq); tA.copy(headFwdLocal).applyQuaternion(tq);
     wp(B.head, tB); tC.subVectors(orb.position, tB).normalize();
-    tq.setFromUnitVectors(tA, tC); tq.slerp(tq3.identity(), 1 - 0.65 * e * ease(S.forma)); rotWorld(B.head, tq);
+    tq.setFromUnitVectors(tA, tC); tq.slerp(tq3.identity(), 1 - 0.6 * e * ease(S.forma)); rotWorld(B.head, tq);
   }
 }
 
-function updateOrb(t) {
-  if (!ready) return;
-  // centro de la palma
-  wp(B.hand, tA); wp(B.middle, tB); wp(B.index, tC); wp(B.pinky, tD);
+function updateOrb(t, forma, w) {
+  const h = H.l;
+  wp(h.hand, tA); wp(h.middle, tB); wp(h.index, tC); wp(h.pinky, tD);
   palm.copy(tA).add(tB).add(tC).add(tD).multiplyScalar(0.25);
-  palmNormal(pn);
-  const f = ease(S.forma);
-  const lift = 0.11 + 0.025 * Math.sin(t * 1.7);
+  palmNormal(h, pn);
+  const f = ease(forma);
+  const lift = 0.10 + 0.02 * Math.sin(t * 1.7);
   side.crossVectors(pn, fwdW).normalize();
-  orbP.copy(palm).addScaledVector(pn, lift).addScaledVector(side, 0.035 * Math.sin(t * 1.3)).addScaledVector(fwdW, 0.025 * Math.sin(t * 2.6));
+  orbP.copy(palm).addScaledVector(pn, lift).addScaledVector(side, 0.03 * Math.sin(t * 1.3)).addScaledVector(fwdW, 0.02 * Math.sin(t * 2.6));
   orb.position.copy(orbP);
-  const sc = 0.2 + 0.8 * f, pulse = 1 + 0.06 * Math.sin(t * 5.0);
+  const sc = 0.2 + 0.8 * f, pulse = 1 + 0.05 * Math.sin(t * 5.0);
   orbCore.scale.setScalar(sc * pulse); halo.scale.setScalar(0.26 * sc * pulse);
   orbMat.uniforms.uT.value = t; orbMat.uniforms.uA.value = f;
   halo.material.opacity = 0.5 * f; orbLight.intensity = 1.2 * f;
   orb.visible = f > 0.001;
-  // partículas: al formarse vienen desde lejos en espiral; luego orbitan
   const gather = 1 - f;
   for (let i = 0; i < NP; i++) {
     const p = seed[i], ang = p.ph + t * p.w, r = p.r * (1 + gather * p.far * 6);
     tB.set(Math.cos(ang) * r, Math.sin(ang * 0.5 + p.tilt) * r * 0.45, Math.sin(ang) * r).applyAxisAngle(UP, p.az);
     pPos[i * 3] = orbP.x + tB.x; pPos[i * 3 + 1] = orbP.y + tB.y; pPos[i * 3 + 2] = orbP.z + tB.z;
     const tw = 0.5 + 0.5 * Math.sin(t * 6 + p.ph * 3);
-    pA[i] = (S.forma > 0 ? Math.min(1, S.forma * 3) : 0) * (0.25 + 0.5 * tw) * (S.w > 0 ? 1 : 0);
+    pA[i] = (forma > 0 && w > 0 ? Math.min(1, forma * 3) : 0) * (0.25 + 0.5 * tw);
     pS[i] = p.s;
   }
-  // hilo de la palma a la bola
   for (let k = 0; k < NH; k++) {
     const i = NP + k, u = ((k / NH) + t * 0.6) % 1;
     tB.lerpVectors(palm, orbP, u).addScaledVector(side, 0.006 * Math.sin(u * 20 + t * 4));
@@ -355,25 +410,35 @@ function updateOrb(t) {
   pGeo.attributes.position.needsUpdate = true; pGeo.attributes.aA.needsUpdate = true; pGeo.attributes.aS.needsUpdate = true;
 }
 
-function pose(dt) {
+// Render interpolado entre el estado anterior y el actual (alpha = fracción del paso pendiente): sin tirones a 120/144 Hz.
+const prev = { ...S };
+const lerpA = (a, b, k) => { let d = b - a; d = Math.atan2(Math.sin(d), Math.cos(d)); return a + d * k; };
+function pose(alpha) {
   if (!ready) return;
-  pivot.position.set(S.x, 0, S.z); pivot.rotation.y = S.rumbo;
-  acts.andar.setEffectiveWeight(S.mov); acts.reposo.setEffectiveWeight(1 - S.mov);
-  mixer.update(dt);
+  const L = (k) => prev[k] + (S[k] - prev[k]) * alpha;
+  const x = L('x'), z = L('z'), mov = L('mov'), w = L('w'), forma = L('forma'), t = L('t');
+  const idleT = S.w > 0 ? Math.max(0, S.idleT - (1 - alpha) * DT) : 0;
+  pivot.position.set(x, 0, z); pivot.rotation.y = lerpA(prev.rumbo, S.rumbo, alpha);
+  resetBind();
+  acts.andar.setEffectiveWeight(mov); acts.reposo.setEffectiveWeight(1 - mov);
+  acts.reposo.time = (t * vel0) % acts.reposo.getClip().duration;
+  acts.andar.time = (S.walkT + (alpha - 1) * DT) % acts.andar.getClip().duration;
+  mixer.update(0);
   pivot.updateMatrixWorld(true);
-  applyIdle(S.w, S.idleT);
-  updateOrb(S.idleT);
+  applyPose(w, idleT, mov);
+  updateOrb(idleT, forma, w);
+  return [x, z];
 }
+const vel0 = 1;
 
 /* ---------- bucle: paso fijo + render ---------- */
 function resize() { const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); pMat.uniforms.uScale.value = h * 0.9; }
 addEventListener('resize', resize); resize();
-const lastTarget = new V();
-function frame(dt) {
-  pose(dt);
+function frame(alpha) {
+  const xz = pose(alpha) || [S.x, S.z];
   // la cámara sigue al personaje
-  tA.set(S.x, 1.2, S.z); tB.subVectors(tA, controls.target); controls.target.add(tB); camera.position.add(tB);
-  sun.position.set(S.x + 4, 7, S.z + 3); sun.target.position.set(S.x, 0, S.z);
+  tA.set(xz[0], 1.2, xz[1]); tB.subVectors(tA, controls.target); controls.target.add(tB); camera.position.add(tB);
+  sun.position.set(xz[0] + 4, 7, xz[1] + 3); sun.target.position.set(xz[0], 0, xz[1]);
   controls.update();
   renderer.render(scene, camera);
   ui();
@@ -384,28 +449,29 @@ function ui() {
   $('reloj').textContent = `quieto ${Math.min(S.quieto, 99).toFixed(1)} s`;
   $('meter').firstElementChild.style.width = (Math.min(1, S.quieto / P.espera) * 100).toFixed(1) + '%';
 }
+function tick() { Object.assign(prev, S); step(); }
 let acc = 0, last = performance.now();
 function loop(now) {
   requestAnimationFrame(loop);
-  let dt = Math.min(0.1, (now - last) / 1000) * vel; last = now;
-  if (pausa || !ready) { if (ready) frame(0); return; }
-  acc += dt; let n = 0;
-  while (acc >= DT && n < 8) { step(); acc -= DT; n++; }
-  frame(n * DT);
+  const dt = Math.min(0.1, (now - last) / 1000) * vel; last = now;
+  if (!ready) return;
+  if (!pausa) { acc += dt; let n = 0; while (acc >= DT && n < 8) { tick(); acc -= DT; n++; } if (n === 8) acc = 0; }
+  frame(acc / DT);
 }
 if (!TEST) requestAnimationFrame(loop);
 
 window.__IDLE__ = {
   ready: () => ready,
   state: () => ({ ...S, espera: P.espera, orbVisible: orb.visible, orb: orb.position.toArray(), palm: palm.toArray(),
-    hand: ready ? wp(B.hand, new V()).toArray() : null, chest: ready ? wp(B.spine_03, new V()).toArray() : null }),
-  step: (n = 1) => { let k = 0; for (let i = 0; i < n; i++) { step(); k++; } frame(k * DT); return window.__IDLE__.state(); },
+    hand: ready ? wp(H.l.hand, new V()).toArray() : null, chest: ready ? wp(B.spine_03, new V()).toArray() : null }),
+  step: (n = 1) => { for (let i = 0; i < n; i++) tick(); frame(1); return window.__IDLE__.state(); },
   key: (k, on) => { on ? keys.add(k) : keys.delete(k); },
   forzar: () => $('bForzar').click(),
   camara: (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); controls.update(); renderer.render(scene, camera); },
   render: () => renderer.render(scene, camera),
+  _clips: () => Object.values(acts).map(a => a.getClip()),
   // posiciones de los huesos de la mano izq. en el espacio local de hand_l (depuración)
-  mano: () => { const inv = new THREE.Matrix4().copy(B.hand.matrixWorld).invert(), r = {};
+  mano: () => { const inv = new THREE.Matrix4().copy(H.l.hand.matrixWorld).invert(), r = {};
     char.traverse(o => { if (o.isBone && /_l$/.test(o.name) && /(index|middle|ring|pinky|thumb)/.test(o.name)) r[o.name] = wp(o, new V()).applyMatrix4(inv).toArray().map(v => +v.toFixed(3)); });
     return r; },
 };
