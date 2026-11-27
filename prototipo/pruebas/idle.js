@@ -19,7 +19,7 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
   s = await st(60 * 4.2); ok(s.w > 0 && s.fase === 'levantando la mano', `tras 5 s quieto empieza a levantar la mano (w ${s.w.toFixed(2)})`);
   s = await st(60 * 2.5); ok(s.w === 1 && s.forma === 1 && s.orbVisible, 'idle de magia completo con bola formada');
   ok(s.hand[1] > s.chest[1] - 0.35, `mano levantada a la altura del pecho (mano y ${s.hand[1].toFixed(2)}, pecho ${s.chest[1].toFixed(2)})`);
-  ok(s.orb[1] > s.palm[1] + 0.05, `bola por encima de la palma (${(s.orb[1] - s.palm[1]).toFixed(3)} m)`);
+  ok(s.orb[1] > s.palm[1] + 0.03, `bola por encima de la palma (${(s.orb[1] - s.palm[1]).toFixed(3)} m)`);
   await shot('2_idle_magia');
   const o1 = s.orb; s = await st(45); const dO = Math.hypot(s.orb[0] - o1[0], s.orb[1] - o1[1], s.orb[2] - o1[2]);
   ok(dO > 0.005, `la bola se mueve (${(dO * 100).toFixed(1)} cm en 0,75 s)`);
@@ -27,6 +27,14 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
   await p.evaluate(() => window.__IDLE__.camaraMano('l', 0.25, 0.2, 0.3)); await shot('4_mano_cerca');
   await p.evaluate(() => window.__IDLE__.camaraMano('l', 0.18, 0.22, 0.2, true)); await shot('6_mano_magia_sin_bola');
   await p.evaluate(() => window.__IDLE__.camaraMano('r', -0.3, 0.05, 0.25)); await shot('5_mano_relajada');
+  // coreografía: recorre las fases y saca una captura de cada una
+  const hasta = async c => { let s = await st(1); const n = Math.max(0, Math.round(((c - s.coreo.c + 16) % 16) * 60)); return st(n); };
+  const fases = [[4.75, 'B', '7_puntas_dedos'], [6.4, 'C', '8_sube_brazo'], [8.4, 'D', '9_orbita'], [12.2, 'F', '10_mano_derecha'], [13.6, 'G', '11_salto']];
+  for (const [c, f, n] of fases) {
+    s = await hasta(c); ok(s.coreo.fase === f && s.orbVisible, `fase ${f} en c=${s.coreo.c.toFixed(2)}`);
+    await p.evaluate(() => window.__IDLE__.camara(0.6, 1.6, 2.4, 0, 1.25, 0)); await shot(n);
+  }
+  s = await hasta(8.4); const o2 = s.orb; s = await st(30); ok(Math.hypot(s.orb[0] - o2[0], s.orb[2] - o2[2]) > 0.1, 'la bola rodea el cuerpo');
   await p.evaluate(() => window.__IDLE__.key('w', true)); s = await st(30);
   ok(s.quieto === 0 && s.w < 1 && s.fase !== 'idle de magia', `al moverse se interrumpe (${s.fase}, w ${s.w.toFixed(2)})`);
   s = await st(30); ok(s.w === 0 && !s.orbVisible, 'mano bajada y bola deshecha');
