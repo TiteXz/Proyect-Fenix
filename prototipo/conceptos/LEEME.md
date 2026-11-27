@@ -3,6 +3,7 @@
 | Fichero | Qué es | Cómo se genera |
 |---|---|---|
 | `armadura_ligera_frente.webp`, `_espalda.webp`, `_detalle.webp` | Render del héroe con armadura ligera (gambesón acolchado, peto de cuero, hombreras de láminas, cuello envolvente, bandolera con cápsulas, abrigo de faldones, botas altas, espada híbrida) y pelo largo liso peinado hacia atrás | `blender -b -P juego/tools/blender/concepto_armadura.py -- <texturas Poly Haven> <salida> [muestras]` |
+| `boceto_armadura_ligera.svg` / `.png` | Boceto a lápiz con aguada (vectorial, sin 3D): proporciones de 8 cabezas, contrapposto, espada de armas medieval (cruz recta, pomo de rueda, vaina con boquilla y contera) colgada a la izquierda con la mano sobre el pomo, una sola hombrera (izquierda) y pelo a los hombros peinado hacia atrás; con notas de diseño | SVG escrito a mano; el PNG es una captura a 2× |
 | `dibujo_armadura_ligera.svg` / `.png` | El mismo concepto dibujado a mano en vectorial (sin 3D) | SVG escrito a mano; el PNG es una captura a 2× |
 
 Mezcla de sensaciones de cazador medieval curtido y ciencia ficción sobria. Diseño propio: no reproduce piezas,
