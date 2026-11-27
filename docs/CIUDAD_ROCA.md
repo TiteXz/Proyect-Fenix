@@ -91,9 +91,9 @@ Puntos de descanso: **plaza, posada, nicho del desfiladero, pozo N3** (4) [SUPUE
 - **Luz:** un haz fino de luz solar con polvo que cae donde no debería (N4/N5), por una grieta del conducto del santuario.
 - **Sonido:** eco distinto y viento grave en la pared hueca (para `audio`); goteo de agua que corre hacia una rendija.
 - **Rastros narrativos:** esqueleto de un explorador con un cuaderno con un dibujo; arañazos en una pared; una vasija con la marca del santuario fuera de su sitio.
-- **Pista humana (decidido: pistas ambientales Y un NPC):** el **Archivista anciano** [SUPUESTO] da frases crípticas por etapas (ver abajo). Las pistas ambientales funcionan solas; el NPC solo orienta, nunca da la solución.
+- **Pista humana (decidido: pistas ambientales Y un NPC):** el **Archivista anciano** (decidido) da frases crípticas por etapas (ver abajo). Las pistas ambientales funcionan solas; el NPC solo orienta, nunca da la solución.
 
-**NPC guía: el Archivista anciano [SUPUESTO].** Copista veterano que trabaja de día en la galería N1 y de noche en el taller del escriba de las terrazas. Ha oído «la leyenda del pozo que respira» pero no sabe qué hay abajo. **No cierra el NPC recurrente D-7 del GDD**: es un NPC local de la ciudad; si D-7 se decide más adelante, puede absorber o no este papel.
+**NPC guía: el Archivista anciano (decidido por el usuario).** Copista veterano que trabaja de día en la galería N1 y de noche en el taller del escriba de las terrazas. Ha oído «la leyenda del pozo que respira» pero no sabe qué hay abajo. **No cierra el NPC recurrente D-7 del GDD**: es un NPC local de la ciudad; si D-7 se decide más adelante, puede absorber o no este papel.
 
 | Etapa (según flags de la cadena) | Frase críptica [SUPUESTO] | Qué orienta |
 |---|---|---|
@@ -310,8 +310,8 @@ Prioridad del MVP: que el **recorrido, la escala y el descubrimiento** funcionen
 
 **Preguntas abiertas para el usuario (máx. 5):**
 (Resueltas: puzles §10, duelos de arena §3c, instancia aparte §2, NPC guía §3b.)
-(Conjuros del archivo: decidido, §3d.)
-1. ¿Te parece bien que el **Archivista anciano** sea el NPC guía del secreto (sin cerrar D-7), o prefieres otro personaje?
+(Conjuros del archivo: decidido, §3d. Archivista anciano como NPC guía: decidido, §3b.)
+No quedan preguntas abiertas.
 
 ## 10. Puzles (DECIDIDO por el usuario)
 
