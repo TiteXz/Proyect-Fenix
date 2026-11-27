@@ -43,6 +43,24 @@ flowchart LR
   Dungeon -->|jefe vencido o abandono| Resumen[Resumen del dungeon] --> Juego
   Menu --> Creditos
   Libro --> Creditos
+  Juego -->|F mostrador Casa de la Arena| Inscripcion[Inscripción y tablón §8.10]
+  Inscripcion -->|Inscribirme / cerrar| Juego
+  Inscripcion -->|Inscribirme| Arena
+  subgraph Arena [Arena: ronda de oleadas o duelo]
+    Ronda[HUD de arena §8.11] -->|oleada limpia| Descanso2[Descanso entre oleadas] --> Ronda
+    Ronda -->|duelo ganado| Eleccion[Perdonar / Matar §8.12] --> Cierre[Resultado de ronda §8.11]
+    Ronda -->|vida 0| Caiste3[Caíste: pierdes la ronda] --> Cierre
+    Ronda -->|oleadas limpias| Cierre
+  end
+  Cierre --> Juego
+  Juego -->|cruzar umbral N6| CargaSub[Carga de instancia §8.15] --> Subsuelo
+  subgraph Subsuelo [Instancia: sala del jefe y biblioteca]
+    SalaJefe[Sala del jefe] -->|jefe vencido| Biblioteca
+    Biblioteca -->|F atril| Presentacion[Presentación de conjuro §8.14] --> Biblioteca
+  end
+  Subsuelo -->|salir / vida 0 en la sala| CargaSub2[Carga de salida] --> Juego
+  Juego -->|F Archivista| Bocadillo[Frase del Archivista §8.3] --> Juego
+  Juego -.->|glifo visto / frase / mural| Codice[Códice: entrada nueva §2.9]
 ```
 
 - **Menú principal:** ver §7. **Pausa = el libro** [DECISIÓN]; no existe un menú de pausa aparte. Pausa la

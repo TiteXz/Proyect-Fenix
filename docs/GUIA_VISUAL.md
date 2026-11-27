@@ -19,7 +19,9 @@ Natural y saturada, nunca apagada ni sucia. Hex orientativos [SUPUESTO], para al
 | Costa / islas | #2bb5b0 (agua), #f0e2c0 (arena), #e8e4da (roca clara) | Turquesa y arena |
 | Desierto | #d9a441, #b8692e (ocre), #efd9a6 | Dorados y ocres; sombras azul-violeta suaves |
 | Monte nevado | #f4f8fb, #b9cde0 (sombra nieve), #7f8a96 (roca) | Blanco limpio, nunca #fff puro |
-| Ciudad de la Roca | #c79a62, #a87444, #6e5438 | Arenisca cálida |
+| Ciudad de la Roca | #c79a62, #a87444, #6e5438 | Arenisca cálida (luz / media / sombra y estrato oscuro) |
+| Ciudad de la Roca (añadidos [SUPUESTO]) | #d9c29a (revoque pálido), #9a5f3c (estrato rojizo), #7a8a6a (verdín de bronce), #8a6a4c (roca profunda del subsuelo, más fría) | Fachadas encaladas, vetas de estrato, bronces y remates, subsuelo N6-N8; detalle en `docs/CIUDAD_ROCA.md` §6 |
+| Biblioteca de la Roca (luz de cristal) | #e6d3a3 (cálida), #9fb8d9 (fría) | Luz difusa de cristales en la instancia; atriles con halo rúnico más cálido |
 | Metal enemigo no-muerto | #6f6a60 (óxido deslucido), #8d9a8a (verdín) | Contraste con el acero brillante del jugador |
 | Dungeon (más sombrío por contraste) | #3a4150, #6a5a7a, antorcha #ff9a3c | El único espacio permitido en baja saturación |
 | Peligro / imparable / vida | #d63a2e | Chevron rojo, barra de vida |
@@ -149,7 +151,7 @@ Globales por preset (FPS, draw calls, triángulos, memoria GPU, tamaño y carga)
 | NPC | 8 k / 3 k / 1 k | atlas 1K / 2K | ≤ 2 | ≤ 1 MB |
 | Caballo | 25 k / 10 k / 3 k | 1K-2K | ≤ 3 | ≤ 3 MB |
 | Edificio de aldea (casa/granero) | 6 k / 2,5 k / 800 (+ impostor) | atlas de kit 2K compartido | 1-3 | ≤ 0,5 MB (geometría; atlas compartido aparte) |
-| Castillo / Ciudad de la Roca (MVP) | por kit modular: pieza 500-3 000; conjunto lejano en 1 malla simplificada | atlas de kit 2K-4K | ≤ 40 (conjunto visible) | arte final en fase 3; MVP proxy |
+| Castillo / Ciudad de la Roca (MVP) | por kit modular: pieza 500-3 000; conjunto lejano en 1 malla simplificada | atlas de kit 2K-4K | ≤ 40 (conjunto visible); instancias: sala del jefe ≤ 25, biblioteca ≤ 30 | arte final en fase 3; MVP proxy (desglose en `docs/CIUDAD_ROCA.md` §7) |
 | Árbol | 5 k / 1,6 k / impostor (2 tris) | atlas de follaje 1K-2K | 1 por especie (instancing) | ≤ 0,3 MB |
 | Roca / acantilado | 1-3 k / 600 / 200 | triplanar (set compartido) | 1 por set (instancing) | ≤ 0,2 MB |
 | Prop (barril, cajón, farol) | 0,4-2 k / 50 % / — | atlas de props | instanciado | ≤ 0,1 MB |
@@ -160,6 +162,8 @@ Nota: la katana del prototipo ronda 42 k tris; **no cabe** en el presupuesto de 
 
 ### LOD e impostores
 - Cambio por distancia con **histéresis** y *dithering* de fundido (sin pop); distancias por preset (Bajo = 0,6× las de Ultra). LOD0 ≤ 30 m (props) / 60 m (enemigos, NPCs) [SUPUESTO]; LOD1 hasta 120 m; LOD2 hasta 250 m; **impostores** (octaedrales o 8 vistas, atlas pre-bakeado) para árboles y edificios sueltos de 250 m al horizonte; terreno lejano por clipmaps/quadtree con bruma.
+- **Excepción monumental [SUPUESTO]:** piezas monumentales justificadas (fachada mayor, anfiteatro de la Ciudad de la Roca) pueden extender LOD0 a 90 m; no aplica a props ni a otros assets.
+- **Multitud:** NPCs activos con modelo propio dentro del límite de la zona (aldea ≤ 12; Ciudad de la Roca ≤ 24); el resto (público, fondo de plaza) son instancias animadas de 3-4 variantes a ≈ 400-1 000 tris y, de lejos, impostores con los mismos materiales y escala.
 - Vegetación y rocas con `InstancedMesh`/`BatchedMesh`; geometría de celda como datos, no mallas (ver contexto).
 - En preset Bajo se salta LOD0 de props y se acorta el horizonte; los enemigos y el jugador mantienen su LOD1 mínimo.
 
@@ -240,7 +244,7 @@ Estados: **existe** (en `juego/public/assets/`), **candidato** (en `prototipo/`,
 | Agua (plano con shader) | pendiente | P2: shader TSL propio, sin texturas pesadas |
 | Castillo en ruinas (exterior lejano + estado posterior) | pendiente | P1 para el dungeon; versión «liberada» para escena final |
 | Dungeon «Patio del castillo en ruinas» (kit: muros, arcos, suelo, puerta, antorchas, pilares) | pendiente | P1 |
-| Ciudad de la Roca (maravilla) | pendiente, proxy en MVP | P3 |
+| Ciudad de la Roca (maravilla) | pendiente; kit modular + proxy en MVP, arte final en fase 3; detalle y presupuestos en `docs/CIUDAD_ROCA.md` (§6-§7) | P3 |
 | Fuente rúnica, runas, círculos de conjuro | procedural en código (glifos) | P1; sin descarga |
 | VFX de hechizos (atlas de partículas: humo, chispas, cristales, haz) | candidato: lógica en `prototipo/vfx/vfx.js` | P1: reescribir en TSL; texturas procedurales |
 | Fuentes (display + sans) | pendiente | P1 (UI); licencia OFL |
