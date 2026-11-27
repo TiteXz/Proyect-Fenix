@@ -1,7 +1,7 @@
 # Guía de UI
 
 Documento del rol **interfaz-ui**. Convención: **[SUPUESTO]** marca lo que propone este rol y no está
-decidido en GDD/COMBATE; **[DECISIÓN]** marca lo fijado por el usuario. Estado: completo para el MVP (2026-11-26, alineado con CONTEXTO y GDD §3–§9). Decisiones del usuario aplicadas: mapeo del libro, viaje por Mapa,
+decidido en GDD/COMBATE; **[DECISIÓN]** marca lo fijado por el usuario. Estado: completo para el MVP (2026-11-26, alineado con CONTEXTO y GDD §3–§9); sincronizado con CIUDAD_ROCA §3b–§3d y §10 (§8.10–§8.16, 2026-11-27). Decisiones del usuario aplicadas: mapeo del libro, viaje por Mapa,
 sin táctil, glifos procedurales, bolso de casillas fijas, guardado 1 manual + 1 auto, teclas de CONTEXTO (Q/E/R). La tabla
 única de controles está en §5.3.
 
@@ -191,7 +191,7 @@ subfiltro «Ciudad de la Roca»; el punto de aviso del marcapáginas sigue la re
 | **Glifo de la Orden** (D) | La primera vez que el jugador **ve** ese glifo (evento del bus, p. ej. `codex:entry-added` {id, tipo}) | Dibujo del glifo (generador de §2.11) + texto breve de lore; el glifo de umbral se anota igual. La entrada **no dice dónde está ni qué abre** |
 | **Frase del Archivista** | Opcional por frase (CIUDAD_ROCA §3b) | La frase literal entre comillas, con la etapa **no** indicada; se muestra por orden de hallazgo, no de cadena. Una por etapa, sin duplicados |
 | **Tabla de las Horas** | Al ver el mural en G6 | 2-3 entradas de pista sin respuestas; una **hornacina vacía** ilustrada como hueco, sin leyenda de «falta algo» |
-Reglas: las entradas no hallazgadas no se listan (ni título censurado) cuando delatarían la sala escondida; para estos tipos
+Reglas: las entradas aún no halladas no se listan (ni título censurado) cuando delatarían la sala escondida; para estos tipos
 se omite el hueco «censurado» de arriba [SUPUESTO]. Ninguna entrada contiene coordenadas, flechas ni «ve a», y el Códice no
 cambia de estado por progreso de puzle (solo por haber visto el elemento). `data-testid`: `codex-entry-<id>`,
 `codex-filter-roca`.
@@ -597,6 +597,112 @@ manual, Esc/○ salir (tras el final, salir pasa al mundo). Reducir movimiento: 
 desplazable a mano. Texto ≥ 18 px, contraste AA, enlaces como texto (sin navegar en partida). `data-testid`: `credits-root`,
 `credits-list`, `credits-close`, `credits-license-<assetId>`.
 
+### 8.10 Inscripción en la Casa de la Arena y tablón de rangos y encargos [SUPUESTO; reglas de CIUDAD_ROCA §3c, pendientes de GDD]
+Modal (§1) que se abre con F en el mostrador de la Casa de la Arena. Dos columnas como la tienda (§8.1): izquierda pestañas
+**Inscripción · Tablón de rangos · Encargos**; derecha detalle. Cabecera: monedas y **rango actual** con la reputación (§8.13).
+- **Inscripción:** lista de modalidades disponibles (**Ronda de oleadas** de 3-5 oleadas; **Duelo** contra un rival del cartel).
+  Detalle: rango exigido, cuota (0 o N monedas), recompensas posibles (oro, XP, objeto de rango, título) y, si aplica, intentos
+  restantes hoy. Botón **«Inscribirme»** (`arena-enroll-btn`) con confirmación de una línea («Entrarás al ruedo ahora»).
+  Deshabilitado + motivo (prioridad): «Rango insuficiente (requiere Plata)» · «Monedas insuficientes (faltan N)» ·
+  «Sin intentos hoy» · «En combate: hay enemigos en alerta». El aviso del libro es la **ficha** de equipo: la UI no modifica el
+  equipo, solo recuerda «Tu configuración: Espada + escudo» (§5.1) y que no se puede cambiar dentro.
+- **Tablón de rangos:** escalera **Bronce · Plata · Oro · Campeón** con el actual resaltado (marca no cromática: borde dorado +
+  texto «Actual»), requisito de cada uno («Completa el rango anterior»), título y objeto de rango ya ganados. Los rangos aún no
+  alcanzados se ven con candado y requisito, no se ocultan (§2.2). Debajo, el **cartel de rivales**: nombre, rango, estado
+  («Vencido y perdonado», «Eliminado» tras Matar, «Regresó más fuerte»); el rival eliminado se tacha y queda como registro.
+- **Encargos:** tarjetas con objetivo concreto de arena («Gana 3 duelos sin recibir golpes en la cabeza»), recompensa y estado
+  (disponible / en curso / completado). Sin marcador en el mapa; solo dentro de la arena y de este tablón.
+- **Salida de la inscripción:** confirmar → ui:arena-enroll {modo, rivalId?} → fundido de 0,5 s → túnel de combatientes. Esc/○
+  cierra sin inscribir. Gratis o de pago, nunca pide más pasos.
+- **Sin penalización de muerte** [CIUDAD_ROCA §3c]: se muestra en la ficha («Si caes, solo pierdes la ronda»).
+`data-testid`: `arena-root`, `arena-tab-<id>`, `arena-enroll-btn`, `arena-enroll-reason`, `arena-rank-<id>`, `arena-rival-<id>`,
+`arena-quest-<id>`, `arena-close`.
+
+### 8.11 HUD durante los combates de arena [SUPUESTO]
+Se **añade** al HUD de §5 (vida, aguante, maná, ranuras y `hud-loadout` no cambian de sitio) con un grupo `hud-arena`
+que aparece solo mientras `state:changed` indica arena:
+| Elemento | Posición y contenido |
+|---|---|
+| **Rival / enemigos** | Arriba centro, bajo la brújula (que se oculta en el ruedo): nombre y barra de vida del rival fijado (duelo) o del jefe de la oleada; en oleadas, contador «Quedan N». Barra con valor numérico opcional; no solo color |
+| **Ronda** | Arriba centro: «Ronda 2/5» o «Duelo» + rango («Bronce»). Al limpiar una oleada, la línea de avisos dice «Oleada limpia · Descanso: 0:30» y el descanso muestra cuenta atrás sin presión (se puede **pulsar Continuar** para adelantar; `arena-next-wave`) |
+| **Público** | Barra delgada vertical a la derecha, **«Ánimo del público»** (icono de gradas + texto «Aclaman» / «En silencio» / «Abuchean»); sube con golpes limpios, paradas perfectas y esquivas, baja al abusar de objetos o escapar. Es [SUPUESTO]: si GDD no lo adopta, se elimina sin tocar nada más. Sin valores numéricos |
+| **Resultado de ronda** | Tarjeta modal (como §8.5): «Ronda superada» / «Ronda perdida», oleadas N/M, oro, XP, objeto de rango, rango resultante y cambio de reputación; botón único **Continuar** (`arena-result-continue`) |
+`hud-arena` usa `pointer-events: none`. Muerte en arena: pantalla «Caíste» (§8.4) con el subtexto «Pierdes la ronda; conservas tus monedas»
+y reaparición a la salida del túnel. Se reutilizan el indicador de ataque (§5.2) y los controles (§5.3). Reducir movimiento:
+sin pulsos de la barra del público. `data-testid`: `hud-arena`, `hud-arena-rival`, `hud-arena-round`, `hud-arena-crowd`,
+`arena-result`.
+
+### 8.12 Aviso Perdonar / Matar (duelos contra NPCs) [SUPUESTO en presentación; CIUDAD_ROCA §3c]
+Aparece al ganar un duelo: el rival cae de rodillas, el público calla y la simulación entra en **pausa suave** (el ruedo queda
+quieto; sin temporizador). Los monstruos de jaula **no** lo muestran.
+- **Aspecto:** tarjeta centrada baja (no cubre al rival), pergamino sobrio, título «¿Qué haces con <nombre>?», dos botones
+  con el **mismo peso visual**: **Perdonar** (icono de mano abierta) y **Matar** (icono de espada baja). Ninguno es primario
+  por color; Matar usa el rojo `--ui-danger` solo en el icono y siempre acompañado de texto.
+- **Sin temporizador:** no hay cuenta atrás ni elección por defecto al pasar el tiempo; el presentador y las gradas esperan.
+  Esc/○ **no** cierra el aviso (hay que elegir).
+- **Foco inicial en Perdonar** (acción reversible en términos de reputación y la menos destructiva) [SUPUESTO]. Cruceta/flechas
+  ◄ ► mueven el foco, Intro/✕ selecciona.
+- **Confirmación obligatoria** en ambas elecciones, en la misma tarjeta: tras seleccionar, un segundo paso muestra la
+  consecuencia en una línea y «Confirmar» / «Volver» (foco en **Volver**): Perdonar → «Subirá tu reputación con la Casa de la Arena; <nombre> podrá volver más fuerte»; Matar →
+  «Obtendrás su equipo; <nombre> desaparece del cartel y bajará tu reputación con algunos habitantes de la ciudad». Texto
+  fijo del GDD cuando se decida; hoy [SUPUESTO] de CIUDAD_ROCA §3c.
+- **Accesibilidad:** `role="alertdialog"` con `aria-describedby`; foco atrapado; `aria-live="assertive"` al abrir («Duelo ganado:
+  perdonar o matar»). Teclado: ◄ ► / Tab; también **1** = Perdonar, **2** = Matar [SUPUESTO] (solo en este modal). Mando:
+  cruceta + ✕, ○ = Volver en el segundo paso. Objetivos ≥ 44 px, pensados para evitar el error de un clic.
+- **Tras confirmar:** `ui:duel-choice` {rivalId, accion: "spare|kill"}; la UI no aplica consecuencias, escucha el bus
+  (cambio de reputación §8.13, botín en la línea de avisos). Reducir movimiento: sin fundido del aviso.
+`data-testid`: `duel-choice`, `duel-spare-btn`, `duel-kill-btn`, `duel-confirm-btn`, `duel-back-btn`, `duel-consequence`.
+
+### 8.13 Reputación con la Casa de la Arena [SUPUESTO]
+- **Dónde se ve:** (1) cabecera de la inscripción (§8.10): rango + **barra de reputación** con nombre de tramo («Desconocido ·
+  Respetado · Admirado · Leyenda»); (2) tarjeta de resultado de ronda (§8.11); (3) libro: sub-apartado «Arena» dentro de Códice
+  › Fragmentos [SUPUESTO] con historial de duelos (perdonados/eliminados, sin números). No hay icono permanente en el HUD base.
+- **Cambios:** tras una elección o ronda, aviso de la línea de avisos «Reputación en la Casa de la Arena: sube/baja»; icono de
+  flecha + texto, sin depender del color. Evento p. ej. `reputation:changed` {facción, tramo, delta}; la UI solo refleja.
+- **Reputación con otros NPCs** (tras Matar, CIUDAD_ROCA §3c): no se muestra como barra ni lista; solo con las reacciones de
+  bocadillos (§8.3 `data-kind="line"`) [SUPUESTO] y una línea en el historial de Arena. Evita enseñar valores internos.
+`data-testid`: `arena-rep-bar` (`data-tier`), `arena-rep-toast`, `arena-history`.
+
+### 8.14 Presentación de nuevos conjuros en la biblioteca [SUPUESTO; CIUDAD_ROCA §3d]
+Al interactuar (F) con un atril de la biblioteca (central o capilla) se reutiliza la secuencia de §3 con la **página de luz** del
+visor del grimorio (`prototipo/grimorio/`): motas que se componen en el aire, giran y la página se funde con el círculo de
+runas, sobre el mundo (cámara del atril), y no dentro del libro.
+- **Pasos:** (1) la escena 3D hace la formación de motas (no es DOM); (2) la UI superpone **solo** una tarjeta mínima: nombre rúnico + subtítulo
+  castellano, glifo reducido (§2.11) y la etiqueta «Nuevo hechizo» / «Nueva runa»; (3) botón **Aceptar**
+  (autofoco). Si el atril **no concede la receta directamente** (punto abierto, CIUDAD_ROCA «Pendiente»: §2.7 de COMBATE), la tarjeta
+  dice «Receta aprendida: pruébala una vez para descubrirla» en lugar de «Nuevo hechizo».
+- **Saltable** (≤ 0,3 s salta al final, igual que §3.2); reducir movimiento: la página aparece con fundido de 0,3 s sin giro ni motas.
+- **Tras aceptar:** punto de aviso en el marcapáginas Hechizos (§2.2) y entrada en el índice del Grimorio; no se abre el libro.
+  Varios atriles en la misma sesión se agrupan al abrir el libro, no en el mundo.
+- **Atril central (Arcano de Espacio):** la tarjeta añade «Piedra de paso disponible» solo cuando existan esquirlas en el bolso (aviso del bus).
+- **Arcano de Tiempo / Tabla de las Horas:** el hueco no tiene presentación ni aviso; solo las entradas de Códice (§2.9).
+- **Sin guía de búsqueda:** ni contador de atriles («2/6»), ni brújula, ni aviso «queda un conjuro». La biblioteca no tiene
+  marcadores; los atriles tienen halo cálido en el mundo (arte), no en la UI.
+`data-testid`: `spell-reveal`, `spell-reveal-name`, `spell-reveal-accept`.
+
+### 8.15 Pantalla de carga de la instancia del subsuelo [SUPUESTO; ARQUITECTURA pendiente]
+Extiende §7.1. Se muestra al cruzar el umbral de N6 (y a la salida de la instancia). La carga **no revela** qué hay delante: usa la
+misma plantilla sobria que cualquier otra carga de zona, con el título genérico **«Descendiendo…»** [SUPUESTO] y pistas rotatorias del
+mismo conjunto genérico del juego (nada de «Sala del jefe» ni «Biblioteca» en el texto, ni en el nombre de la barra).
+- Barra de progreso (`loading-progress`) con progreso del bus; fundido a negro de 0,4 s al entrar y salir. Texto accesible
+  `aria-live="polite"`: «Cargando». Sin botón de cancelar una vez iniciada la carga; si falla: «Reintentar» (`loading-retry`).
+- **Antes de entrar:** si el estado de puzles se va a guardar, autoguardado discreto (icono 1,5 s, §4.1) antes del fundido; no se muestra mensaje que mencione «puzle resuelto».
+- **Salida / muerte en la sala:** al reaparecer fuera de la instancia («Reapareces a la entrada del pasaje»), carga con el mismo
+  título. Con reducir movimiento: fundido simple, sin viñeta.
+`data-testid`: `loading-root` (`data-zone="generic"`), `loading-progress`, `loading-retry`.
+
+### 8.16 Puzles sin marcadores: reglas para la UI (recordatorio de CIUDAD_ROCA §3b y §10)
+La cadena C → B → A y los glifos D **no tienen ninguna ayuda de interfaz**. La UI **no puede delatar la sala escondida**:
+- **Prohibido:** flechas, marcadores de misión, iconos sobre paredes o puertas, brújula con POI para la sala/puzles, contador de
+  progreso de la cadena («2/3»), estado de puzle en el Mapa o Códice, rutas, zonas resaltadas, avisos de «has encontrado algo».
+- **El aviso de interacción** (§5.4) es siempre el genérico («F · Interactuar», «F · Girar espejo»); nunca «F · Abrir sala secreta».
+  Sin aviso de F si el objeto no es interactuable; no hay *outline* de interactuables fuera del ya definido en la guía visual.
+- **El Mapa** no muestra la sala ni los niveles ocultos (N6-N8) antes de visitarlos; tras entrar a la instancia, el mapa **no
+  añade** una hoja nueva por defecto [SUPUESTO]. La brújula y las piedras de paso siguen §2.10.
+- **Códice (§2.9):** solo entradas por lo visto; sin censura de huecos que revelen que falta algo; sin enlace desde la entrada a su ubicación.
+- **Testing:** `window.__GAME__` puede exponer flags para Playwright, **nunca** el DOM visible; no se añaden `data-testid` visibles a
+  elementos del mundo.
+
 ## 9. Tokens de diseño, estados y responsive
 **Tokens** (CSS custom properties en `:root`, prefijo `--ui-*`; los valores finales los toma de `docs/GUIA_VISUAL.md`, que
 define la fuente display y la paleta):
@@ -645,6 +751,9 @@ Sin requisitos táctiles (fuera de alcance); objetivos clicables ≥ 32 px.
 12. **Pociones y objetivo:** Z/X, ▼/◄ y clic central/R3 son [SUPUESTO] del GDD; ¿confirmar? Cruceta ► (ciclar magia) es nueva [SUPUESTO].
 13. **Escena final saltable:** ¿se permite saltar los subtítulos del Guardián tras la primera vez? (§8.7).
 14. **Tienda/altar pausan la simulación** [SUPUESTO] (§1): confirmar con el arquitecto/COMBATE.
+15. **Ciudad de la Roca (§8.10–§8.16):** (a) ¿se adopta el indicador «Ánimo del público» o se deja solo el efecto visual/sonoro?;
+    (b) ¿el foco inicial del aviso Perdonar/Matar en «Perdonar» y la doble confirmación son aceptables?;
+    (c) ¿el atril concede la receta directamente (texto de §8.14)? Depende de COMBATE §2.7.
 
 Resoluciones: (1) aceptado el mapeo de §2.3; (2) viaje desde el Mapa del libro, ver §2.10; (9) táctil no es
 objetivo, solo mando y teclado/ratón; (10) glifos procedurales, ver §2.11 (detalle en GUIA_VISUAL.md).
