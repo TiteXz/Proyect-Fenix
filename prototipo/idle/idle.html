@@ -463,7 +463,7 @@ function applyPose(wMagia, t, mov) {
     let yaw = 0.16;
     if (S.forma > 0) {
       wp(B.spine_03, tB); tC.subVectors(lookP, tB); tC.y = 0;
-      if (tC.lengthSq() > 1e-6) { tC.normalize(); const ang = Math.atan2(tC.dot(leftW), tC.dot(fwdW)); yaw = 0.16 + Math.max(-0.45, Math.min(0.45, ang * 0.35)) * C.lejos; }
+      if (tC.lengthSq() > 1e-6) { tC.normalize(); const ang = Math.atan2(tC.dot(leftW), tC.dot(fwdW)); yaw = 0.16 + yawSuave(ang, 1.3) * 0.35 * C.lejos; }
     }
     tq.setFromAxisAngle(UP, yaw * e); rotWorld(B.spine_03, tq);
   }
@@ -519,21 +519,62 @@ function applyPose(wMagia, t, mov) {
   // mirada: cuello y cabeza siguen un punto suavizado (lookP) solo con giro (yaw) e inclinación (pitch), sin torcer
   // sobre su eje (roll), y repartido entre los dos huesos para que el cuello no se deforme
   const wl = e * ease(S.forma);
-  if (wl > 0) { lookNoRoll(B.neck_01, 0.4 * wl, lookP); lookNoRoll(B.head, 1.0 * wl, lookP); }
+  if (wl > 0) {
+    // ángulos deseados (respecto al cuerpo) suavizados con muelle y velocidad máxima: la cabeza no da tirones
+    wp(B.head, tB); tC.subVectors(lookP, tB).normalize();
+    const yd = yawSuave(Math.atan2(tC.dot(leftW), tC.dot(fwdW)), MAX_YAW);
+    const pd = Math.max(PITCH_MIN, Math.min(PITCH_MAX, Math.asin(Math.max(-1, Math.min(1, tC.y)))));
+    if (!MIRA.init || DTR < 0) { MIRA.y = yd; MIRA.p = pd; MIRA.vy = MIRA.vp = 0; MIRA.init = true; }
+    else { [MIRA.y, MIRA.vy] = spring1(MIRA.y, MIRA.vy, yd, 6, DTR, 2.4); [MIRA.p, MIRA.vp] = spring1(MIRA.p, MIRA.vp, pd, 6, DTR, 1.8); }
+    lookNoRoll(B.neck_01, 0.4 * wl, MIRA.y, MIRA.p); lookNoRoll(B.head, 1.0 * wl, MIRA.y, MIRA.p);
+  }
 }
 const MAX_YAW = 1.15, PITCH_MIN = -0.6, PITCH_MAX = 0.45;
-function lookNoRoll(bone, part, target) {
+// yaw deseado continuo: sigue el ángulo hasta ~95° y, si el objetivo queda detrás, vuelve suavemente al centro
+// (en ±180° vale 0 por ambos lados, así no salta de un hombro al otro al cruzar la espalda)
+function yawSuave(ang, max) {
+  const a = Math.abs(ang), fade = a < 1.65 ? 1 : a > 2.9 ? 0 : 1 - smooth((a - 1.65) / 1.25);
+  return Math.sign(ang) * Math.min(a, max) * fade;
+}
+const MIRA = { y: 0, p: 0, vy: 0, vp: 0, init: false };
+let DTR = -1;   // dt de render (lo fija placeOrb); -1 = reiniciar
+function spring1(x, v, target, w, dt, vmax) {   // muelle crítico escalar con velocidad máxima
+  const x0 = x - target, y = v + w * x0, k = Math.exp(-w * dt);
+  let nx = target + (x0 + y * dt) * k, nv = (v - w * y * dt) * k;
+  const step = nx - x, lim = vmax * dt;
+  if (Math.abs(step) > lim) { nx = x + Math.sign(step) * lim; nv = Math.sign(step) * vmax; }
+  return [nx, nv];
+}
+function lookNoRoll(bone, part, yd, pd) {   // gira el hueso hacia (yaw, pitch) del cuerpo, sin roll
   B.head.getWorldQuaternion(tq); tA.copy(headFwdLocal).applyQuaternion(tq).normalize();
-  wp(B.head, tB); tC.subVectors(target, tB).normalize();
   const yf = Math.atan2(tA.dot(leftW), tA.dot(fwdW));
-  const yd = Math.max(-MAX_YAW, Math.min(MAX_YAW, Math.atan2(tC.dot(leftW), tC.dot(fwdW))));
   let dy = yd - yf; dy = Math.atan2(Math.sin(dy), Math.cos(dy));
   tq.setFromAxisAngle(UP, dy * part); rotWorld(bone, tq);
   B.head.getWorldQuaternion(tq); tA.copy(headFwdLocal).applyQuaternion(tq).normalize();
   const pf = Math.asin(Math.max(-1, Math.min(1, tA.y)));
-  const pd = Math.max(PITCH_MIN, Math.min(PITCH_MAX, Math.asin(Math.max(-1, Math.min(1, tC.y)))));
   tD.crossVectors(tA, UP); if (tD.lengthSq() < 1e-8) return; tD.normalize();
   tq.setFromAxisAngle(tD, (pd - pf) * part); rotWorld(bone, tq);
+}
+
+// cápsulas aproximadas del cuerpo (hueso a hueso, radio en m); se cargan al empezar
+const CAPS = [['pelvis', 'spine_03', 0.17], ['spine_03', 'neck_01', 0.16], ['neck_01', 'head', 0.07], ['head', 'head', 0.12],
+  ['clavicle_l', 'upperarm_l', 0.08], ['upperarm_l', 'lowerarm_l', 0.065], ['lowerarm_l', 'hand_l', 0.055],
+  ['clavicle_r', 'upperarm_r', 0.08], ['upperarm_r', 'lowerarm_r', 0.065], ['lowerarm_r', 'hand_r', 0.055]];
+let capsB = null; const capL = new THREE.Line3(), capA = new V(), capBv = new V(), capP = new V();
+function esquivarCuerpo(p, w) {
+  if (w <= 0) return;
+  if (!capsB) capsB = CAPS.map(([a, b, r]) => [find0(char, a), find0(char, b), r]).filter(c => c[0] && c[1]);
+  const margen = ORB_R + 0.02;
+  for (let it = 0; it < 3; it++) {
+    for (const [a, b, r] of capsB) {
+      wp(a, capA); wp(b, capBv); capL.set(capA, capBv); capL.closestPointToPoint(p, true, capP);
+      const d = capP.distanceTo(p), need = r + margen;
+      if (d < need) {
+        if (d < 1e-5) p.addScaledVector(UP, need * w);
+        else p.addScaledVector(tmpV.subVectors(p, capP).normalize(), (need - d) * w);
+      }
+    }
+  }
 }
 
 // muelles críticamente amortiguados (solución exacta: estable con cualquier dt)
@@ -585,9 +626,10 @@ function placeOrb(t) {
   const orbit = (u, outV) => {      // vuelta y media alrededor del pecho, de izquierda (por la espalda) a derecha
     const a0 = Math.atan2(1, 0);    // ángulo de «izquierda» en el marco (fwd, left)
     const ang = a0 + u * Math.PI * 3;
-    const rad = 0.36 + 0.04 * Math.sin(u * Math.PI * 2);
+    // por detrás baja un poco; por delante pasa alta, a la altura de la cara, para no cruzar los brazos
+    const rad = 0.46 + 0.03 * Math.sin(u * Math.PI * 2), front = Math.max(0, Math.cos(ang));
     return outV.copy(chest).addScaledVector(fwdW, Math.cos(ang) * rad).addScaledVector(leftW, Math.sin(ang) * rad)
-      .addScaledVector(UP, 0.12 + 0.10 * Math.sin(u * Math.PI * 3));
+      .addScaledVector(UP, 0.10 + 0.26 * front * front - 0.06 * Math.max(0, -Math.cos(ang)));
   };
   if (c < 0 || C.fase === 'A' || C.fase === 'H') onPalm(L, 0, out);
   else if (C.fase === 'B') onPalm(L, C.puntas, out);
@@ -595,15 +637,19 @@ function placeOrb(t) {
     // un único recorrido suave: palma izq. → muñeca → codo → hombro → vuelta y media al pecho → hombro der. → codo → muñeca → palma der.
     let n = 0;
     onPalm(L, 0, WP[n++]);
-    wp(H.l.hand, WP[n++]).addScaledVector(UP, 0.06);
-    wp(H.l.lower, WP[n++]).addScaledVector(UP, 0.07).addScaledVector(leftW, 0.03);
-    wp(H.l.upper, WP[n++]).addScaledVector(UP, 0.10).addScaledVector(leftW, 0.06);
+    wp(H.l.hand, WP[n++]).addScaledVector(UP, 0.10);
+    wp(H.l.lower, WP[n++]).addScaledVector(UP, 0.13).addScaledVector(leftW, 0.05);
+    wp(H.l.upper, WP[n++]).addScaledVector(UP, 0.17).addScaledVector(leftW, 0.09);
     for (let k = 1; k < 18; k++) orbit(k / 18, WP[n++]);
-    wp(H.r.upper, WP[n++]).addScaledVector(UP, 0.10).addScaledVector(leftW, -0.06);
-    wp(H.r.lower, WP[n++]).addScaledVector(UP, 0.07).addScaledVector(leftW, -0.03);
-    wp(H.r.hand, WP[n++]).addScaledVector(UP, 0.06);
+    wp(H.r.upper, WP[n++]).addScaledVector(UP, 0.17).addScaledVector(leftW, -0.09);
+    wp(H.r.lower, WP[n++]).addScaledVector(UP, 0.13).addScaledVector(leftW, -0.05);
+    wp(H.r.hand, WP[n++]).addScaledVector(UP, 0.10);
     onPalm(R, 0, WP[n++]);
-    splineAt(WP, n, smooth(seg(c, 5.5, 12.5)), out);
+    const u = smooth(seg(c, 5.5, 12.5));
+    splineAt(WP, n, u, out);
+    // la bola nunca atraviesa el cuerpo: se empuja fuera de cápsulas de torso, cabeza y brazos (salvo al salir y
+    // llegar a una palma, donde tiene que tocarla)
+    esquivarCuerpo(out, Math.min(1, 5 * Math.sin(Math.PI * u)));
   }
   else if (C.fase === 'F') onPalm(R, 0, out);
   else {   // G: salto en arco de la palma derecha a la izquierda
@@ -611,9 +657,9 @@ function placeOrb(t) {
     onPalm(R, 0, tmpV); onPalm(L, 0, out); out.lerpVectors(tmpV, out, u).addScaledVector(UP, 0.20 * Math.sin(Math.PI * u));
   }
   // suavizado: la bola sigue su recorrido con un muelle rápido (quita esquinas) y la mirada con uno lento (retraso natural)
-  const dt = lastT < 0 || t < lastT || t - lastT > 1 ? -1 : t - lastT; lastT = t;
+  const dt = lastT < 0 || t < lastT || t - lastT > 1 ? -1 : t - lastT; lastT = t; DTR = dt;
   if (!springInit || dt < 0 || S.forma <= 0) { orbS.copy(out); orbV.set(0, 0, 0); lookP.copy(out); lookV.set(0, 0, 0); springInit = true; }
-  else { spring(orbS, orbV, out, 22, dt); spring(lookP, lookV, orbS, 7, dt); }
+  else { spring(orbS, orbV, out, 26, dt); spring(lookP, lookV, orbS, 7, dt); }
   out.copy(orbS);
   orb.position.copy(out);
 }

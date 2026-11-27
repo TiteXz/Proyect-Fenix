@@ -36,6 +36,18 @@ const toWebp = (png, webp) => { cp.execFileSync('python3', ['-I', '-c', 'import 
     if (f === 'C' || f === 'E') { await p.evaluate(() => window.__IDLE__.camaraCabeza(0.35, 0.0, 0.45)); await shot(n + '_cuello'); }
   }
   s = await hasta(8.4); const o2 = s.orb; s = await st(30); ok(Math.hypot(s.orb[0] - o2[0], s.orb[2] - o2[2]) > 0.1, 'la bola rodea el cuerpo');
+  // fluidez: un ciclo completo sin cruzar el cuerpo, sin tirones de la bola ni giros bruscos de cabeza
+  const m = await p.evaluate(() => { const I = window.__IDLE__, { THREE, char } = I._dbg(); const g = n => { let r; char.traverse(o => { if (!r && o.name === n) r = o; }); return r; };
+    const segs = [['pelvis', 'spine_03', 0.17], ['spine_03', 'neck_01', 0.16], ['upperarm_l', 'lowerarm_l', 0.06], ['lowerarm_l', 'hand_l', 0.05], ['upperarm_r', 'lowerarm_r', 0.06], ['lowerarm_r', 'hand_r', 0.05], ['clavicle_l', 'upperarm_l', 0.08], ['clavicle_r', 'upperarm_r', 0.08]];
+    const A = new THREE.Vector3(), Bv = new THREE.Vector3(), O = new THREE.Vector3(), L = new THREE.Line3(), cp = new THREE.Vector3(), q = new THREE.Quaternion(), pq = new THREE.Quaternion(), h = g('head');
+    let cr = 0, acc = 0, hv = 0; const P = [];
+    for (let i = 0; i < 60 * 16; i++) { const s = I.step(1); P.push(s.orb); h.getWorldQuaternion(q); if (i) hv = Math.max(hv, q.angleTo(pq) * 60 * 57.3); pq.copy(q);
+      if (['C', 'D', 'E'].includes(s.coreo.fase)) { O.fromArray(s.orb); for (const [a, b, r] of segs) { g(a).getWorldPosition(A); g(b).getWorldPosition(Bv); L.set(A, Bv); L.closestPointToPoint(O, true, cp); if (cp.distanceTo(O) - r - 0.045 < -0.01) cr++; } } }
+    for (let i = 2; i < P.length; i++) acc = Math.max(acc, Math.hypot(...[0, 1, 2].map(k => P[i][k] - 2 * P[i - 1][k] + P[i - 2][k])) * 3600);
+    return { cr, acc, hv }; });
+  ok(m.cr === 0, `la bola no atraviesa el cuerpo (${m.cr} fotogramas dentro)`);
+  ok(m.acc < 25, `bola sin tirones (aceleración máx. ${m.acc.toFixed(1)} m/s²)`);
+  ok(m.hv < 200, `cabeza sin giros bruscos (máx. ${m.hv.toFixed(0)}°/s)`);
   await p.evaluate(() => window.__IDLE__.key('w', true)); s = await st(30);
   ok(s.quieto === 0 && s.w < 1 && s.fase !== 'idle de magia', `al moverse se interrumpe (${s.fase}, w ${s.w.toFixed(2)})`);
   s = await st(30); ok(s.w === 0 && !s.orbVisible, 'mano bajada y bola deshecha');
