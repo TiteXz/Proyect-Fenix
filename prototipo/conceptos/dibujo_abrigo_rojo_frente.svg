@@ -1,0 +1,338 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 1300" width="700" height="1300">
+  <title>Héroe de frente: abrigo largo rojo (dibujo detallado)</title>
+  <defs>
+    <filter id="b1" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.2"/></filter>
+    <filter id="b2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.5"/></filter>
+    <filter id="b4" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="4"/></filter>
+    <filter id="b8" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8"/></filter>
+    <filter id="b14" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="14"/></filter>
+    <!-- textura de piel / tela / cuero (ruido muy suave multiplicado sobre la forma) -->
+    <filter id="poros" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="1.6" numOctaves="2" seed="3" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.5  0 0 0 0 0.35  0 0 0 0 0.28  0 0 0 0.35 0" result="c"/>
+      <feComposite in="c" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="tela" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9 0.25" numOctaves="3" seed="11" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.1  0 0 0 0 0.02  0 0 0 0 0.02  0 0 0 0.5 -0.08" result="c"/>
+      <feComposite in="c" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="cueroTex" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="turbulence" baseFrequency="0.25" numOctaves="3" seed="5" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.05  0 0 0 0 0.03  0 0 0 0 0.02  0 0 0 0.45 -0.1" result="c"/>
+      <feComposite in="c" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <filter id="barba" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="2.4" numOctaves="1" seed="21" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0.12  0 0 0 0 0.08  0 0 0 0 0.06  0 0 0 2.2 -1.0" result="c"/>
+      <feComposite in="c" in2="SourceGraphic" operator="in"/>
+    </filter>
+
+    <!-- degradados (luz principal cálida desde la derecha del dibujo, contraluz frío a la izquierda) -->
+    <linearGradient id="rojo" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3a0f0c"/><stop offset="0.22" stop-color="#6e1f17"/><stop offset="0.55" stop-color="#8e2e22"/>
+      <stop offset="0.78" stop-color="#a63a2a"/><stop offset="0.95" stop-color="#6a1f17"/><stop offset="1" stop-color="#3a0f0c"/>
+    </linearGradient>
+    <linearGradient id="capelina" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#241a11"/><stop offset="0.4" stop-color="#4d3a28"/><stop offset="0.75" stop-color="#6e5539"/><stop offset="1" stop-color="#33251a"/>
+    </linearGradient>
+    <linearGradient id="manga" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#110e0c"/><stop offset="0.6" stop-color="#352d27"/><stop offset="1" stop-color="#16120f"/>
+    </linearGradient>
+    <linearGradient id="cuero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5c3d26"/><stop offset="0.5" stop-color="#7a5235"/><stop offset="1" stop-color="#2a1b10"/>
+    </linearGradient>
+    <linearGradient id="fajin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b08e52"/><stop offset="0.5" stop-color="#8c6c38"/><stop offset="1" stop-color="#58411f"/>
+    </linearGradient>
+    <linearGradient id="pantalon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#15110e"/><stop offset="0.6" stop-color="#3a3029"/><stop offset="1" stop-color="#18130f"/>
+    </linearGradient>
+    <linearGradient id="bota" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#120c08"/><stop offset="0.55" stop-color="#3e2b1e"/><stop offset="0.72" stop-color="#6a4d38"/><stop offset="1" stop-color="#140d09"/>
+    </linearGradient>
+    <linearGradient id="acero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2d3135"/><stop offset="0.42" stop-color="#d4d9de"/><stop offset="0.5" stop-color="#f4f6f8"/><stop offset="0.58" stop-color="#8b9299"/><stop offset="1" stop-color="#25282c"/>
+    </linearGradient>
+    <linearGradient id="pelo" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#140d08"/><stop offset="0.4" stop-color="#3b2819"/><stop offset="0.7" stop-color="#5a3f27"/><stop offset="1" stop-color="#1a110b"/>
+    </linearGradient>
+    <radialGradient id="piel" cx="0.6" cy="0.42" r="0.62">
+      <stop offset="0" stop-color="#e7b896"/><stop offset="0.55" stop-color="#cf9873"/><stop offset="0.85" stop-color="#a26c4f"/><stop offset="1" stop-color="#7c4c36"/>
+    </radialGradient>
+    <linearGradient id="cuello" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#7a4b35"/><stop offset="0.6" stop-color="#b98361"/><stop offset="1" stop-color="#7d4d37"/>
+    </linearGradient>
+    <radialGradient id="iris" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#2b3a30"/><stop offset="0.35" stop-color="#4f6a55"/><stop offset="0.8" stop-color="#36463a"/><stop offset="1" stop-color="#1b2219"/>
+    </radialGradient>
+    <linearGradient id="mano" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8a5a42"/><stop offset="0.6" stop-color="#c99272"/><stop offset="1" stop-color="#83543d"/>
+    </linearGradient>
+
+    <clipPath id="cCara"><path id="caraForma" d="M350 70 C384 70 404 96 405 132 C406 152 402 172 396 190 C388 212 372 230 350 234 C328 230 312 212 304 190 C298 172 294 152 295 132 C296 96 316 70 350 70 Z"/></clipPath>
+    <clipPath id="cAbrigo"><path id="abrigoForma" d="M190 296 C176 380 184 470 204 560 C194 650 178 760 166 880 C160 940 158 990 156 1030 C200 1048 262 1056 318 1058 L340 650 L360 650 L382 1058 C438 1056 500 1048 544 1030 C542 990 540 940 534 880 C522 760 506 650 496 560 C516 470 524 380 510 296 C460 270 240 270 190 296 Z"/></clipPath>
+  </defs>
+
+  <!-- sombra de contacto -->
+  <ellipse cx="352" cy="1268" rx="180" ry="22" fill="#000" opacity="0.3" filter="url(#b14)"/>
+
+  <!-- ===== PELO POR DETRÁS (cae a los hombros por detrás del cuello) ===== -->
+  <path d="M296 120 C288 170 286 222 290 262 C300 284 320 292 334 290 L366 290 C380 292 400 284 410 262 C414 222 412 170 404 120 Z" fill="url(#pelo)"/>
+  <g stroke="#0d0805" stroke-width="1.2" fill="none" opacity="0.6">
+    <path d="M300 160 C296 200 296 240 302 278"/><path d="M400 160 C404 200 404 240 398 278"/><path d="M310 180 C308 220 310 250 316 284"/><path d="M390 180 C392 220 390 250 384 284"/>
+  </g>
+
+  <!-- ===== VAINA (por detrás del faldón, asoma junto a la pierna izquierda del personaje) ===== -->
+  <path d="M478 640 L560 1120 L578 1116 L498 636 Z" fill="#1d130c"/>
+  <path d="M552 1098 L582 1092 L590 1136 C586 1146 568 1150 560 1142 Z" fill="url(#acero)"/>
+
+  <!-- ===== PIERNAS Y BOTAS ===== -->
+  <path d="M262 980 C258 1060 258 1120 262 1176 L334 1176 C336 1110 340 1050 352 970 Z" fill="url(#pantalon)"/>
+  <path d="M348 970 C360 1050 364 1110 366 1176 L438 1176 C442 1120 442 1060 438 980 Z" fill="url(#pantalon)"/>
+  <path d="M290 990 C288 1060 290 1110 294 1160" stroke="#5a4c40" stroke-width="4" opacity="0.35" filter="url(#b2)"/>
+  <path d="M408 990 C410 1060 410 1110 406 1160" stroke="#6a5a4c" stroke-width="5" opacity="0.4" filter="url(#b2)"/>
+  <path d="M254 1104 C252 1160 252 1206 256 1236 C254 1254 246 1262 236 1268 C262 1278 316 1278 340 1270 C342 1250 340 1200 340 1104 C312 1096 282 1096 254 1104 Z" fill="url(#bota)"/>
+  <path d="M360 1104 C360 1200 358 1250 360 1270 C384 1278 438 1278 464 1268 C454 1262 446 1254 444 1236 C448 1206 448 1160 446 1104 C418 1096 388 1096 360 1104 Z" fill="url(#bota)"/>
+  <path d="M254 1104 C282 1096 312 1096 340 1104 L340 1120 C312 1112 282 1112 254 1120 Z" fill="#5e4331"/>
+  <path d="M360 1104 C388 1096 418 1096 446 1104 L446 1120 C418 1112 388 1112 360 1120 Z" fill="#6a4c37"/>
+  <path d="M236 1268 C262 1278 316 1278 340 1270 L340 1278 C316 1286 262 1286 236 1276 Z" fill="#0c0805"/>
+  <path d="M360 1270 C384 1278 438 1278 464 1268 L464 1276 C438 1286 384 1286 360 1278 Z" fill="#0c0805"/>
+  <path d="M310 1130 C312 1180 312 1220 306 1262" stroke="#8a6a50" stroke-width="5" opacity="0.4" filter="url(#b2)"/>
+  <path d="M424 1130 C426 1180 426 1220 432 1262" stroke="#9a7a5e" stroke-width="6" opacity="0.5" filter="url(#b2)"/>
+  <path d="M254 1104 C252 1160 252 1206 256 1236 C254 1254 246 1262 236 1268 C262 1278 316 1278 340 1270 C342 1250 340 1200 340 1104 Z" fill="#000" filter="url(#cueroTex)"/>
+  <path d="M360 1104 C360 1200 358 1250 360 1270 C384 1278 438 1278 464 1268 C454 1262 446 1254 444 1236 C448 1206 448 1160 446 1104 Z" fill="#000" filter="url(#cueroTex)"/>
+
+  <!-- ===== LO QUE SE VE POR LA ABERTURA: bajo de la túnica oscura y muslos ===== -->
+  <path d="M316 620 L384 620 L392 760 L308 760 Z" fill="#2a231e"/>
+  <path d="M308 752 C330 764 370 764 392 752 L392 760 L308 760 Z" fill="#14100d"/>
+  <path d="M326 756 L374 756 L370 1000 C360 1010 340 1010 330 1000 Z" fill="#100c0a"/>
+  <path d="M306 756 C304 840 300 920 298 990 L344 990 C346 920 348 840 350 760 Z" fill="url(#pantalon)"/>
+  <path d="M350 760 C352 840 354 920 356 990 L402 990 C400 920 396 840 394 756 Z" fill="url(#pantalon)"/>
+  <path d="M350 762 L350 990" stroke="#0a0806" stroke-width="3"/>
+  <path d="M376 780 C380 860 382 930 384 990" stroke="#6a5a4c" stroke-width="4" opacity="0.4" filter="url(#b2)"/>
+
+  <!-- ===== ABRIGO ROJO (cerrado hasta la cintura, faldón abierto delante) ===== -->
+  <use href="#abrigoForma" fill="url(#rojo)"/>
+  <use href="#abrigoForma" fill="#000" filter="url(#tela)"/>
+  <g clip-path="url(#cAbrigo)">
+    <!-- pliegues del faldón -->
+    <g filter="url(#b4)">
+      <path d="M226 650 C216 780 208 900 200 1046 L222 1050 C228 910 236 790 244 660 Z" fill="#1c0605" opacity="0.6"/>
+      <path d="M292 660 C290 790 290 910 294 1056 L312 1056 C308 910 306 790 308 660 Z" fill="#1c0605" opacity="0.5"/>
+      <path d="M392 660 C394 790 396 910 400 1056 L416 1056 C412 910 410 790 406 660 Z" fill="#1c0605" opacity="0.45"/>
+      <path d="M468 650 C480 780 490 900 500 1046 L522 1040 C510 900 498 780 486 660 Z" fill="#1c0605" opacity="0.55"/>
+    </g>
+    <g filter="url(#b4)" stroke-linecap="round" fill="none">
+      <path d="M256 660 C252 790 252 910 256 1050" stroke="#b44533" stroke-width="10" opacity="0.4"/>
+      <path d="M440 660 C446 790 452 910 460 1050" stroke="#d45a40" stroke-width="13" opacity="0.45"/>
+      <path d="M324 680 C322 800 322 920 324 1056" stroke="#a63a2a" stroke-width="6" opacity="0.4"/>
+      <path d="M376 680 C378 800 380 920 382 1056" stroke="#c8503a" stroke-width="7" opacity="0.4"/>
+    </g>
+    <!-- pecho: volumen, costura central con presillas -->
+    <g filter="url(#b8)">
+      <ellipse cx="300" cy="400" rx="56" ry="70" fill="#4a120d" opacity="0.4"/>
+      <ellipse cx="412" cy="392" rx="60" ry="72" fill="#c24a35" opacity="0.4"/>
+      <path d="M204 300 C192 420 200 520 214 590" stroke="#120404" stroke-width="18" opacity="0.55"/>
+    </g>
+    <path d="M350 300 L350 566" stroke="#2a0a07" stroke-width="2.5"/>
+    <path d="M354 300 L354 566" stroke="#c2533c" stroke-width="1" opacity="0.6"/>
+    <g fill="url(#acero)" stroke="#1a0a06" stroke-width="0.8">
+      <rect x="342" y="380" width="16" height="7" rx="3"/><rect x="342" y="430" width="16" height="7" rx="3"/><rect x="342" y="480" width="16" height="7" rx="3"/><rect x="342" y="530" width="16" height="7" rx="3"/>
+    </g>
+    <!-- bajo raído y vivo del borde delantero -->
+    <path d="M340 650 L318 1058 M360 650 L382 1058" stroke="#1a0605" stroke-width="3"/>
+    <path d="M342 650 L320 1058" stroke="#c45a42" stroke-width="1.2" opacity="0.6"/>
+    <path d="M160 1028 C204 1046 262 1052 316 1054 M384 1054 C438 1052 496 1046 540 1028" stroke="#d27058" stroke-width="2" opacity="0.45"/>
+    <path d="M182 1012 l6 18 l8 -14 l7 16 M486 1016 l6 14 l7 -12 l8 12" stroke="#2a0a07" stroke-width="2" fill="none" opacity="0.5"/>
+    <!-- sombra que proyectan la capelina y los brazos -->
+    <path d="M200 300 C260 330 300 360 330 380 C300 340 260 310 200 300 Z" fill="#000" opacity="0.35" filter="url(#b8)"/>
+  </g>
+
+  <!-- ===== FAJÍN Y CINTURÓN ===== -->
+  <path d="M200 568 C258 586 442 586 500 568 L504 604 C442 622 258 622 196 604 Z" fill="url(#fajin)"/>
+  <path d="M200 568 C258 586 442 586 500 568 L504 604 C442 622 258 622 196 604 Z" fill="#000" filter="url(#tela)"/>
+  <path d="M202 598 C260 614 440 614 502 598 L504 618 C440 636 260 636 200 618 Z" fill="url(#cuero)"/>
+  <path d="M214 578 C268 592 432 592 486 578" stroke="#d2b276" stroke-width="2.5" opacity="0.55" filter="url(#b1)"/>
+  <rect x="334" y="598" width="32" height="24" rx="3" fill="none" stroke="url(#acero)" stroke-width="4"/>
+  <path d="M344 610 h18" stroke="url(#acero)" stroke-width="3"/>
+  <!-- nudo del fajín al costado derecho del personaje (izquierda del dibujo) -->
+  <path d="M226 594 C210 610 202 640 206 676 C214 690 224 690 228 680 C226 652 230 624 240 606 Z" fill="url(#fajin)"/>
+  <path d="M214 600 C196 616 186 648 188 682 C194 692 202 692 204 684 C202 652 208 626 222 604 Z" fill="#6e5228"/>
+  <path d="M204 610 C210 640 212 660 210 680" stroke="#3a2a12" stroke-width="1.4" opacity="0.6"/>
+
+  <!-- ===== ESPADA: empuñadura en la cadera izquierda (derecha del dibujo), algo escorzada ===== -->
+  <path d="M470 600 C480 616 492 630 500 642" stroke="#24160d" stroke-width="7"/>
+  <path d="M446 646 L520 612" stroke="#1c1f22" stroke-width="10" stroke-linecap="round"/>
+  <path d="M446 646 L520 612" stroke="url(#acero)" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M482 626 L468 560 L486 556 L500 622 Z" fill="#26170d"/>
+  <g stroke="#7a5638" stroke-width="1.4" opacity="0.8"><path d="M470 572 L486 568"/><path d="M472 584 L488 580"/><path d="M474 596 L490 592"/><path d="M476 608 L492 604"/></g>
+  <ellipse cx="476" cy="548" rx="16" ry="14" fill="url(#acero)"/>
+  <ellipse cx="476" cy="548" rx="6" ry="5" fill="#2a2d31"/>
+  <path d="M466 540 C470 536 480 536 486 540" stroke="#ffffff" stroke-width="2" opacity="0.8"/>
+  <path d="M488 640 L508 634 L512 652 L492 658 Z" fill="url(#acero)"/>
+
+  <!-- ===== MANGAS, BRAZALES Y MANOS ===== -->
+  <path d="M190 304 C166 334 154 404 152 484 C150 544 154 594 164 640 L204 636 C200 584 202 524 208 464 C212 404 214 344 210 304 Z" fill="url(#manga)"/>
+  <path d="M510 304 C534 334 546 404 548 484 C550 544 546 594 536 640 L496 636 C500 584 498 524 492 464 C488 404 486 344 490 304 Z" fill="url(#manga)"/>
+  <g filter="url(#b4)" fill="none">
+    <path d="M524 420 C530 470 530 520 526 580" stroke="#7d6c5e" stroke-width="7" opacity="0.5"/>
+    <path d="M170 420 C166 470 166 520 170 580" stroke="#4e5a66" stroke-width="5" opacity="0.4"/>
+    <path d="M160 500 C176 508 194 508 206 500" stroke="#060504" stroke-width="5" opacity="0.6"/>
+    <path d="M494 500 C510 508 528 508 540 500" stroke="#060504" stroke-width="5" opacity="0.6"/>
+  </g>
+  <path d="M162 564 C176 556 196 556 206 564 L204 640 C192 646 174 646 164 640 Z" fill="url(#cuero)"/>
+  <path d="M494 564 C504 556 524 556 538 564 L536 640 C526 646 508 646 496 640 Z" fill="url(#cuero)"/>
+  <path d="M162 564 C176 556 196 556 206 564 L204 640 C192 646 174 646 164 640 Z" fill="#000" filter="url(#cueroTex)"/>
+  <path d="M494 564 C504 556 524 556 538 564 L536 640 C526 646 508 646 496 640 Z" fill="#000" filter="url(#cueroTex)"/>
+  <path d="M164 590 C176 584 194 584 206 590 M164 618 C176 612 194 612 205 618" stroke="#1a110a" stroke-width="2" opacity="0.7"/>
+  <path d="M496 590 C508 584 526 584 538 590 M497 618 C508 612 526 612 537 618" stroke="#1a110a" stroke-width="2" opacity="0.7"/>
+  <!-- manos (vistas desde fuera, dedos relajados y algo curvados) -->
+  <g>
+    <path d="M164 638 C156 664 158 694 168 714 C176 730 194 734 204 722 C212 710 212 680 206 638 Z" fill="#1c140f"/>
+    <path d="M168 704 C164 724 168 744 176 756 C184 766 196 766 202 756 C208 746 208 726 206 708 Z" fill="url(#mano)"/>
+    <g stroke="#5a3626" stroke-width="1.2" opacity="0.75" fill="none">
+      <path d="M176 714 C176 732 178 748 184 760"/><path d="M186 716 C188 734 190 748 194 760"/><path d="M196 714 C198 730 200 742 202 752"/>
+    </g>
+    <path d="M168 712 C162 722 162 732 166 740" stroke="#4a2c1f" stroke-width="1.4" fill="none"/>
+    <path d="M186 708 C192 724 196 744 196 758" stroke="#eabf9e" stroke-width="2.5" opacity="0.4" filter="url(#b1)"/>
+  </g>
+  <g>
+    <path d="M536 638 C544 664 542 694 532 714 C524 730 506 734 496 722 C488 710 488 680 494 638 Z" fill="#1c140f"/>
+    <path d="M532 704 C536 724 532 744 524 756 C516 766 504 766 498 756 C492 746 492 726 494 708 Z" fill="url(#mano)"/>
+    <g stroke="#5a3626" stroke-width="1.2" opacity="0.75" fill="none">
+      <path d="M524 714 C524 732 522 748 516 760"/><path d="M514 716 C512 734 510 748 506 760"/><path d="M504 714 C502 730 500 742 498 752"/>
+    </g>
+    <path d="M532 712 C538 722 538 732 534 740" stroke="#4a2c1f" stroke-width="1.4" fill="none"/>
+    <path d="M514 708 C518 724 520 744 518 758" stroke="#f2c8a6" stroke-width="3" opacity="0.45" filter="url(#b1)"/>
+  </g>
+
+  <!-- ===== HOMBRERA ÚNICA (hombro izquierdo del personaje = derecha del dibujo) ===== -->
+  <path d="M532 316 C524 286 494 272 460 276 L454 336 C480 340 504 352 522 372 Z" fill="url(#cuero)"/>
+  <path d="M536 350 C528 324 500 312 468 314 L462 370 C486 374 510 386 528 406 Z" fill="#3a2517"/>
+  <path d="M538 386 C530 364 504 354 474 356 L468 408 C492 412 514 422 532 440 Z" fill="url(#cuero)"/>
+  <path d="M532 316 C524 286 494 272 460 276 L454 336 C480 340 504 352 522 372 Z" fill="#000" filter="url(#cueroTex)"/>
+  <path d="M538 386 C530 364 504 354 474 356 L468 408 C492 412 514 422 532 440 Z" fill="#000" filter="url(#cueroTex)"/>
+  <path d="M532 440 C514 422 492 412 468 408" stroke="url(#acero)" stroke-width="5"/>
+  <g fill="url(#acero)"><circle cx="492" cy="294" r="3.4"/><circle cx="496" cy="334" r="3.4"/><circle cx="500" cy="376" r="3.4"/></g>
+  <path d="M470 282 C494 280 516 290 528 306" stroke="#c59a6e" stroke-width="3" opacity="0.6" filter="url(#b1)"/>
+
+  <!-- ===== CAPELINA (capucha bajada alrededor del cuello, cae sobre el pecho) ===== -->
+  <path d="M250 262 C278 240 422 240 450 262 C500 276 532 300 528 326 C490 340 440 352 400 380 C384 392 366 400 350 402 C334 400 316 392 300 380 C260 352 210 340 172 326 C168 300 200 276 250 262 Z" fill="url(#capelina)"/>
+  <path d="M250 262 C278 240 422 240 450 262 C500 276 532 300 528 326 C490 340 440 352 400 380 C384 392 366 400 350 402 C334 400 316 392 300 380 C260 352 210 340 172 326 C168 300 200 276 250 262 Z" fill="#000" filter="url(#tela)" opacity="0.6"/>
+  <!-- pliegues de la capelina -->
+  <path d="M300 300 C320 330 336 360 346 396" stroke="#1a120b" stroke-width="3" opacity="0.5" fill="none" filter="url(#b1)"/>
+  <path d="M400 300 C380 330 364 360 354 396" stroke="#1a120b" stroke-width="3" opacity="0.5" fill="none" filter="url(#b1)"/>
+  <path d="M430 270 C460 286 490 300 512 318" stroke="#9a7c58" stroke-width="7" opacity="0.5" fill="none" filter="url(#b2)"/>
+  <path d="M240 280 C220 292 200 306 186 320" stroke="#120c07" stroke-width="7" opacity="0.5" fill="none" filter="url(#b2)"/>
+  <!-- cuello de la capucha (rollo de tela alrededor del cuello) -->
+  <path d="M300 250 C320 236 380 236 400 250 C412 262 404 282 386 288 C364 296 336 296 314 288 C296 282 288 262 300 250 Z" fill="#5a4530"/>
+  <path d="M304 262 C326 274 374 274 396 262" stroke="#2a1d12" stroke-width="2" opacity="0.7" fill="none"/>
+  <path d="M376 246 C392 252 400 262 398 274" stroke="#a5865f" stroke-width="4" opacity="0.5" fill="none" filter="url(#b1)"/>
+
+  <!-- ===== CUELLO ===== -->
+  <path d="M324 206 C326 228 326 244 322 258 C340 268 360 268 378 258 C374 244 374 228 376 206 Z" fill="url(#cuello)"/>
+  <path d="M326 230 C334 242 350 248 366 244 C372 242 376 236 376 230 C366 236 340 238 326 230 Z" fill="#3a2015" opacity="0.5" filter="url(#b2)"/>
+  <path d="M356 236 C358 246 360 254 362 260" stroke="#5a3424" stroke-width="2" opacity="0.4" filter="url(#b1)"/>
+
+  <!-- ===== CABEZA ===== -->
+  <!-- orejas -->
+  <path d="M297 128 C286 124 282 146 288 164 C292 174 298 176 302 170 Z" fill="#b57e5d"/>
+  <path d="M403 128 C414 124 418 146 412 164 C408 174 402 176 398 170 Z" fill="#c89070"/>
+  <path d="M292 136 C290 148 292 158 296 164" stroke="#6a3e2b" stroke-width="1.6" fill="none" opacity="0.7"/>
+  <path d="M408 136 C410 148 408 158 404 164" stroke="#7a4a33" stroke-width="1.6" fill="none" opacity="0.7"/>
+  <!-- cara -->
+  <use href="#caraForma" fill="url(#piel)"/>
+  <g clip-path="url(#cCara)">
+    <!-- modelado (aerógrafo): sienes, cuencas, nariz, pómulos, mandíbula -->
+    <g filter="url(#b4)">
+      <ellipse cx="304" cy="126" rx="14" ry="30" fill="#6a3e2b" opacity="0.55"/>
+      <ellipse cx="398" cy="126" rx="10" ry="26" fill="#7a4a33" opacity="0.35"/>
+      <ellipse cx="328" cy="136" rx="17" ry="10" fill="#7a4632" opacity="0.6"/>
+      <ellipse cx="372" cy="136" rx="17" ry="10" fill="#8a5038" opacity="0.45"/>
+      <path d="M338 138 C340 156 340 170 338 180 C344 184 348 184 350 182 C346 168 344 152 344 138 Z" fill="#7a4632" opacity="0.65"/>
+      <ellipse cx="350" cy="190" rx="16" ry="5" fill="#5a2e20" opacity="0.6"/>
+      <path d="M302 170 C308 196 324 218 342 228 C326 222 310 206 302 186 Z" fill="#5a3022" opacity="0.6"/>
+      <path d="M398 170 C394 196 380 216 362 228 C380 220 392 204 398 186 Z" fill="#7a4632" opacity="0.4"/>
+      <ellipse cx="350" cy="224" rx="20" ry="7" fill="#6a3a28" opacity="0.4"/>
+      <ellipse cx="316" cy="170" rx="9" ry="14" fill="#7a4230" opacity="0.4"/>
+    </g>
+    <g filter="url(#b4)">
+      <ellipse cx="386" cy="160" rx="12" ry="9" fill="#f2c6a4" opacity="0.65"/>
+      <ellipse cx="368" cy="96" rx="22" ry="12" fill="#f0c4a2" opacity="0.5"/>
+      <path d="M352 140 C354 156 354 168 352 178" stroke="#f6d2b4" stroke-width="5" opacity="0.75" fill="none"/>
+      <ellipse cx="358" cy="214" rx="10" ry="5" fill="#f0c09c" opacity="0.5"/>
+    </g>
+    <!-- barba de pocos días -->
+    <path d="M302 176 C310 206 328 228 350 234 C372 228 390 206 398 176 C392 196 380 210 366 214 C360 206 354 204 350 206 C346 204 340 206 334 214 C320 210 308 196 302 176 Z" fill="#000" filter="url(#barba)"/>
+    <path d="M334 196 C340 192 346 192 350 194 C354 192 360 192 366 196 C360 198 354 198 350 197 C346 198 340 198 334 196 Z" fill="#000" filter="url(#barba)"/>
+  </g>
+  <use href="#caraForma" fill="#000" filter="url(#poros)"/>
+  <!-- cejas (pelo a pelo) -->
+  <g stroke="#2a1a10" stroke-width="1.6" stroke-linecap="round">
+    <path d="M314 124 L320 121"/><path d="M318 123 L325 119"/><path d="M322 122 L330 118"/><path d="M327 121 L335 118"/><path d="M332 121 L340 119"/><path d="M336 122 L343 121"/>
+    <path d="M386 124 L380 121"/><path d="M382 123 L375 119"/><path d="M378 122 L370 118"/><path d="M373 121 L365 118"/><path d="M368 121 L360 119"/><path d="M364 122 L357 121"/>
+  </g>
+  <path d="M314 125 C324 117 336 117 344 122" stroke="#3a2416" stroke-width="3.2" fill="none" opacity="0.55" filter="url(#b1)"/>
+  <path d="M386 125 C376 117 364 117 356 122" stroke="#3a2416" stroke-width="3.2" fill="none" opacity="0.55" filter="url(#b1)"/>
+  <!-- ojos -->
+  <g>
+    <path d="M316 139 C322 133 334 132 342 138 C336 143 324 144 316 139 Z" fill="#e6dccf"/>
+    <path d="M384 139 C378 133 366 132 358 138 C364 143 376 144 384 139 Z" fill="#ebe2d6"/>
+    <circle cx="329" cy="138" r="4.6" fill="url(#iris)"/><circle cx="371" cy="138" r="4.6" fill="url(#iris)"/>
+    <circle cx="329" cy="138" r="1.9" fill="#070605"/><circle cx="371" cy="138" r="1.9" fill="#070605"/>
+    <circle cx="331" cy="136.5" r="1" fill="#fff"/><circle cx="373" cy="136.5" r="1" fill="#fff"/>
+    <!-- párpado superior (sombra sobre el ojo) y pestañas -->
+    <path d="M316 139 C322 132 334 131 342 137 C334 134 322 135 316 140 Z" fill="#2a1710"/>
+    <path d="M384 139 C378 132 366 131 358 137 C366 134 378 135 384 140 Z" fill="#2a1710"/>
+    <path d="M318 136 C326 133 334 133 340 136" stroke="#1a0e08" stroke-width="2" fill="none" opacity="0.4" filter="url(#b1)"/>
+    <path d="M382 136 C374 133 366 133 360 136" stroke="#1a0e08" stroke-width="2" fill="none" opacity="0.4" filter="url(#b1)"/>
+    <!-- pliegue del párpado -->
+    <path d="M318 132 C326 127 336 127 342 132" stroke="#6a3c2a" stroke-width="1.2" fill="none" opacity="0.7"/>
+    <path d="M382 132 C374 127 364 127 358 132" stroke="#7a4632" stroke-width="1.2" fill="none" opacity="0.7"/>
+    <!-- párpado inferior y ojeras -->
+    <path d="M318 141 C326 145 334 145 341 140" stroke="#8a5038" stroke-width="1" fill="none" opacity="0.6"/>
+    <path d="M382 141 C374 145 366 145 359 140" stroke="#8a5038" stroke-width="1" fill="none" opacity="0.6"/>
+    <path d="M320 147 C328 151 336 150 342 146" stroke="#7a4430" stroke-width="2.5" fill="none" opacity="0.35" filter="url(#b1)"/>
+    <path d="M380 147 C372 151 364 150 358 146" stroke="#7a4430" stroke-width="2.5" fill="none" opacity="0.3" filter="url(#b1)"/>
+  </g>
+  <!-- nariz -->
+  <path d="M340 180 C343 186 348 188 350 186 C352 188 357 186 360 180" stroke="#5a2e20" stroke-width="1.6" fill="none"/>
+  <ellipse cx="343" cy="183" rx="3.2" ry="1.8" fill="#3a1a12" filter="url(#b1)"/>
+  <ellipse cx="357" cy="183" rx="3.2" ry="1.8" fill="#3a1a12" filter="url(#b1)"/>
+  <path d="M338 176 C334 180 336 186 340 186" stroke="#6a3826" stroke-width="1.3" fill="none" opacity="0.8"/>
+  <path d="M362 176 C366 180 364 186 360 186" stroke="#8a4c34" stroke-width="1.3" fill="none" opacity="0.7"/>
+  <!-- boca -->
+  <path d="M337 202 C342 198 347 199 350 200 C353 199 358 198 363 202 C358 204 354 205 350 205 C346 205 342 204 337 202 Z" fill="#8a4a3c"/>
+  <path d="M336 203 C342 210 358 210 364 203 C358 206 342 206 336 203 Z" fill="#a8604e"/>
+  <path d="M337 202 C343 204 357 204 363 202" stroke="#3a1a12" stroke-width="1.3" fill="none"/>
+  <path d="M344 208 C348 209 352 209 356 208" stroke="#e2a08a" stroke-width="1.4" opacity="0.6" filter="url(#b1)"/>
+  <path d="M328 198 C330 204 332 206 334 206 M372 198 C370 204 368 206 366 206" stroke="#6a3826" stroke-width="1" fill="none" opacity="0.6"/>
+  <!-- surco nasogeniano y cicatriz -->
+  <path d="M332 184 C326 192 326 200 330 206" stroke="#7a4230" stroke-width="1.4" fill="none" opacity="0.45" filter="url(#b1)"/>
+  <path d="M368 184 C374 192 374 200 370 206" stroke="#8a4c34" stroke-width="1.4" fill="none" opacity="0.35" filter="url(#b1)"/>
+  <path d="M384 152 L392 172" stroke="#a65e50" stroke-width="1.6" opacity="0.7"/>
+  <path d="M385 152 L393 172" stroke="#f0c7ae" stroke-width="0.8" opacity="0.6"/>
+
+  <!-- ===== PELO POR DELANTE: peinado hacia atrás, nacimiento natural y mechones a los lados ===== -->
+  <path d="M296 128 C292 88 316 58 350 56 C386 58 410 88 404 128 C400 110 392 94 380 86 C370 80 360 80 350 82 C338 80 326 82 316 88 C304 96 298 110 296 128 Z" fill="url(#pelo)"/>
+  <!-- borde del nacimiento suavizado -->
+  <path d="M300 116 C306 98 320 86 336 84 C344 82 356 82 366 84 C382 88 394 100 400 116" stroke="#2a1a10" stroke-width="5" fill="none" opacity="0.45" filter="url(#b2)"/>
+  <g stroke-linecap="round" fill="none">
+    <g stroke="#0d0805" stroke-width="1.1" opacity="0.6">
+      <path d="M312 98 C322 76 340 64 358 62"/><path d="M320 92 C332 74 350 66 372 66"/><path d="M336 86 C348 72 366 66 386 72"/>
+      <path d="M352 84 C368 74 386 78 398 92"/><path d="M304 110 C310 86 326 70 346 64"/><path d="M366 86 C382 82 396 92 402 108"/>
+    </g>
+    <g stroke="#8a6440" stroke-width="2" opacity="0.5" filter="url(#b1)">
+      <path d="M340 74 C356 66 374 68 388 78"/><path d="M326 80 C340 70 358 68 372 72"/>
+    </g>
+    <!-- mechones a los lados, por detrás de las orejas hacia los hombros -->
+    <path d="M298 126 C292 160 292 200 298 240" stroke="#1f140c" stroke-width="7" opacity="0.8"/>
+    <path d="M402 126 C408 160 408 200 402 240" stroke="#3b2818" stroke-width="7" opacity="0.8"/>
+    <path d="M296 230 C294 250 290 268 282 282" stroke="#2a1c12" stroke-width="6" opacity="0.8"/>
+    <path d="M404 230 C406 250 410 268 418 282" stroke="#3b2818" stroke-width="6" opacity="0.8"/>
+  </g>
+  <!-- contraluz frío en el contorno izquierdo del pelo y luz cálida en la mejilla derecha -->
+  <path d="M298 122 C296 96 312 70 336 62" stroke="#b8cad8" stroke-width="2.5" fill="none" opacity="0.6" filter="url(#b1)"/>
+  <path d="M398 150 C400 170 396 190 388 206" stroke="#ffd0a8" stroke-width="3" fill="none" opacity="0.5" filter="url(#b2)"/>
+</svg>
