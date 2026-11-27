@@ -255,7 +255,7 @@ Grid: **1 m** de snap fino, **3 m** de snap de módulo, **6 m** de piso; rotaci�
 | Escaleras y puentes | Rampas escalonadas y arcos de caja con colisión correcta | Kit tallado con desgaste y madera añadida |
 | Pozo (N1-N5) | Cilindro con rampa helicoidal y 5 niveles señalados; sin detalle fino | Segmentos con nichos, estantes y props |
 | Subsuelo oculto (N6-N8) | Antecámara, **sala circular de 40 m** con 6 pilares y puerta, **sala-biblioteca simple** con estanterías de cajas y 3-4 atriles; luz por colores base | Biblioteca monumental completa, 12 galerías, cristales, props |
-| Puzles | Cadena recomendada con piezas primitivas (espejos como cilindros, rayo como línea emisiva) | Piezas del kit y efectos finales |
+| Puzles (cadena C → B → A decidida) | C: 1 toldo quemable, 1 charca congelable y 1 pared de glifos reactiva con primitivas. B: 2 compuertas y plano de agua con altura variable y 2-3 plataformas de caja. A: ranura solar, 3 espejos como cilindros girables con 4 posiciones fijas, rayo como línea emisiva, puerta oculta. D (glifos y Códice) solo si sobra tiempo | Piezas del kit, rayo y agua finales, glifos de D, reflejos libres |
 | Lejano | Silueta única baked sencilla | Malla + impostores |
 | Coste | Superficie ≤ 14 draw calls y ≤ 120 k tris; instancia ≤ 10 draw calls | Presupuesto de §7 |
 
@@ -270,15 +270,17 @@ Prioridad del MVP: que el **recorrido, la escala y el descubrimiento** funcionen
 - Bibliotecas subterráneas inmensas con luz difusa; pozos y cisternas con escaleras que descienden.
 
 **Preguntas abiertas para el usuario (máx. 5):**
-1. ¿Qué **puzles** eliges? Recomendamos la cadena C → B → A con D opcional (§10).
-2. ¿La **arena** incluye duelos contra NPCs que puedan morir, o solo derrota/retirada sin muertes permanentes?
-3. ¿Aceptas que la sala del jefe y la biblioteca sean **instancia aparte** (como el dungeon) y no parte del mundo continuo?
-4. ¿Cuántos **conjuros** y de qué tipo (ataque, soporte, utilidad) se recogen en la biblioteca? Condiciona atriles y recompensa.
-5. ¿Debe haber **rastro o NPC guía** para el secreto (pista hablada del acólito) o solo pistas ambientales?
+(Puzles: resuelto, ver §10.)
+1. ¿La **arena** incluye duelos contra NPCs que puedan morir, o solo derrota/retirada sin muertes permanentes?
+2. ¿Aceptas que la sala del jefe y la biblioteca sean **instancia aparte** (como el dungeon) y no parte del mundo continuo?
+3. ¿Cuántos **conjuros** y de qué tipo (ataque, soporte, utilidad) se recogen en la biblioteca? Condiciona atriles y recompensa.
+4. ¿Debe haber **rastro o NPC guía** para el secreto (pista hablada del acólito) o solo pistas ambientales?
 
-## 10. Puzles propuestos (pendiente de elegir por el usuario)
+## 10. Puzles (DECIDIDO por el usuario)
 
-Todos usan la arquitectura existente y conducen hacia el pasaje oculto de N6. Valoración [SUPUESTO] para planificar:
+**Decisión:** cadena obligatoria de 3 puzles hacia la sala escondida: **C** (conjuros como llaves; superficie y pozo alto) → **B** (cisternas y canales; pozo medio) → **A** (espejos de sol; clave final que abre N6 y la sala del jefe). **D** (glifos de la Orden por la ciudad) como pistas opcionales que se apuntan en el Códice. **E** (anillos del pozo) **descartado**.
+
+Valoración [SUPUESTO] de las opciones consideradas, para planificar (la fila E se conserva solo como registro):
 
 | Id | Puzle | Dónde va | Duración | Dificultad | Piezas de kit | Riesgo de producción |
 |---|---|---|---|---|---|---|
@@ -288,18 +290,18 @@ Todos usan la arquitectura existente y conducen hacia el pasaje oculto de N6. Va
 | D | **Glifos de la Orden repartidos por la ciudad:** secuencias grabadas en fachadas que hay que repetir en pilares del subsuelo (se anotan en el Códice) | Ciudad (3-5 sitios) y N5 | 10-15 min de búsqueda | Media-alta (exploración) | Relieves de glifos, pilares de glifos, entradas de Códice | Bajo en arte; riesgo de diseño: puede frustrar sin pistas, por eso es opcional |
 | E | **Anillos del pozo:** estratos tallados que giran como cerradura de combinación hasta alinear un relieve | N5 (cámara circular) | 5-8 min | Media | Anillos concéntricos giratorios con relieve, pilares, mecanismos | Medio: animación y snap precisos; reutilizable como cierre del pasaje |
 
-**Recomendación del equipo: cadena de 3 + pistas opcionales.**
+**Cadena adoptada (recomendación del equipo aceptada):**
 1. **C** en superficie y pozo alto (N1-N3): enseña la lógica de hechizo-objeto y abre el acceso a los niveles bajos.
 2. **B** en el pozo medio (N3-N4): maneja el agua y descubre la cámara N5.
 3. **A** como llave final: la luz del Santuario (conducto de luz) cruza N5 y abre la puerta de la sala escondida (N6).
-4. **D** como pistas opcionales: glifos de umbral repartidos que dan lore y pistas de la última puerta (sin ser obligatorios). **E** se descarta de la cadena principal (puede servir de pasaje alternativo en fase 3).
+4. **D** como pistas opcionales: glifos de umbral repartidos que dan lore y pistas de la última puerta (sin ser obligatorios; cada glifo visto se anota en el Códice). **E** descartado.
 
 Esta cadena aprovecha el ciclo día/noche, los hechizos del jugador y la arquitectura del pozo sin añadir sistemas nuevos pesados; el riesgo principal es el raycast de reflejos (A), con alternativa de reflejo en ángulos fijos (4 posiciones de espejo por pieza).
 
 ## Pendiente de sincronizar (otros documentos; no modificados aquí)
 
 - **`docs/COMBATE.md` (disenador-combate):** ficha del **jefe de la sala escondida** (usar §3b: arena de Ø 40 m, 6 pilares, fases con brasero); **enemigos de la arena** y de duelos con NPCs; **rondas, rangos y recompensas** por rango (propuesta §3c).
-- **`docs/GDD.md` (disenador-juego):** reglas de la **arena** (rondas, rangos, entrada, recompensas, XP); **recompensas de conjuros** en la biblioteca (cuántos, cuáles, cómo se desbloquean) y su relación con el árbol de hechizos; secreto del subsuelo y archivo como parte de la historia; servicios de la ciudad (herrero, posada, alquimista, establo, escriba, gremio, cambista); puntos de descanso (plaza, posada, desfiladero, pozo N3); mercader del desierto; límite de NPCs activos para ciudad (≤ 24 propuesto); decisión de puzles (§10) y del NPC recurrente (D-7).
+- **`docs/GDD.md` (disenador-juego):** reglas de la **arena** (rondas, rangos, entrada, recompensas, XP); **recompensas de conjuros** en la biblioteca (cuántos, cuáles, cómo se desbloquean) y su relación con el árbol de hechizos; secreto del subsuelo y archivo como parte de la historia; servicios de la ciudad (herrero, posada, alquimista, establo, escriba, gremio, cambista); puntos de descanso (plaza, posada, desfiladero, pozo N3); mercader del desierto; límite de NPCs activos para ciudad (≤ 24 propuesto); cadena de puzles decidida C → B → A (+ D opcional con entradas de Códice, §10) como parte del camino al subsuelo; decisión del NPC recurrente (D-7).
 - **`docs/GUIA_VISUAL.md`:** colores nuevos (#d9c29a, #9a5f3c, #7a8a6a, #8a6a4c, #e6d3a3, #9fb8d9); LOD0 extendido a 90 m para piezas monumentales; presupuesto de multitud en impostores y de instancias (sala del jefe y biblioteca).
 - **`docs/ARQUITECTURA.md` (+ ADR):** sala del jefe y biblioteca como **instancia**, el bloque de 6 × 5 celdas más 7, estado persistente de puzles y raycast de espejos.
 - **`docs/GUIA_UI.md` (interfaz-ui):** inscripción de la arena, tablón de rangos y encargos, entradas de Códice de glifos.
