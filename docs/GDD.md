@@ -119,6 +119,8 @@ Hoguera con estandarte en asentamientos y caminos (≈ 20–25 en el mapa). Prim
 vida/aguante/maná al 100 %, fija el punto de reaparición, autoguarda y ofrece **esperar** hasta amanecer (06:00),
 mediodía (12:00) o anochecer (20:00) con fundido de 2 s. Cuenta como «campamento» para COMBATE §2.13. No reaparece
 enemigos. No se puede descansar con enemigos en alerta a ≤ 30 m.
+Ciudad de la Roca: 4 puntos (plaza, nicho del desfiladero, pozo N3, posada de pago) + 1 en la biblioteca tras el jefe;
+detalle y reglas en §7.6.1. Cuentan dentro de los 20–25 del mapa.
 
 ### 4.3 Ciclo día/noche (`mundo/tiempo.ts`)
 1 día = 24 min reales (CONTEXTO) ⇒ 1 h de juego = 1 min real. Partida nueva a las 08:00. Amanecer 06:00, anochecer 20:00.
@@ -195,6 +197,10 @@ Recursos §4.1; movimiento §3.2; combate y configuraciones EP/EE en COMBATE §1
   vendo nada». Esperar en un punto de descanso hasta el amanecer lo resuelve.
 - **Zona segura [SUPUESTO]:** los enemigos de mundo no entran en el radio de un asentamiento (patrullas lo rodean).
 - Fuera del MVP: NPC recurrente que guíe la trama (D-7), NPCs modulares (fase 3), viajes entre asentamientos.
+- **Ciudad de la Roca:** en el MVP cuenta como «otro asentamiento» (2–4 aldeanos dentro del tope de 20). En fase 2
+  (servicios, arena, Archivista) tiene su **propio tope: ≤ 24 NPCs activos** (modelo, rutina, interacción) **+ multitud
+  de fondo** (instancias/impostores sin IA ni interacción, no cuentan) [SUPUESTO]. Reparto en §7.6.2; el Archivista
+  en §10.12. Los **rivales de la arena no son habitantes**: son combatientes con vida (excepción a G-10, §7.7).
 
 ### 5.3 Bolso mágico (decisión del usuario; detalle [SUPUESTO]) (`bolso.ts`)
 | Regla | Valor |
@@ -237,6 +243,15 @@ no-muerto). Aquí solo su papel en el mundo y su botín (§8.1). Grupos de mundo
 | Bolso | +4 casillas por compra (§5.3) | Monedas |
 | Conocimiento | Fragmentos del Códice en ruinas y estatuas (§10.4) | Exploración |
 
+**Fase 2: la Ciudad de la Roca como nodo de progresión** [SUPUESTO; XP y recetas en COMBATE §2.7, §2.11]
+| Eje | Fuente en la ciudad | Aporte |
+|---|---|---|
+| XP de arena | Primera victoria de cada rango y de cada rival (§7.7) | ≤ 290 XP en total (un solo cobro) |
+| Magia | Biblioteca del subsuelo (§7.8.3): **Arcano de Espacio** garantizado + 5 recetas/runas opcionales | 1 de los 2 arcanos del catálogo; desbloquea **Piedra de paso** (viaje rápido de fase 2) |
+| Reputación | Fama (arena) y Estima (ciudad) (§8.5) | Precios y recompensas, nunca poder de combate |
+| Conocimiento | Glifos de umbral (puzle D), frases del Archivista, Tabla de las Horas | Entradas de Códice (10 XP c/u) |
+Regla: la ciudad **no bloquea por nivel** (§10.6): se puede entrar al subsuelo a nivel 1; solo es más duro (amenaza 3).
+
 ### 6.2 Dificultad del mundo por zonas (`mundo/zonas.ts`) [SUPUESTO]
 | Zona | Amenaza | Vida / daño enemigo | Monedas |
 |---|---|---|---|
@@ -257,6 +272,8 @@ esqueletos; 2 añade cultistas; 3 grupos mixtos de 4–5.
 
 ### 7.1 Escenas
 Carga → Menú principal → **Mundo (Valdera)** ⇄ **Dungeon (instancia)** → Escena final → Créditos → Mundo. Pausa = libro.
+Fase 2: **Mundo ⇄ Subsuelo de la Roca (instancia: antecámara N6 + sala del jefe N7 + biblioteca N8)**, con pantalla de
+carga al cruzar el umbral de N6 (§7.8). La arena **no** es instancia: es parte de la celda de la ciudad.
 
 ### 7.2 Escena 0: despertar (primeros 30 s) [SUPUESTO]
 El jugador despierta en el **Torreón caído** (cripta de un torreón exterior del castillo, ≈ 600 m de la Aldea del Vado).
@@ -271,7 +288,7 @@ Disposición propuesta [SUPUESTO; a fijar por el diseño de nivel]:
 | Bosque (inicio) | Centro-oeste | Aldea del Vado, Torreón caído, Molino, Santuario del Arroyo, **castillo en ruinas** en una colina ≈ 3 km al norte de la Aldea |
 | Costa | Franja oeste y sur | Puerto Gaviota, Caleta, faros y ruinas costeras |
 | Monte nevado | Norte | Refugio del lago, lago glaciar, estatua sin rostro |
-| Desierto y zona rocosa | Este y sureste | Oasis de Arenal, Ciudad de la Roca |
+| Desierto y zona rocosa | Este y sureste | Oasis de Arenal, Ciudad de la Roca (§7.6) |
 | Islas (4–5) | > 1 km de la costa | Visibles, inaccesibles en el MVP |
 POI: 50–70 (CONTEXTO): ≈ 25 campamentos/patrullas fijas, ≈ 20 cofres y ruinas, 20–25 puntos de descanso, 4–6
 estatuas/santuarios con fragmentos. **Sin viaje rápido en el MVP** [SUPUESTO]: caballo + caminos; piedras de paso en fase 2.
@@ -297,6 +314,135 @@ monedas ×0,5, sin cofre del Guardián.
 Tras vencer al jefe: cámara sobre el castillo, **voz del Guardián liberado con subtítulos** (4–6 líneas, ≈ 40 s, cierra con
 «No eras nadie. Simplemente, no te rendiste.»), créditos, vuelta al mundo junto al portón al amanecer.
 
+### 7.6 Ciudad de la Roca (zona 3, este/sureste) (`mundo/ciudad_roca.ts`; espacio y arte en `docs/CIUDAD_ROCA.md`)
+Ciudad **grande y habitada** tallada en un macizo de arenisca (decisión del usuario). Ocupa **6 × 5 celdas de 128 m +
+7 celdas** de desfiladero (CIUDAD_ROCA §2). Amenaza 3 (§6.2) en desfiladero, periferia y pozo desde N3; **plaza,
+terrazas, arena (fuera de combate) y servicios son zona segura** (§5.2).
+
+**Qué entra cuándo** [SUPUESTO: CONTEXTO limita el MVP a un mercader, un dungeon y sin XP]
+| Fase | Contenido | Arte |
+|---|---|---|
+| MVP | Ciudad visitable: desfiladero, plaza, terrazas sin interiores, fachada del Santuario, meseta, pozo N1–N2 (N3 y siguientes cerrados por derrumbe hasta la fase 2); descansos de plaza y desfiladero; 2–4 aldeanos ambientales | Proxy (CIUDAD_ROCA §8) |
+| Fase 2 | Servicios (§7.6.2), arena (§7.7), Archivista (§10.12), cadena de puzles, subsuelo, jefe y biblioteca (§7.8) | Proxy (CIUDAD_ROCA §8) |
+| Fase 3 | Arte final: kit tallado, multitud animada, biblioteca monumental (CIUDAD_ROCA §7) | Final |
+
+Recorrido: desierto → desfiladero (≈ 900 m, combate) → plaza (hub) → arena (norte) / terrazas (servicios) → Santuario
+del Telar → escalera a la meseta → gran pozo (N1–N5 públicos) → oculto: N6–N8 (§7.8).
+
+#### 7.6.1 Puntos de descanso de la ciudad [SUPUESTO]
+| Punto | Fase | Regla especial |
+|---|---|---|
+| Nicho-altar del desfiladero | MVP | Normal (§4.2) |
+| Fuente de la plaza | MVP | Normal |
+| Pozo N3 (sala de mapas) | Fase 2 | Normal; además permite **esperar hasta las 17:00** (rayo del puzle A, §7.8.1) |
+| Posada (terrazas) | Fase 2 | 10 monedas; permite esperar a **cualquier hora en punto**; da «Descansado» (+10 % regeneración de aguante durante 24 min reales; a validar por COMBATE) |
+| Biblioteca N8 | Fase 2 | Se activa al vencer al jefe; autoguarda dentro de la instancia (requiere cambio técnico, §10.10) |
+
+#### 7.6.2 Servicios y NPCs (fase 2) (`ciudad/servicios.ts`) [SUPUESTO salvo la lista, decidida por el usuario]
+| Servicio (NPC) | Dónde | Horario | Qué ofrece |
+|---|---|---|---|
+| Herrero/armero | Terrazas N1 | 07–20 | Mejoras Filo, Vigor, Fuelle (§8.3, mismos precios); armas de fase 2 |
+| Posada (posadero) | Terrazas N2 | 24 h | Descanso de pago (§7.6.1) |
+| Alquimista/curandero | Terrazas N2 | 08–21 | Pociones de vida/maná (30; stock 8/5 al amanecer); mejoras Pozo arcano y Economía de maná |
+| Sastre/peletero | Terrazas N3 | 08–19 | Armaduras modulares de fase 2 (COMBATE); tintes cosméticos |
+| Establo (mozo) | Entrada de la plaza | 24 h | Trae el caballo aunque esté a > 60 m, gratis |
+| Escriba/copista | Terrazas N3 | 09–19 | Tinta rúnica (15; 3/día), pergaminos de runas de fase 2 |
+| Taberna (tabernera) | Plaza | 12–02 | 1 rumor/día que señala un POI sin descubrir en la brújula |
+| Gremio de cazadores (maestre) | Terrazas N1 | 07–21 | 3 encargos «ve y limpia» rotativos (1 nuevo al amanecer): 60–120 monedas + 5 Estima |
+| Cambista | Plaza | 08–20 | Compra botín vendible al **120 %** de §5.4 |
+| Mercader general | Plaza | 06–21 | Como el del Vado **sin ampliaciones del bolso** (siguen solo en el Vado, §5.3) |
+| Casa de la Arena (inscriptor) | Plaza | 08–22 | Inscripción y cartel (§7.7) |
+
+Reparto de los ≤ 24 activos: 11 de servicio + Archivista + maestro de arena y presentador + sacerdote-custodio +
+2 acólitos + 4 guardas + 3–4 ambientales. Público y fondo de plaza = multitud (no cuenta). Las reglas de NPC golpeado
+(§5.2) se aplican a todos; «no vende hasta el amanecer» a cualquier NPC con tienda.
+
+### 7.7 Arena de la Roca (fase 2) (`ciudad/arena.ts`) [SUPUESTO sobre la propuesta de CIUDAD_ROCA §3c]
+Ruedo elíptico 40 × 32 m en el anfiteatro del lado norte de la plaza; inscripción en la Casa de la Arena.
+
+| Regla | Valor |
+|---|---|
+| Inscripción | F con el inscriptor, 08–22; el combate empieza tras 5 s de entrada del presentador. Cuota (se pierde si se pierde): Bronce 0 · Plata 50 · Oro 120 · Campeón 250 |
+| Rangos | **Bronce → Plata → Oro → Campeón**; cada uno se desbloquea al completar el anterior |
+| Serie de un rango | 3 / 4 / 5 / 5 oleadas de monstruos del bestiario + **duelo final contra el rival del rango** (NPC con nombre) |
+| Dificultad | Vida/daño enemigo ×1,0 / ×1,25 / ×1,5 / ×1,75 (Bronce a Campeón); composición y fichas de rivales en COMBATE |
+| Entre oleadas | 15 s; aguante y maná al 100 %, **la vida no**; pociones permitidas; sin tienda |
+| Derrota | Pierde la serie y la cuota; reaparece en el túnel de combatientes con recursos al 100 %; **sin otra penalización** |
+| Abandono | Salir del ruedo es imposible (muro de 3,5 m); abandonar desde la pausa = derrota |
+| Repetir | Rangos completados repetibles: monedas ×0,3, sin XP ni objeto; máx. 3 cobros por rango y día de juego |
+| Recompensa (1.ª vez) | Monedas: 60 / 120 / 220 / 400 (fijas, sin multiplicador de zona) · Objeto de rango: 2 pociones / 3 tintas / pieza de equipo de fase 2 / arma de Campeón (COMBATE) · Título: Novato del ruedo / Gladiador / Veterano / Campeón de la Roca |
+| XP (1.ª vez) | Rango: 25 / 35 / 50 / 80 · Rival vencido: 15 · Revancha vencida: 10 ⇒ **máx. ≈ 290 XP** (dentro del margen de COMBATE M-50) |
+
+**Duelo contra NPC: elegir matar o perdonar** (decisión del usuario). Al llegar el rival a 0 de vida cae de rodillas
+(no muere), el público calla y aparece **Perdonar / Matar** (sin límite de tiempo; la cámara se acerca). Los monstruos
+no ofrecen elección.
+| Elección | Consecuencias |
+|---|---|
+| **Perdonar** | Fama +10, Estima +5. El rival sigue en el cartel y ofrece **1 revancha** a partir del amanecer siguiente, con ×1,25 sobre su rango y equipo mejorado; vencerla da monedas ×1,5 y +10 XP y se vuelve a elegir. Perdonado 2 veces, se retira y deja un regalo (objeto vendible de 100) |
+| **Matar** | **Botín extra**: su equipo (vendible 60 / 100 / 150 / 250 según rango; en fase 2 puede ser equipable). Fama +5, Estima −15; el rival **desaparece del cartel para siempre** (el rango se completa igual); su NPC vinculado (1 por rival, p. ej. un familiar en la taberna) deja de hablar con el jugador |
+
+Reglas comprobables:
+| ID | Regla | Test |
+|---|---|---|
+| AR-01 | Desbloqueo | Sin Bronce completado, el inscriptor no ofrece Plata |
+| AR-02 | Derrota | Morir en la oleada 2 de Plata ⇒ túnel, recursos 100 %, monedas = antes − 50, Plata sigue sin completar |
+| AR-03 | Elección | Rival a 0 de vida ⇒ queda vivo y aparece Perdonar/Matar; con un monstruo a 0 ⇒ muere sin elección |
+| AR-04 | Perdonar | Perdonar ⇒ Fama +10, Estima +5; revancha no disponible antes de las 06:00 siguientes, disponible después |
+| AR-05 | Matar | Matar ⇒ objeto de botín en el bolso, Fama +5, Estima −15, el rival no vuelve a aparecer tras recargar |
+| AR-06 | Un solo cobro | Repetir Bronce ⇒ 18 monedas, 0 XP; el 4.º cobro del mismo día ⇒ 0 monedas |
+
+### 7.8 Subsuelo: camino oculto, jefe y biblioteca (fase 2) (`ciudad/subsuelo.ts`)
+El pozo público (N1–N5) acaba en un aparente callejón sin salida. **La sala del jefe está escondida**: sin marcador,
+se llega explorando (pistas ambientales de CIUDAD_ROCA §3b) y resolviendo la **cadena obligatoria C → B → A**
+(decisión del usuario). **D** es opcional; **E** está descartado.
+
+#### 7.8.1 Cadena de puzles [SUPUESTO en el detalle; espacio en CIUDAD_ROCA §10]
+| Puzle | Dónde | Regla exacta | Resuelto (bandera persistente) |
+|---|---|---|---|
+| **C** Conjuros como llaves | Meseta + N2–N3 | C1: Bola de fuego quema el toldo y las cuerdas que tapan la boca del conducto de luz en la meseta (no vuelve a crecer). C2: Lanza de escarcha congela la charca de N2 durante **20 s** (se puede repetir) y permite cruzar a N3. C3: Destello sagrado a ≤ 15 m de la pared de glifos de N3 la revela y abre la escalera a N4 | `puzleC` cuando C1, C2 (cruzado) y C3 están hechos; los tres usan hechizos del MVP |
+| **B** Cisternas | N3–N4 | 2 compuertas (palancas F). Agua con 3 alturas (alta/media/baja); cada cambio tarda **4 s**. Media: las 3 plataformas flotantes llegan a la repisa; baja: descubre el paso a N5. Una palanca de **reinicio** en la entrada de N4 devuelve todo a «alta» (anti-bloqueo) | `puzleB` al pisar N5 |
+| **A** Espejos de sol | Santuario → conducto → N3–N5 | El rayo entra por la ranura del frontón **solo de 17:00 a 19:00** (2 min reales) y solo si C1 está hecho. 3 espejos de bronce con **4 posiciones fijas** (90°) cada uno; 1 solución. El glifo de N5 debe recibir luz **2 s seguidos** ⇒ la pared de N5 se abre para siempre. Los espejos conservan su posición | `puzleA` ⇒ acceso a N6 |
+| **D** Glifos de umbral (opcional) | 5 fachadas de la ciudad + pilar de N5 | Cada glifo visto a ≤ 10 m con línea de visión ⇒ entrada de Códice. Con 5/5, el pilar de N5 muestra las posiciones correctas de los espejos | No bloquea nada |
+
+Pistas: solo ambientales y del Archivista (§10.12); **nunca** marcador, flecha ni entrada de misión.
+
+#### 7.8.2 Instancia del subsuelo: antecámara (N6) y sala del jefe (N7)
+- **Entrada:** cruzar el umbral de N6 ⇒ pantalla de carga ⇒ instancia (el mundo se congela y descarga como en §7.4).
+  Se guarda el estado de puzles antes de cargar.
+- **Sala del jefe:** circular, Ø 40 m útiles, 6 pilares; la puerta se sella al entrar. Jefe único (ficha en COMBATE,
+  pendiente). Sin oleadas ni altar.
+- **Muerte:** reaparece en la antecámara con recursos al 100 %; el jefe se reinicia completo; monedas iguales.
+- **Salida:** volver por el umbral (carga ⇒ N5) en cualquier momento fuera de combate. Tras el jefe, el muro este se
+  retrae y da paso a N8. Jefe **no rejugable** [SUPUESTO]: la sala queda vacía.
+- **Recompensa del jefe:** 300 monedas + cofre (COMBATE) + XP de POI (15).
+
+#### 7.8.3 Biblioteca de la Orden (N8): recompensas de magia (decisión del usuario; ubicaciones de CIUDAD_ROCA §3d)
+Zona sin enemigos, con punto de descanso. Ningún atril tiene marcador; se encuentran con las mismas pistas ambientales.
+| Recompensa | Tipo (COMBATE §2) | Dónde | Obligatoria | XP (COMBATE §2.11) |
+|---|---|---|---|---|
+| **Arcano de Espacio** | Arcano (destinos de Espacio, p. ej. Piedra de paso) | Atril central (+ 2 esquirlas de Piedra de paso al lado) | **Garantizada** | 200 |
+| Llama sagrada | Fusión Fuego+Luz | G5, al encender el brasero con fuego | Opcional | 30 |
+| Aurora | Fusión Aire+Luz | G8, bajo el lucernario | Opcional | 30 |
+| Crepúsculo | Fusión Luz+Sombra | G2, rincón en penumbra | Opcional | 30 |
+| Planeo | Runa de movimiento | G11, mirador cerca del techo | Opcional | 40 |
+| Ancla | Runa de control | G3, mesa del copista | Opcional | 40 |
+| **Arcano de Tiempo** | **No se obtiene** (reservado a la trama final) | G6, «Tabla de las Horas» con hornacina vacía | — | 2–3 entradas de Códice (10 c/u) |
+
+Regla de concesión [SUPUESTO, a confirmar por COMBATE §2.7]: el atril **graba la receta/runa en el grimorio** (como un
+pergamino leído, sin tinta); la XP de «fusión descubierta» se cobra en el **primer lanzamiento válido**, como el resto.
+Planeo **funciona dentro de la biblioteca** (no es zona de anulación); la sala del jefe sí lo anula. Tiempo estimado:
+8–10 min hasta el atril central, 20–30 min para todo lo opcional.
+
+Reglas comprobables:
+| ID | Regla | Test |
+|---|---|---|
+| SU-01 | Orden de la cadena | Con `puzleC = false` la escalera a N4 está cerrada; con `puzleB = false` no hay paso a N5; con `puzleA = false` la pared de N5 no se abre |
+| SU-02 | Hora del rayo | A las 16:59 no hay rayo; a las 17:00 sí (con C1 hecho); a las 19:00 desaparece |
+| SU-03 | Espejos | Solución correcta + 2 s de luz en el glifo ⇒ `puzleA = true` persiste tras recargar; 1,9 s ⇒ no |
+| SU-04 | Anti-bloqueo de B | Desde cualquier estado de compuertas, la palanca de reinicio devuelve el agua a «alta» en ≤ 4 s |
+| SU-05 | Instancia | Cruzar el umbral de N6 ⇒ pantalla de carga; morir en N7 ⇒ antecámara, jefe con vida completa |
+| SU-06 | Biblioteca | Vencer al jefe ⇒ muro abierto; atril central ⇒ Arcano de Espacio en el grimorio; nunca se obtiene el Arcano de Tiempo |
+
 ## 8. Economía, victoria/derrota y puntuación
 
 ### 8.1 Fuentes de monedas (`economia.ts`) [SUPUESTO; ×multiplicador de zona §6.2]
@@ -306,7 +452,10 @@ Tras vencer al jefe: cámara sobre el castillo, **voz del Guardián liberado con
 | Cofre común / de ruina | 20–40 / 40–60 (+ reliquia 50 %) |
 | Encargo del anciano | 40 + escudo |
 | Dungeon | §7.4 |
-| Venta de botín | §5.4 |
+| Venta de botín | §5.4 (cambista de la Roca: 120 %, fase 2) |
+| Arena de la Roca (fase 2) | §7.7: 800 por los 4 rangos la 1.ª vez + botín/revanchas |
+| Gremio de cazadores (fase 2) | 60–120 por encargo, 1 nuevo al día |
+| Jefe del subsuelo (fase 2) | 300 + cofre (§7.8.2) |
 
 ### 8.2 Mercader de la Aldea del Vado (stock que se repone al amanecer)
 | Artículo | Precio | Stock diario |
@@ -336,6 +485,16 @@ Curva: cada nivel ≈ ×2 del anterior, redondeado. Total mejoras 2.960 + bolso 
   monedas; se guarda el **mejor tiempo**. En el libro, estadísticas de partida (tiempo jugado, POI descubiertos x/total,
   fragmentos x/total).
 
+### 8.5 Reputación en la Ciudad de la Roca (fase 2) (`ciudad/reputacion.ts`) [SUPUESTO]
+Dos contadores persistentes; solo cambian precios y recompensas, **nunca bloquean la trama ni el subsuelo**.
+| Contador | Rango (inicio) | Sube | Baja | Efectos |
+|---|---|---|---|---|
+| **Fama** (Casa de la Arena) | 0–100 (0) | Perdonar +10, matar +5, completar rango +5 | — | ≥ 40: monedas de arena ×1,2 · ≥ 80: ×1,4 y título «Favorito del público» |
+| **Estima** (ciudad) | −100…+100 (0) | Perdonar +5, encargo del gremio +5 | Matar −15 | ≥ +30: servicios −10 % · ≤ −30: servicios +20 % y el sacerdote-custodio no habla · ≤ −60: la posada no te aloja (los descansos gratuitos siguen) |
+Con 4 rivales, matar a todos deja la Estima en −60 como mínimo sin encargos; se recupera con el gremio (sin bloqueo
+permanente). Comprobable: **RE-01** matar 2 rivales con Estima 0 ⇒ −30 y el herrero cobra Filo 1 a 96; **RE-02** con
+Estima −60 la posada rechaza y la fuente de la plaza permite descansar.
+
 ## 9. Feedback
 | Evento | Visual | Sonido | HUD |
 |---|---|---|---|
@@ -359,6 +518,11 @@ Curva: cada nivel ≈ ×2 del anterior, redondeado. Total mejoras 2.960 + bolso 
 | Jefe: cambio de fase | Onda de choque, el yelmo arde en frío | Rugido + cambio de música | Barra del jefe marca fase 2 |
 | Muerte del jugador | Cámara lenta 0,5 s, desaturación, fundido | Golpe sordo, música se corta | «Caíste» 2 s |
 | Montar / silbar | Animación de montar / el caballo aparece al trote | Silbido, relincho, cascos | — |
+| Arena: entrada / oleada (fase 2) | Compuertas de jaula se abren; presentador en el palco | Clamor del público, cuerno | «Plata · Oleada 2/4» |
+| Arena: rival de rodillas | Cámara se acerca, público quieto | Silencio súbito | Aviso **Perdonar / Matar** (GUIA_UI) |
+| Perdonar / Matar | Rival se levanta y se retira / remate breve | Aclamación / abucheo mezclado | «Fama +10» / «Estima −15» 2 s |
+| Paso de puzle resuelto | Polvo que cae, mecanismo que se mueve; el rayo se enciende al llegar al glifo | Piedra que rueda, acorde grave | — (sin texto; el Códice anota si procede) |
+| Página de conjuro (atril) | Motas que forman una página de luz y se funden con la runa del jugador | Coro tenue | Nombre del conjuro 3 s; entrada en el grimorio |
 Detalle visual: GUIA_VISUAL; sonido: rol `audio`; HUD: GUIA_UI.
 
 ---
@@ -377,7 +541,7 @@ Detalle visual: GUIA_VISUAL; sonido: rol `audio`; HUD: GUIA_UI.
 | Caleta | Costa / frente a las islas [SUPUESTO] | Pueblo pesquero; acceso a las islas en fase 4 [SUPUESTO] |
 | Oasis de Arenal | Desierto | Parada de caravanas; ruinas de una piedra de viaje caída de la Orden [SUPUESTO] |
 | Refugio del lago | Monte nevado, lago glaciar | Refugio de montaña; estatua sin rostro [SUPUESTO] |
-| Ciudad de la Roca | Zona rocosa del desierto (mesetas y cañones) | Maravilla excavada en un macizo; archivo de la Orden en el gran pozo central [SUPUESTO] |
+| Ciudad de la Roca | Zona rocosa del desierto (mesetas y cañones) | Ciudad grande y habitada tallada en un macizo (§7.6); bajo el gran pozo, oculto, el **archivo de la Orden** (biblioteca, §7.8.3), que los habitantes ya no recuerdan (§10.12) |
 | Dungeon del castillo («Patio del castillo en ruinas») | Bosque, colina ≈ 3 km al norte de la Aldea [SUPUESTO] (§7.3) | Lugar de la noche de la Pausa, atrapado en un bucle temporal |
 | Islas (4–5) | Islas | Fragmentos opcionales; posibles ganchos de expansión [SUPUESTO] |
 
@@ -443,7 +607,8 @@ Nota: el orquestador recomendó combinar 1 + 4; el usuario aún no ha decidido.
 3. **¿Por qué luchaban en el castillo** el Guardián y el protagonista aquella noche, y contra quién?
 4. **¿Por qué el hechizo de Tiempo congeló al protagonista fuera del bucle** y al Guardián dentro?
 5. **Papel de los asentamientos:** ¿cada uno guarda una pieza de la leyenda o un resto de la Orden? ¿Hay una facción
-   o NPC recurrente (p. ej. un erudito que estudia la Pausa) que guíe la trama?
+   o NPC recurrente (p. ej. un erudito que estudia la Pausa) que guíe la trama? (Sigue abierta: el Archivista de la
+   Roca es un NPC local y candidato, no la respuesta; §10.12.)
 6. **Cultistas:** ¿tienen líder con nombre? ¿Conocen la verdad sobre el protagonista?
 7. **Esqueletos y no-muertos:** ¿son caídos de la noche de la Pausa, efecto del bucle o del deshilachado?
 8. **¿Quién esculpió las estatuas sin rostro** y por qué sin rostro (nadie recordaba al Guardián, o era deliberado)?
@@ -475,6 +640,20 @@ Nota: el orquestador recomendó combinar 1 + 4; el usuario aún no ha decidido.
 - **Nuevo (2026-11-26) para `disenador-combate`:** adoptar o corregir los valores propuestos en §3.3 (hit-stop,
   esquiva, cancelación) y §4.1 (recursos), los multiplicadores de zona (§6.2), la composición de oleadas (§7.4) y los
   porcentajes de mejora (§8.3) en la simulación DPS/TTK.
+- ✔ aplicado (2026-11-27): diseño de la Ciudad de la Roca (`docs/CIUDAD_ROCA.md`, viñeta GDD) volcado en §4.2, §5.2,
+  §6.1, §7.1, §7.6–§7.8, §8.1, §8.5, §9, §10.12.
+- **Nuevo (2026-11-27) para `disenador-combate`:** ficha del jefe del subsuelo; composición de oleadas de arena por
+  rango y 4 rivales con nombre (más su versión de revancha); XP de arena ≤ 290 a sumar al catálogo de M-50
+  (≈ 3.780 + 290 ≈ 4.070 < 4.571); concesión por atril frente a §2.7; Planeo en biblioteca frente a §2.10;
+  buff «Descansado» de la posada; objetos de rango Oro/Campeón.
+- **Nuevo (2026-11-27) para `interfaz-ui`:** inscripción y cartel de la arena, contador de oleadas, aviso Perdonar/Matar,
+  Fama y Estima en el libro, esperar a una hora concreta (N3 y posada), entradas de Códice de glifos, del Archivista y
+  de la Tabla de las Horas, presentación de la página de conjuro.
+- **Nuevo (2026-11-27) para `arquitecto` (cambios técnicos):** segunda instancia (subsuelo) con estado de puzles
+  persistente; autoguardado/descanso **dentro** de una instancia (hoy el guardado manual está vedado en el dungeon);
+  rivales con vida dentro de la ciudad (excepción a «NPC inmortal»); tope propio de 24 NPCs + multitud; varios
+  comerciantes (rompe la regla de un único mercader del MVP: solo a partir de fase 2); guardado de Fama, Estima,
+  cartel de arena y banderas `puzleA/B/C`, glifos D y etapa del Archivista.
 
 ### 10.11 Decisiones abiertas: fauna y NPCs
 Decidido por el usuario: **hay animales y hay NPCs** (§5.1, §5.2).
@@ -485,15 +664,36 @@ Decidido por el usuario: **hay animales y hay NPCs** (§5.1, §5.2).
 | D-2 | Especies | ¿Qué animales y en qué biomas (bosque, costa, desierto, monte nevado, islas)? | Sin decidir (fase 3) |
 | D-3 | Utilidad jugable | ¿Se cazan? ¿Dan materiales (p. ej. para inscripciones de fase 2)? ¿Se pueden atacar con hechizos? | Sin utilidad jugable (fase 3) |
 | D-4 | Lore de la fauna | ¿El deshilachado del tejido afecta a los animales (criaturas alteradas por la magia inestable)? | Sin decidir |
-| D-5 | Papeles de NPC | Además del mercader: ¿dadores de encargos, narradores de lore, guías, entrenadores de runas? | MVP: mercader + anciano (leyenda y 1 encargo) + aldeanos ambientales [SUPUESTO en el encargo] |
+| D-5 | Papeles de NPC | Además del mercader: ¿dadores de encargos, narradores de lore, guías, entrenadores de runas? | MVP: mercader + anciano (leyenda y 1 encargo) + aldeanos ambientales [SUPUESTO en el encargo]. Fase 2: servicios de la Roca y Archivista (§7.6.2, §10.12) |
 | D-6 | Mercaderes en el MVP | ¿Uno fijo o uno por asentamiento? | **Decidido (2026-11-25): uno fijo, en la Aldea del Vado** |
-| D-7 | NPC recurrente | ¿Hay un NPC que guíe la trama (p. ej. un erudito de la Pausa)? Enlaza con §10.9 p. 5 | Sin decidir (fuera del MVP) |
+| D-7 | NPC recurrente | ¿Hay un NPC que guíe la trama (p. ej. un erudito de la Pausa)? Enlaza con §10.9 p. 5 | Sin decidir (fuera del MVP). El Archivista de la Roca (§10.12) es local y candidato; no cierra D-7 |
 | D-8 | Reconocimiento | ¿Qué NPCs «reconocen» al protagonista y cómo se muestra? | **Decidido (2026-11-26):** el **mercader de la Aldea del Vado** y **un anciano**, con una frase suelta en bocadillo **solo la primera vez** (se guarda en la partida) (§5.2) |
 | D-9 | Vida de los NPCs | ¿Rutinas, se mueven, pueden morir o ser atacados? | **Decidido (2026-11-26):** rutina día/noche; **se les puede golpear, no mueren, reaccionan**; el mercader golpeado **no vende hasta el amanecer siguiente** (§5.2) |
 
 Implicación técnica (para arquitecto/planificador, sin cambio aquí): los NPCs entran en el streaming por celdas
 (rutina calculada por hora al despertar, CONTEXTO), en el sistema de interacción y en el de impactos (reciben eventos de
 daño sin componente de vida). `docs/COMBATE.md` ya contempla «Aliado / NPC / montura» como destino de hechizos.
+
+### 10.12 El secreto de la Roca y el Archivista anciano (fase 2)
+- **El secreto:** la ciudad creció sobre el **archivo de la Orden de los Tejedores** sin saberlo. Los habitantes conocen
+  el pozo, sus copistas y sus tumbas; nadie recuerda lo que hay debajo. El Santuario del Telar repite a diario un ritual
+  de luz que en realidad es una **llave** (puzle A). La biblioteca está intacta pero **detenida**: sugiere, no explica.
+- **Lo que NO responde** (aplazado, §10.9): qué causó la Pausa, adónde fue la Orden, quién es el NPC recurrente (D-7).
+  La **Tabla de las Horas** con su hornacina vacía solo apunta a que el **Arcano de Tiempo** existe y se guarda en otra
+  parte (trama final).
+- **Archivista anciano** (decisión del usuario): copista veterano; 08–18 en la galería N1, 19–23 en el taller del
+  escriba, 23–08 en su casa de las terrazas. Ha oído «la leyenda del pozo que respira» pero no sabe qué hay abajo. Da
+  **una frase críptica por conversación**, repetible, según la etapa; **orienta, nunca resuelve**; no retrocede de etapa.
+
+| Etapa (banderas) | Frase [SUPUESTO, de CIUDAD_ROCA §3b] | Orienta hacia |
+|---|---|---|
+| 0 · nada | «El pozo recuerda lo que la ciudad olvida. Prueba primero lo que arde y lo que hiela.» | Puzle C |
+| 1 · `puzleC` | «Donde baja el agua, algo espera a que la dejen ir.» | Puzle B |
+| 2 · `puzleB` | «El santuario se enciende a su hora; la luz sabe el camino mejor que yo.» | Puzle A |
+| 3 · `puzleA` | «Si una puerta se abre sola, no entres con prisa.» | Preparar el jefe |
+| 4 · jefe vencido | «Dicen que allí abajo se guarda todo, menos la hora que nadie encuentra.» | Eco del Arcano de Tiempo |
+Cada frase nueva añade una entrada de Códice (10 XP). Comprobable: **AV-01** con `puzleB = true` y `puzleA = false` la
+frase es la de la etapa 2; resolver A y hablar ⇒ etapa 3; ninguna etapa crea marcador en la brújula.
 
 ---
 
@@ -504,6 +704,10 @@ daño sin componente de vida). `docs/COMBATE.md` ya contempla «Aliado / NPC / m
 | Causa de la Pausa y trama completa; NPC recurrente (D-7); 2.º encargo; chamán goblin | Fase 2 |
 | Piedras de paso / viaje rápido | Fase 2 (runas) |
 | Habilidad o efecto jugable por liberar al Guardián | Fase 2+ (en el MVP, solo narrativo) |
+| Ciudad de la Roca: servicios, arena, cadena de puzles, subsuelo, jefe y biblioteca (§7.6–§7.8) | Fase 2 (arte final en fase 3) |
+| Arena: torneos por temporada, apuestas, aliados en el ruedo; rivales que te buscan por el mundo tras perdonarlos | Futuro |
+| Puzle E (anillos del pozo) | Descartado |
+| Arcano de Tiempo | Trama final (sin fase) |
 | Martillo y arco | Reserva (COMBATE §1.2) |
 | Fauna, NPCs modulares, más NPCs con rutina entre asentamientos | Fase 3 |
 | Salto libre, nado, escalada | Futuro (sin fase asignada) [SUPUESTO] |
