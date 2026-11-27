@@ -5,7 +5,7 @@ Fuentes: `docs/GDD.md` (zona 3, este/sureste, §10 lore), `docs/GUIA_VISUAL.md` 
 Decisión del usuario: estilo **tallado en la roca** (fachadas esculpidas en arenisca, escaleras y puentes en el cañón, ciudad antigua del desierto).
 Diseño propio: evoca la sensación de las ciudades rupestres en general, sin copiar ningún monumento real ni nada de otros juegos.
 
-Decisiones del usuario integradas: ciudad **grande y habitada**; **subsuelo oculto** con sala de jefe y biblioteca gigante (conjuros como recompensa); **servicios** completos y una **arena**; fachada mayor replanteada; **puzles decididos**: cadena C → B → A hacia la sala escondida, D opcional, E descartado (§10).
+Decisiones del usuario integradas: ciudad **grande y habitada**; **subsuelo oculto** con sala de jefe y biblioteca gigante (conjuros como recompensa); **servicios** completos y una **arena**; fachada mayor replanteada; **puzles decididos**: cadena C → B → A hacia la sala escondida, D opcional, E descartado (§10); duelos de arena con elección matar/perdonar (§3c); subsuelo en instancia aceptado (§2, §3b); conjuros del archivo propuestos (§3d); NPC guía del secreto además de pistas ambientales (§3b).
 
 ## 1. Concepto y fantasía del lugar
 
@@ -25,7 +25,7 @@ Relación con el lore (GDD §10): el **archivo de la Orden de los Tejedores** es
 | Fachada mayor (Santuario del Telar) | 48 m de ancho × 38 m de alto, profundidad interior ≈ 30 m | Único edificio de máximo detalle |
 | Terrazas de viviendas y servicios | 4 niveles de 6 m, bandas de 200 m en ambos lados del cañón | Unidas por escaleras talladas |
 | Gran pozo central (parte pública del subsuelo) | 60 m de diámetro, 90 m de profundidad, 5 niveles | En la meseta; rampa helicoidal y galerías |
-| Subsuelo oculto | Sala del jefe a 100-118 m; biblioteca a 118-170 m de profundidad bajo la meseta | Ver §3b; se cuenta como instancia [SUPUESTO] |
+| Subsuelo oculto | Sala del jefe a 100-118 m; biblioteca a 118-170 m de profundidad bajo la meseta | Ver §3b; **instancia aparte (decidido)**, con pantalla de carga al cruzar el pasaje N6 |
 | Puentes | 4-6, luces de 12-35 m, altura 20-45 m | Piedra de un arco; uno colgante de madera y cuerda |
 
 **Encaje en celdas de 128 m (streaming):** el conjunto superficial ocupa un bloque alineado de **6 × 5 celdas (768 × 640 m)** más **7 celdas lineales** para el desfiladero [SUPUESTO]. Cada celda guarda datos de geometría y props; el macizo son piezas por celda con una malla lejana única (§7). El pozo público (N1-N5) cae en 1-2 celdas centrales como interior contiguo. **La sala del jefe y la biblioteca son una instancia aparte** (patrón del dungeon del GDD): ahorran memoria en el mundo abierto y permiten iluminación propia; el acceso es el pasaje oculto desde el fondo del pozo. La zona es de dificultad 3 (GDD §5): grupos mixtos de 4-5 en el desfiladero, el pozo bajo y la periferia; plaza, terrazas y servicios son zona segura.
@@ -80,9 +80,9 @@ Puntos de descanso: **plaza, posada, nicho del desfiladero, pozo N3** (4) [SUPUE
 | N3 Sala de mapas | 38-58 m | Mapas tallados, descanso, primeros enemigos | Público |
 | N4 Cisterna profunda | 58-78 m | Agua, compuertas, plataformas; enemigos | Público (peligroso) |
 | N5 Fondo del pozo | 78-90 m | Cámara circular de aspecto sellado, «aquí acaba el pozo» | Público; aparente callejón sin salida |
-| N6 Pasaje y antecámara | 90-100 m | Pasadizo estrecho, glifos de umbral, trampas ligeras | **Oculto**: se llega resolviendo la cadena de puzles (§10) |
-| N7 Sala del jefe | 100-118 m | Arena circular de combate | Oculto, instancia |
-| N8 Biblioteca gigante | 118-170 m | Archivo de la Orden, recompensa de conjuros | Oculto, se abre al derrotar al jefe |
+| N6 Pasaje y antecámara | 90-100 m | Pasadizo estrecho, glifos de umbral, trampas ligeras | **Oculto**: se llega resolviendo la cadena de puzles (§10). **Pantalla de carga al cruzar el umbral de N6** hacia la instancia |
+| N7 Sala del jefe | 100-118 m | Arena circular de combate | Oculto, **instancia (decidido)** |
+| N8 Biblioteca gigante | 118-170 m | Archivo de la Orden, recompensa de conjuros (§3d) | Oculto, misma instancia; se abre al derrotar al jefe |
 
 **Pistas ambientales (sin flechas ni marcadores):** la exploración se guía por el mundo, nunca por la interfaz.
 - **Corrientes de aire:** llamas de antorcha que se inclinan, polvo y telas que se mueven hacia la pared oculta en N4-N5.
@@ -91,7 +91,19 @@ Puntos de descanso: **plaza, posada, nicho del desfiladero, pozo N3** (4) [SUPUE
 - **Luz:** un haz fino de luz solar con polvo que cae donde no debería (N4/N5), por una grieta del conducto del santuario.
 - **Sonido:** eco distinto y viento grave en la pared hueca (para `audio`); goteo de agua que corre hacia una rendija.
 - **Rastros narrativos:** esqueleto de un explorador con un cuaderno con un dibujo; arañazos en una pared; una vasija con la marca del santuario fuera de su sitio.
-- **Pista humana opcional:** un acólito comenta una «leyenda del pozo que respira» sin dar la ubicación.
+- **Pista humana (decidido: pistas ambientales Y un NPC):** el **Archivista anciano** [SUPUESTO] da frases crípticas por etapas (ver abajo). Las pistas ambientales funcionan solas; el NPC solo orienta, nunca da la solución.
+
+**NPC guía: el Archivista anciano [SUPUESTO].** Copista veterano que trabaja de día en la galería N1 y de noche en el taller del escriba de las terrazas. Ha oído «la leyenda del pozo que respira» pero no sabe qué hay abajo. **No cierra el NPC recurrente D-7 del GDD**: es un NPC local de la ciudad; si D-7 se decide más adelante, puede absorber o no este papel.
+
+| Etapa (según flags de la cadena) | Frase críptica [SUPUESTO] | Qué orienta |
+|---|---|---|
+| 0. Antes de C | «El pozo recuerda lo que la ciudad olvida. Prueba primero lo que arde y lo que hiela.» | Probar hechizos sobre toldos y agua |
+| 1. C resuelto | «Donde baja el agua, algo espera a que la dejen ir.» | Compuertas y cisternas (B) |
+| 2. B resuelto | «El santuario se enciende a su hora; la luz sabe el camino mejor que yo.» | Rayo solar y espejos (A) |
+| 3. A resuelto | «Si una puerta se abre sola, no entres con prisa.» | Preparación para el jefe |
+| 4. Jefe vencido | «Dicen que allí abajo se guarda todo, menos la hora que nadie encuentra.» | Eco de la reserva del Arcano de Tiempo (§3d) |
+
+Reglas: una frase por conversación, repetible, sin marcador de misión ni flecha; el estado de etapa lo marca la cadena de puzles; si el jugador ya la superó, el Archivista no «retrocede». Entradas de Códice opcionales por frase.
 
 **Sala del jefe (N7). Solo el espacio; la ficha del jefe es de `disenador-combate`:**
 | Aspecto | Diseño [SUPUESTO] |
@@ -112,7 +124,7 @@ Puntos de descanso: **plaza, posada, nicho del desfiladero, pozo N3** (4) [SUPUE
 | Estanterías talladas | Muros cubiertos de nichos-estante de 0,6 × 3 m en 12 niveles de galerías (5 m cada una); rollos y libros como props instanciados; solo 3-4 galerías con detalle real |
 | Circulación | Rampa en espiral por el perímetro, escaleras talladas y 5 puentes de piedra que cruzan el vacío central |
 | Centro | «Pozo de luz» de 20 m con cristales de conjuro que cuelgan y dan luz difusa fría; plataforma central de lectura |
-| Conjuros (recompensa) | 3-4 **atriles o capillas** con un conjuro cada uno, repartidos por la biblioteca (no todos a la vista); el reparto de qué conjuros lo decide el GDD |
+| Conjuros (recompensa) | **1 atril central garantizado + 5 atriles/capillas opcionales** escondidos en galerías; reparto decidido en §3d (pendiente solo de ficha detallada en COMBATE.md §2) |
 | Luz | Tono dorado frío: luz difusa de cristales (#e6d3a3 / #9fb8d9), motas de polvo, rayos suaves desde lucernarios muy altos; atriles con halo rúnico más cálido para guiar la mirada |
 | Ambiente | Silencio, reverberación, páginas moviéndose con corriente tenue; sin enemigos (zona de recompensa y descanso) |
 | Presupuesto | Instancia ≤ 30 draw calls; geometría por segmentos con LOD y *culling* por galería |
@@ -133,6 +145,33 @@ Decisión: **el teatro tallado se convierte en anfiteatro-arena**. Es el mismo g
 | Ambiente | Banderolas, brasas de brasero, luz de tarde cenital; de noche antorchas en el podio |
 
 **Reglas de la arena (propuesta [SUPUESTO] para el diseñador de juego, no vinculante):** inscripción gratis o con cuota; **rondas** de 3-5 oleadas con descanso entre oleadas; **rangos** Bronce, Plata, Oro y Campeón desbloqueados al completar el anterior; enemigos: monstruos del bestiario más duelos con NPCs (humanos o no-muertos); recompensas: oro, experiencia, objeto de rango y título; sin penalización de muerte más allá de perder la ronda; límite de intentos por día opcional.
+
+**Duelos contra NPCs: el jugador elige matar o perdonar (decisión del usuario).** Al ganar, el rival cae de rodillas, el público guarda silencio y aparece la elección **Perdonar / Matar** (aviso DOM de `interfaz-ui`; el presentador y las gradas reaccionan, aclamación o abucheo). Consecuencias [SUPUESTO, a definir por GDD]:
+
+| Elección | Consecuencias propuestas |
+|---|---|
+| Perdonar | Sube la **reputación en la Casa de la Arena**; el rival conserva su lugar en el cartel y **puede volver más fuerte** (un rango de dificultad superior, equipo mejorado) |
+| Matar | **Botín extra** (el equipo del rival); el rival **desaparece del cartel**; **baja la reputación** con algunos NPCs de la ciudad (los vinculados a él y facciones pacíficas, p. ej. sacerdotes) |
+
+Notas de producción: la elección no afecta al ruedo ni al kit; sí requiere una ventana de interacción y animaciones breves de remate y de piedad (coordinar con `programador-gameplay` y `artista-3d`). Los monstruos de jaula no ofrecen esta elección.
+
+### 3d. Conjuros del archivo (DECIDIDO por el usuario; pendiente solo la ficha detallada en COMBATE.md §2)
+
+Coherente con `docs/COMBATE.md` §2 (nombres de §2.3, §2.5, §2.7 y §2.10). El archivo recompensa **explorar**: lo esencial es corto de obtener y lo demás está escondido en las 12 galerías. Numeración: G1 a nivel del suelo, G12 junto al techo.
+
+| Recompensa | Tipo (COMBATE §2) | Galería y presentación [SUPUESTO] | Tiempo añadido |
+|---|---|---|---|
+| **Arcano de Espacio** (garantizado) | Núcleo Arcano (Aire+Sombra+Tierra); destinos de Espacio, p. ej. **Piedra de paso** | **Atril central** de la plataforma de lectura, tras vencer al jefe. Una página de luz se compone en el aire a partir de motas, gira y se funde con la runa del jugador (estilo visor del grimorio). La Orden lo usaba para moverse por el archivo | 0-2 min tras la ruta principal; además 1-2 esquirlas rúnicas junto al atril para estrenar Piedra de paso [SUPUESTO] |
+| **Llama sagrada** (Fuego+Luz) | Receta de la Orden (§2.5, fusión 2) | **G5**: capilla de brasero con atril lateral; la página se forma al encender el brasero con fuego | 3-5 min |
+| **Aurora** (Aire+Luz) | Receta de la Orden (§2.5, fusión 18) | **G8**: balcón bajo un lucernario; la página aparece al incidir la luz del lucernario en el atril | 3-5 min |
+| **Crepúsculo** (Luz+Sombra) | Receta de la Orden (§2.5, fusión 12) | **G2**: rincón oscuro tras estantes (pista por corriente de aire); la página es visible solo en penumbra y se forma al acercarse | 4-6 min |
+| **Planeo** | Runa de movimiento (§2.10) | **G11**: mirador cerca del techo alcanzable por puentes; página flotante junto al vacío central, ideal para estrenarlo | 4-6 min |
+| **Ancla** | Runa de control (§2.3: −15 % potencia, −20 inestabilidad) | **G3**: mesa de «correcciones» del copista, con un atril entre rollos | 3-4 min |
+| **Arcano de Tiempo** | **No incluido**: reservado al final de la trama (la Pausa) | **G6**: mural «Tabla de las Horas» con una hornacina vacía; 2-3 **entradas de lore en el Códice** (pistas, sin respuestas), y el atril central deja un hueco con marca de reloj | 2-3 min de lectura |
+
+Total de exploración opcional ≈ **20-30 min** (más 8-10 min de ruta principal hasta el atril central). Los opcionales se descubren con las mismas pistas ambientales (luz, corrientes, polvo); ninguno tiene marcador.
+
+Puntos a cuadrar con COMBATE (anotados en «Pendiente de sincronizar»): (1) las fusiones y arcanos se descubren lanzándolos una vez (§2.7); falta decidir si el atril concede directamente la receta; (2) las zonas de anulación (§2.10) bloquean Planeo en dungeons y salas de jefe: la biblioteca, como zona de recompensa, no debería bloquear Planeo, o Planeo se usaría solo fuera (en el pozo y la meseta); (3) Piedra de paso no se puede crear dentro de la instancia.
 
 ## 4. Lenguaje arquitectónico
 
@@ -254,7 +293,7 @@ Grid: **1 m** de snap fino, **3 m** de snap de módulo, **6 m** de piso; rotaci�
 | Servicios | Edificios-caja con rótulo distintivo y NPC genérico por servicio (mercader, herrero, posada); interiores solo si el servicio lo exige | Interiores diferenciados, props de oficio, vida ambiental |
 | Escaleras y puentes | Rampas escalonadas y arcos de caja con colisión correcta | Kit tallado con desgaste y madera añadida |
 | Pozo (N1-N5) | Cilindro con rampa helicoidal y 5 niveles señalados; sin detalle fino | Segmentos con nichos, estantes y props |
-| Subsuelo oculto (N6-N8) | Antecámara, **sala circular de 40 m** con 6 pilares y puerta, **sala-biblioteca simple** con estanterías de cajas y 3-4 atriles; luz por colores base | Biblioteca monumental completa, 12 galerías, cristales, props |
+| Subsuelo oculto (N6-N8) | Antecámara con pantalla de carga al cruzar, **sala circular de 40 m** con 6 pilares y puerta, **sala-biblioteca simple** con estanterías de cajas y 6 atriles (1 central garantizado + 5 opcionales en galerías, con la página de luz como efecto sencillo); luz por colores base | Biblioteca monumental completa, 12 galerías, cristales, props |
 | Puzles (cadena C → B → A decidida) | C: 1 toldo quemable, 1 charca congelable y 1 pared de glifos reactiva con primitivas. B: 2 compuertas y plano de agua con altura variable y 2-3 plataformas de caja. A: ranura solar, 3 espejos como cilindros girables con 4 posiciones fijas, rayo como línea emisiva, puerta oculta. D (glifos y Códice) solo si sobra tiempo | Piezas del kit, rayo y agua finales, glifos de D, reflejos libres |
 | Lejano | Silueta única baked sencilla | Malla + impostores |
 | Coste | Superficie ≤ 14 draw calls y ≤ 120 k tris; instancia ≤ 10 draw calls | Presupuesto de §7 |
@@ -270,11 +309,9 @@ Prioridad del MVP: que el **recorrido, la escala y el descubrimiento** funcionen
 - Bibliotecas subterráneas inmensas con luz difusa; pozos y cisternas con escaleras que descienden.
 
 **Preguntas abiertas para el usuario (máx. 5):**
-(Puzles: resuelto, ver §10.)
-1. ¿La **arena** incluye duelos contra NPCs que puedan morir, o solo derrota/retirada sin muertes permanentes?
-2. ¿Aceptas que la sala del jefe y la biblioteca sean **instancia aparte** (como el dungeon) y no parte del mundo continuo?
-3. ¿Cuántos **conjuros** y de qué tipo (ataque, soporte, utilidad) se recogen en la biblioteca? Condiciona atriles y recompensa.
-4. ¿Debe haber **rastro o NPC guía** para el secreto (pista hablada del acólito) o solo pistas ambientales?
+(Resueltas: puzles §10, duelos de arena §3c, instancia aparte §2, NPC guía §3b.)
+1. ¿Confirmas la propuesta de **conjuros del archivo** (§3d): Arcano de Espacio garantizado y 5 opcionales en galerías, sin Arcano de Tiempo?
+2. ¿Te parece bien que el **Archivista anciano** sea el NPC guía del secreto (sin cerrar D-7), o prefieres otro personaje?
 
 ## 10. Puzles (DECIDIDO por el usuario)
 
@@ -300,10 +337,10 @@ Esta cadena aprovecha el ciclo día/noche, los hechizos del jugador y la arquite
 
 ## Pendiente de sincronizar (otros documentos; no modificados aquí)
 
-- **`docs/COMBATE.md` (disenador-combate):** ficha del **jefe de la sala escondida** (usar §3b: arena de Ø 40 m, 6 pilares, fases con brasero); **enemigos de la arena** y de duelos con NPCs; **rondas, rangos y recompensas** por rango (propuesta §3c).
-- **`docs/GDD.md` (disenador-juego):** reglas de la **arena** (rondas, rangos, entrada, recompensas, XP); **recompensas de conjuros** en la biblioteca (cuántos, cuáles, cómo se desbloquean) y su relación con el árbol de hechizos; secreto del subsuelo y archivo como parte de la historia; servicios de la ciudad (herrero, posada, alquimista, establo, escriba, gremio, cambista); puntos de descanso (plaza, posada, desfiladero, pozo N3); mercader del desierto; límite de NPCs activos para ciudad (≤ 24 propuesto); cadena de puzles decidida C → B → A (+ D opcional con entradas de Códice, §10) como parte del camino al subsuelo; decisión del NPC recurrente (D-7).
+- **`docs/COMBATE.md` (disenador-combate):** ficha del **jefe de la sala escondida** (usar §3b: arena de Ø 40 m, 6 pilares, fases con brasero); **enemigos de la arena** y de duelos con NPCs; **rondas, rangos y recompensas** por rango (propuesta §3c); **ficha de los conjuros del archivo** en §2 (§3d): si el atril concede la receta sin lanzarla antes (§2.7), Planeo frente a zonas de anulación (§2.10), esquirlas de Piedra de paso, y que el Arcano de Tiempo queda reservado.
+- **`docs/GDD.md` (disenador-juego):** reglas de la **arena** (rondas, rangos, entrada, recompensas, XP); **recompensas de conjuros** en la biblioteca (propuesta §3d: Arcano de Espacio garantizado; Llama sagrada, Aurora, Crepúsculo, Planeo y Ancla opcionales; Arcano de Tiempo reservado a la trama final con solo pistas de lore en el Códice); **consecuencias de la elección matar/perdonar** en la arena (propuesta [SUPUESTO] §3c: perdonar da reputación en la Casa de la Arena y el rival puede volver más fuerte; matar da botín extra, el rival desaparece del cartel y baja la reputación con algunos NPCs); **Archivista anciano** como NPC guía del secreto con frases por etapas (§3b), sin cerrar D-7; secreto del subsuelo y archivo como parte de la historia; servicios de la ciudad (herrero, posada, alquimista, establo, escriba, gremio, cambista); puntos de descanso (plaza, posada, desfiladero, pozo N3); mercader del desierto; límite de NPCs activos para ciudad (≤ 24 propuesto); cadena de puzles decidida C → B → A (+ D opcional con entradas de Códice, §10) como parte del camino al subsuelo; decisión del NPC recurrente (D-7).
 - **`docs/GUIA_VISUAL.md`:** colores nuevos (#d9c29a, #9a5f3c, #7a8a6a, #8a6a4c, #e6d3a3, #9fb8d9); LOD0 extendido a 90 m para piezas monumentales; presupuesto de multitud en impostores y de instancias (sala del jefe y biblioteca).
-- **`docs/ARQUITECTURA.md` (+ ADR):** sala del jefe y biblioteca como **instancia**, el bloque de 6 × 5 celdas más 7, estado persistente de puzles y raycast de espejos.
-- **`docs/GUIA_UI.md` (interfaz-ui):** inscripción de la arena, tablón de rangos y encargos, entradas de Códice de glifos.
+- **`docs/ARQUITECTURA.md` (+ ADR):** sala del jefe y biblioteca como **instancia aparte (decidido por el usuario)** con pantalla de carga al cruzar el pasaje N6 (guardado de estado de puzles y reaparición fuera de la sala), el bloque de 6 × 5 celdas más 7, estado persistente de puzles y raycast de espejos.
+- **`docs/GUIA_UI.md` (interfaz-ui):** inscripción de la arena, tablón de rangos y encargos, aviso **Perdonar / Matar**, reputación en la Casa de la Arena, entradas de Códice de glifos, de las frases del Archivista y de la Tabla de las Horas, y la presentación de las páginas de conjuro.
 - **Audio:** eco y viento de pistas ambientales, ambiente de arena y plaza, reverberación de la biblioteca.
 - **`estado/feature_list.json` (planificador):** features de ciudad (proxy), arena, subsuelo/jefe, biblioteca y cadena de puzles, tras elegir el usuario.
