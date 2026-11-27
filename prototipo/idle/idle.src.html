@@ -254,7 +254,12 @@ new THREE.GLTFLoader().parse(b64ToBuf(GLB_B64), '', gltf => {
   char.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; } });
   pivot.add(char);
   const find = n => { let r = null; char.traverse(o => { if (!r && o.isBone && o.name === n) r = o; }); return r; };
-  arreglarManos(char, gltf.animations);
+  // orienta el modelo para que mire a +Z (Blender/MakeHuman exporta mirando a −Z): de talón a punta del pie
+  char.updateMatrixWorld(true);
+  { const f = find0(char, 'foot_l'), bl = find0(char, 'ball_l');
+    if (f && bl) { const d = bl.getWorldPosition(new V()).sub(f.getWorldPosition(new V())); if (d.z < 0) char.rotation.y = Math.PI; char.updateMatrixWorld(true); } }
+  let esSoldado = false; char.traverse(o => { if (o.isSkinnedMesh && o.name === 'armor') esSoldado = true; });
+  if (esSoldado) { arreglarManos(char, gltf.animations); APUNTAR_PULGAR = true; }   // solo el soldado re-enlazado: el héroe MakeHuman ya trae los dedos bien
   char.traverse(o => { if (o.isBone) { bones.push(o); bind.push([o.quaternion.clone(), o.position.clone()]); } });
   ['spine_03', 'neck_01', 'head', 'pelvis'].forEach(n => B[n] = find(n));
   char.updateMatrixWorld(true);   // pose de enlace (bind): mano abierta
@@ -304,6 +309,7 @@ new THREE.GLTFLoader().parse(b64ToBuf(GLB_B64), '', gltf => {
   B.head.getWorldQuaternion(tq); headFwdLocal.copy(fwd).applyQuaternion(tq.invert());
   ready = true;
 }, e => { $('estado').textContent = 'Error al cargar: ' + e.message; console.error(e); });
+function find0(root, n) { let r = null; root.traverse(o => { if (!r && o.isBone && o.name === n) r = o; }); return r; }
 function resetBind() { for (let i = 0; i < bones.length; i++) { bones[i].quaternion.copy(bind[i][0]); bones[i].position.copy(bind[i][1]); } }
 
 /* ---------- input ---------- */
@@ -396,7 +402,7 @@ function poseFingers(h, curl, spread, w) {
   h.hand.updateMatrixWorld(true);
   // pulgar: se orienta su base explícitamente (en la pose de enlace sale en T, separado de la mano)
   const th = h.fingers.find(f => f.thumb && f.j === 1), th2 = h.fingers.find(f => f.thumb && f.j === 2);
-  if (th && th2) {
+  if (th && th2 && APUNTAR_PULGAR) {
     wp(h.hand, tA); wp(h.middle, tB); tB.sub(tA).normalize();         // dirección de los dedos
     wp(h.index, tC); wp(h.pinky, tD); tC.sub(tD).normalize();          // hacia el índice
     palmNormal(h, tE);
@@ -406,7 +412,7 @@ function poseFingers(h, curl, spread, w) {
     h.hand.updateMatrixWorld(true);
   }
 }
-let thumbK = 0;
+let thumbK = 0, APUNTAR_PULGAR = false;   // solo el soldado: su pulgar de enlace sale en T
 function applyPose(wMagia, t, mov) {
   const a = 1 - mov;                 // capa de brazos: plena quieto, nula andando
   const e = ease(wMagia);
@@ -450,7 +456,7 @@ function applyPose(wMagia, t, mov) {
         const rel = f.thumb ? PULGAR_REL[f.j - 1] : RELAJADA[f.j - 1] + casc * (f.j === 1 ? 1.2 : 0.6);
         if (k <= 0) return rel;
         const ola = Math.sin(t * 2.0 - f.fi * 0.75);
-        const mag = f.thumb ? [-0.20, 0.02, 0.10][f.j - 1] + 0.05 * Math.sin(t * 1.6)
+        const mag = f.thumb ? (APUNTAR_PULGAR ? [-0.20, 0.02, 0.10] : [-0.12, -0.04, 0.06])[f.j - 1] + 0.05 * Math.sin(t * 1.6)
                             : [0.14, 0.22, 0.18][f.j - 1] + casc * 0.8 + ola * [0.09, 0.10, 0.08][f.j - 1];
         return rel + (mag - rel) * k;
       }, f => {
@@ -560,6 +566,11 @@ window.__IDLE__ = {
   forzar: () => $('bForzar').click(),
   camara: (x, y, z, tx, ty, tz) => { camera.position.set(x, y, z); controls.target.set(tx, ty, tz); controls.update(); renderer.render(scene, camera); },
   render: () => renderer.render(scene, camera),
+  // cámara relativa a una mano (lado 'l' o 'r'); sinBola oculta la bola y sus partículas para ver la mano
+  camaraMano: (lado, dx, dy, dz, sinBola) => { const h = wp(H[lado].hand, new V()), m = wp(H[lado].middle, new V()), c = h.lerp(m, 0.5);
+    camera.position.set(c.x + dx, c.y + dy, c.z + dz); controls.target.copy(c); camera.lookAt(c);
+    const vis = [orb.visible, parts.visible]; if (sinBola) { orb.visible = false; parts.visible = false; }
+    renderer.render(scene, camera); orb.visible = vis[0]; parts.visible = vis[1]; },
   _clips: () => Object.values(acts).map(a => a.getClip()),
   manos: () => MANOS_INFO,
   _dbg: () => ({ THREE, scene, camera, renderer, char, H, pivot, resetBind }),

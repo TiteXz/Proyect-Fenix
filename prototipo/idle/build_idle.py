@@ -1,13 +1,13 @@
 """Genera idle.html autocontenido (GLB del personaje en base64) a partir de idle.src.html.
 
 Uso: python3 prototipo/idle/build_idle.py [personaje.glb] [salida.html]
-Por defecto usa juego/public/assets/personajes/caballero_soldado.glb (clips «reposo» y «andar»).
+Por defecto usa juego/public/assets/personajes/heroe.glb (MakeHuman CC0, generado por juego/tools/blender/heroe.py) (clips «reposo» y «andar»).
 """
 import base64, os, sys
 
 here = os.path.dirname(os.path.abspath(__file__))
 root = os.path.dirname(os.path.dirname(here))
-glb = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, 'juego', 'public', 'assets', 'personajes', 'caballero_soldado.glb')
+glb = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, 'juego', 'public', 'assets', 'personajes', 'heroe.glb')
 out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(here, 'idle.html')
 s = open(os.path.join(here, 'idle.src.html'), encoding='utf-8').read()
 assert s.count("/*__GLB__*/''") == 1
