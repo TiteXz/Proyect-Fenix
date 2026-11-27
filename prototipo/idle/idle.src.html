@@ -267,7 +267,8 @@ new THREE.GLTFLoader().parse(b64ToBuf(GLB_B64), '', gltf => {
   let esSoldado = false; char.traverse(o => { if (o.isSkinnedMesh && o.name === 'armor') esSoldado = true; });
   if (esSoldado) { arreglarManos(char, gltf.animations); APUNTAR_PULGAR = true; }   // solo el soldado re-enlazado: el héroe MakeHuman ya trae los dedos bien
   char.traverse(o => { if (o.isBone) { bones.push(o); bind.push([o.quaternion.clone(), o.position.clone()]); } });
-  ['spine_03', 'neck_01', 'head', 'pelvis'].forEach(n => B[n] = find(n));
+  ['spine_01', 'spine_02', 'spine_03', 'neck_01', 'head', 'pelvis'].forEach(n => B[n] = find(n));
+  for (const sd of ['l', 'r']) LEG[sd] = { upper: find('thigh_' + sd), lower: find('calf_' + sd), hand: find('foot_' + sd) };
   char.updateMatrixWorld(true);   // pose de enlace (bind): mano abierta
   for (const sd of ['l', 'r']) {
     const h = { side: sd, upper: find('upperarm_' + sd), lower: find('lowerarm_' + sd), hand: find('hand_' + sd),
@@ -435,6 +436,47 @@ let thumbK = 0, APUNTAR_PULGAR = false;   // solo el soldado: su pulgar de enlac
    G 13.6–14.6 salta en arco a la palma izquierda
    H 14.6–16  se asienta en la palma izquierda (la mano derecha baja)                                   */
 const CICLO = 16, INICIO = 2.4;
+// postura: tronco más erguido y pies más juntos (sobre el clip de reposo, solo quieto)
+const LEG = { l: null, r: null }, POSTURA = { erguir: 0.10, mediaSep: 0.105 };
+const fq = new Q(), pole2 = new V();
+function postura(a) {
+  if (a <= 0) return;
+  // erguir: lleva el cuello sobre la pelvis (repartido entre spine_01 y spine_02), con 2° de inclinación natural
+  wp(B.pelvis, tA); wp(B.neck_01, tB); tB.sub(tA);
+  const cur = Math.atan2(tB.dot(fwdW), tB.dot(UP)), want = 0.035;
+  const d = (want - cur) * a;
+  tq.setFromAxisAngle(leftW, d * 0.5); rotWorld(B.spine_01, tq);
+  tq.setFromAxisAngle(leftW, d * 0.5); rotWorld(B.spine_02, tq);
+  // pies: separación lateral fija respecto a la pelvis, mismo avance; la planta conserva su orientación
+  // avance medio de los dos pies: se alinean (el izquierdo 3 cm adelantado) en vez de quedar como a media zancada
+  wp(B.pelvis, tA); wp(LEG.l.hand, tC); wp(LEG.r.hand, tD);
+  const avMed = (tC.clone().sub(tA).dot(fwdW) + tD.clone().sub(tA).dot(fwdW)) / 2;
+  // con los pies bajo la cadera las piernas se estiran: sube la pelvis lo necesario para que no se doblen las rodillas
+  let subir = 0;
+  for (const sd of ['l', 'r']) {
+    const g = LEG[sd], s = sd === 'l' ? 1 : -1;
+    wp(g.upper, tA); wp(g.lower, tB); wp(g.hand, tC);
+    const reach = (tA.distanceTo(tB) + tB.distanceTo(tC)) * 0.985;
+    wp(B.pelvis, tD);
+    const lat = tC.clone().sub(tD).dot(leftW), av = tC.clone().sub(tD).dot(fwdW);
+    tE.copy(tC).addScaledVector(leftW, s * POSTURA.mediaSep - lat).addScaledVector(fwdW, avMed + s * 0.015 - av);
+    const hx = Math.hypot(tA.x - tE.x, tA.z - tE.z), need = Math.sqrt(Math.max(0, reach * reach - hx * hx)) - (tA.y - tE.y);
+    subir = Math.max(subir, need);
+  }
+  if (subir > 0) { B.pelvis.parent.updateMatrixWorld(true); wp(B.pelvis, tA); tA.y += Math.min(0.08, subir) * a; B.pelvis.position.copy(B.pelvis.parent.worldToLocal(tA)); B.pelvis.updateMatrixWorld(true); }
+  for (const sd of ['l', 'r']) {
+    const g = LEG[sd], s = sd === 'l' ? 1 : -1;
+    g.hand.getWorldQuaternion(fq);
+    wp(g.hand, tC); wp(B.pelvis, tA);
+    if (subir > 0) tC.y -= Math.min(0.08, subir) * a;   // el pie se queda en el suelo
+    const lat = tC.clone().sub(tA).dot(leftW), av = tC.clone().sub(tA).dot(fwdW);
+    target.copy(tC).addScaledVector(leftW, (s * POSTURA.mediaSep - lat) * a).addScaledVector(fwdW, (avMed + s * 0.015 - av) * a);
+    wp(g.lower, pole2).addScaledVector(fwdW, 0.6);
+    pole.copy(pole2);
+    solveArm(g, target, pole, a);
+    g.hand.getWorldQuaternion(tq2); tq3.copy(tq2).invert(); tq.copy(fq).multiply(tq3); rotWorld(g.hand, tq);
+  }
+}
 const seg = (c, a, b) => Math.min(1, Math.max(0, (c - a) / (b - a)));
 const smooth = x => x * x * x * (x * (x * 6 - 15) + 10);
 const PF = { l: { c: new V(), n: new V(), f: new V(), s: new V() }, r: { c: new V(), n: new V(), f: new V(), s: new V() } };
@@ -470,6 +512,7 @@ function applyPose(wMagia, t, mov) {
   coreo(t);
   pivot.getWorldQuaternion(tq); fwdW.set(0, 0, 1).applyQuaternion(tq); leftW.crossVectors(UP, fwdW);
   // respiración; el pecho gira un poco hacia la mano mágica y sigue a la bola (limitado)
+  postura(a);
   tq.setFromAxisAngle(leftW, 0.015 * Math.sin(t * 1.6) * a); rotWorld(B.spine_03, tq);
   if (e > 0) {
     let yaw = 0.16;

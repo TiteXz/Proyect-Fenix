@@ -1,11 +1,13 @@
-"""Genera el héroe base realista: humano MakeHuman (CC0) con esqueleto game_engine (dedos de 3 falanges),
-piel 2K, ojos, cejas, pestañas, pelo y ropa de trabajo, sin armadura: manos, cuello y rodillas al descubierto
-o con ropa ajustada para validar la deformación. Copia los clips del caballero (reposo, andar, …) con retarget.py.
+"""Genera el héroe realista: humano MakeHuman (CC0) con esqueleto game_engine (dedos de 3 falanges), piel 2K,
+ojos, cejas, pestañas y pelo largo recogido hacia atrás; ropa propia de mezcla medieval / ciencia ficción y espada
+híbrida katana + sable de luz enfundada a la izquierda (heroe_equipo.py). Copia los clips del caballero con retarget.py.
 
 Uso:
-  blender -b -P juego/tools/blender/heroe.py -- <salida.glb> <caballero.glb con clips> [preview_dir]
+  blender -b -P juego/tools/blender/heroe.py -- <salida.glb> <caballero.glb con clips> <dir texturas Poly Haven> [preview_dir]
+  (texturas: rough_linen, hessian_230, caban, brown_leather en 1K: <id>_Diffuse.jpg, <id>_nor_gl.jpg, <id>_arm.jpg)
 
-Licencias: todo CC0 (MakeHuman system assets vía MPFB 2.0.18; clips Quaternius UAL vía caballero.glb).
+Licencias: todo CC0 (MakeHuman system assets vía MPFB 2.0.18; texturas Poly Haven; clips Quaternius UAL vía
+caballero.glb). Ropa y espada: geometría propia.
 Determinista: mismos parámetros → mismo resultado.
 """
 import math
@@ -27,7 +29,8 @@ from retarget import retarget  # noqa: E402
 ARGS = sys.argv[sys.argv.index("--") + 1:]
 OUT_GLB = os.path.abspath(ARGS[0])
 ANIMS = os.path.abspath(ARGS[1])
-PREVIEW = os.path.abspath(ARGS[2]) if len(ARGS) > 2 else None
+TEXDIR = os.path.abspath(ARGS[2])
+PREVIEW = os.path.abspath(ARGS[3]) if len(ARGS) > 3 else None
 U = LocationService.get_user_data()
 
 for o in list(bpy.data.objects):
@@ -35,22 +38,20 @@ for o in list(bpy.data.objects):
 
 # ---------------------------------------------------------------- humano
 MACRO = {
-    "gender": 1.0, "age": 0.45, "muscle": 0.68, "weight": 0.5, "proportions": 0.9,
+    "gender": 1.0, "age": 0.55, "muscle": 0.8, "weight": 0.55, "proportions": 0.9,
     "height": 0.6, "cupsize": 0.5, "firmness": 0.5,
     "race": {"asian": 0.05, "caucasian": 0.85, "african": 0.1},
 }
 basemesh = HumanService.create_human(macro_detail_dict=MACRO)
 rig = HumanService.add_builtin_rig(basemesh, "game_engine", import_weights=True)
 rig.name = "Heroe"
-HumanService.set_character_skin(os.path.join(U, "skins/young_caucasian_male2/young_caucasian_male2.mhmat"),
+HumanService.set_character_skin(os.path.join(U, "skins/young_caucasian_male/young_caucasian_male.mhmat"),
                                 basemesh, skin_type="GAMEENGINE")
 ASSETS = [
-    ("eyes/high-poly/high-poly.mhclo", "Eyes"),
+    ("eyes/low-poly/low-poly.mhclo", "Eyes"),
     ("eyebrows/eyebrow001/eyebrow001.mhclo", "Eyebrows"),
     ("eyelashes/eyelashes01/eyelashes01.mhclo", "Eyelashes"),
-    ("hair/short02/short02.mhclo", "Hair"),
-    ("clothes/male_worksuit01/male_worksuit01.mhclo", "Clothes"),
-    ("clothes/shoes01/shoes01.mhclo", "Clothes"),
+    ("hair/ponytail01/ponytail01.mhclo", "Hair"),
 ]
 added = []
 for rel, kind in ASSETS:
@@ -90,8 +91,8 @@ def bake(obj, name):
 NAMES = {basemesh: "cuerpo"}
 for a in added:
     n = a.name.lower()
-    NAMES[a] = ("ojos" if "high-poly" in n or "eye" in n and "brow" not in n and "lash" not in n else
-                "cejas" if "brow" in n else "pestanas" if "lash" in n else "pelo" if "short" in n else
+    NAMES[a] = ("ojos" if "low-poly" in n or "high-poly" in n or "eye" in n and "brow" not in n and "lash" not in n else
+                "cejas" if "brow" in n else "pestanas" if "lash" in n else "pelo" if "ponytail" in n or "hair" in n else
                 "zapatos" if "shoe" in n else "ropa")
 baked = [bake(o, NAMES[o]) for o in [basemesh] + added]
 for o in list(bpy.data.objects):
@@ -112,6 +113,10 @@ for o in baked:
                 if "Specular IOR Level" in nd.inputs:
                     nd.inputs["Specular IOR Level"].default_value = 0.5
         m.name = o.name
+# ---------------------------------------------------------------- ropa y espada
+from heroe_equipo import equipar  # noqa: E402
+body = next(o for o in baked if o.name == "cuerpo")
+baked += equipar(rig, body, TEXDIR)
 tris = sum(sum(len(p.vertices) - 2 for p in o.data.polygons) for o in baked)
 print("TRIANGULOS:", tris, {o.name: sum(len(p.vertices) - 2 for p in o.data.polygons) for o in baked})
 
@@ -141,10 +146,10 @@ def fix_alpha(path):
     rest = data[20 + jl:]
     for m in js.get("materials", []):
         if m["name"] in ("pelo", "cejas", "pestanas"):
-            m["alphaMode"], m["alphaCutoff"], m["doubleSided"] = "MASK", 0.4, True
+            m["alphaMode"], m["alphaCutoff"], m["doubleSided"] = "MASK", 0.25, True
         else:
             m["alphaMode"] = "OPAQUE"
-            m["doubleSided"] = m["name"] == "ropa"
+            m["doubleSided"] = m["name"] in ("sobretunica", "fajin")
             m.pop("alphaCutoff", None)
     out = json.dumps(js, separators=(",", ":")).encode()
     out += b" " * ((4 - len(out) % 4) % 4)
